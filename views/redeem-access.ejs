@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Redeem Access</title>
+  </head>
+  <body>
+    <% const data = redeemAccessData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper" style="margin-left: 0;">
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <div class="row justify-content-center pt-30">
+            <div class="col-xl-10 col-lg-11">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="card-style mb-30">
+                    <img src="/images/logo/logo.svg" alt="logo" /><br><br>
+                    <div class="title mb-25">
+                      <h2><%= data.page.title %></h2>
+                      <p class="text-sm mt-10 mb-0">
+                        <%= data.page.subtitle %>
+                      </p>
+                    </div>
+
+                    <form action="#" method="POST">
+                      <div class="input-style-1">
+                        <label>Email Address</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value="<%= data.defaultValues.email %>"
+                          placeholder="Enter your email"
+                        />
+                      </div>
+
+                      <div class="input-style-1">
+                        <label>Access Code</label>
+                        <input
+                          type="text"
+                          name="accessCode"
+                          value="<%= data.defaultValues.accessCode %>"
+                          placeholder="Enter your access code"
+                        />
+                      </div>
+
+                      <p class="text-sm mb-25">
+                        <%= data.helpText %>
+                      </p>
+
+                      <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="main-btn primary-btn btn-hover">
+                          Redeem Access
+                        </button>
+
+                        <a href="/login" class="main-btn light-btn btn-hover">
+                          Back to Login
+                        </a>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <div class="card-style mb-30">
+                    <div class="title mb-20">
+                      <h6 class="text-medium"><%= data.statusCard.title %></h6>
+                    </div>
+
+                    <p class="text-sm mb-20">
+                      <%= data.statusCard.description %>
+                    </p>
+
+                    <ul style="padding-left: 18px; margin-bottom: 0;">
+                      <% data.statusCard.items.forEach(function(item) { %>
+                        <li class="text-sm mb-12"><%= item %></li>
+                      <% }) %>
+                    </ul>
+                  </div>
+
+                  <div class="card-style mb-30">
+                    <div class="title mb-20">
+                      <h6 class="text-medium">Need Help?</h6>
+                    </div>
+
+                    <p class="text-sm mb-10">
+                      Make sure:
+                    </p>
+
+                    <ul style="padding-left: 18px; margin-bottom: 0;">
+                      <li class="text-sm mb-12">You entered the same purchase email</li>
+                      <li class="text-sm mb-12">Your access code has no extra spaces</li>
+                      <li class="text-sm mb-12">You are using the latest code sent to you</li>
+                    </ul>
+                  </div>
+
+                  <div class="card-style mb-30">
+                    <div class="title mb-20">
+                      <h6 class="text-medium">What Happens Next?</h6>
+                    </div>
+
+                    <p class="text-sm mb-10">
+                      After redeeming successfully:
+                    </p>
+
+                    <ol style="padding-left: 18px; margin-bottom: 0;">
+                      <li class="text-sm mb-12">Your access will be verified</li>
+                      <li class="text-sm mb-12">You will complete onboarding</li>
+                      <li class="text-sm mb-12">Your personalized dashboard will unlock</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

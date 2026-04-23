@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Workouts</title>
+  </head>
+  <body>
+    <% const data = workoutsData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== sidebar-nav start =========== -->
+    <%- include('partials/sidebar.ejs', { activePage: 'workouts' }) %>
+    <!-- ======== sidebar-nav end =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Workouts',
+        pageSubtitle: 'Follow your training plan and stay consistent.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <!-- ========== title-wrapper start ========== -->
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Workout Plans</h2>
+                  <p class="text-sm text-medium">
+                    Your active plan is
+                    <strong><%= data.summary.activePlan %></strong>.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="/dashboard">Home</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+                        Workouts
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== title-wrapper end ========== -->
+
+          <!-- ========== summary cards start ========== -->
+          <div class="row">
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary">
+                  <i class="lni lni-agenda"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Active Plan</h6>
+                  <h3 class="text-bold mb-10">Week <%= data.summary.currentWeek %></h3>
+                  <p class="text-sm text-gray"><%= data.summary.activePlan %></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success">
+                  <i class="lni lni-checkmark-circle"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Completed Sessions</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.completedSessions %></h3>
+                  <p class="text-sm text-success">Out of <%= data.summary.totalSessions %> total sessions</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange">
+                  <i class="lni lni-target"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Current Setup</h6>
+                  <h3 class="text-bold mb-10"><%= data.currentUser.level %></h3>
+                  <p class="text-sm text-gray"><%= data.currentUser.environment %> workouts</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== summary cards end ========== -->
+
+          <!-- ========== plans start ========== -->
+          <div class="row">
+            <% data.plans.forEach(function(plan) { %>
+              <div class="col-lg-4 col-md-6">
+                <div class="card-style mb-30">
+                  <div class="title d-flex justify-content-between align-items-center">
+                    <div class="left">
+                      <h6 class="text-medium mb-10"><%= plan.title %></h6>
+                    </div>
+                    <div class="right">
+                      <% if (plan.status === 'Active') { %>
+                        <span class="status-btn success-btn"><%= plan.status %></span>
+                      <% } else { %>
+                        <span class="status-btn close-btn"><%= plan.status %></span>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div class="mb-15">
+                    <p class="text-sm mb-10"><strong>Level:</strong> <%= plan.level %></p>
+                    <p class="text-sm mb-10"><strong>Environment:</strong> <%= plan.environment %></p>
+                    <p class="text-sm mb-10"><strong>Duration:</strong> <%= plan.duration %></p>
+                    <p class="text-sm mb-10"><strong>Frequency:</strong> <%= plan.frequency %></p>
+                  </div>
+
+                  <a href="/workouts" class="main-btn primary-btn btn-hover btn-sm">
+                    View Plan
+                  </a>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          <!-- ========== plans end ========== -->
+
+          <!-- ========== today workout + tips start ========== -->
+          <div class="row">
+            <div class="col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Today's Workout</h6>
+                    <h3 class="text-bold"><%= data.todayWorkout.title %></h3>
+                  </div>
+                  <div class="right">
+                    <a href="/workouts" class="main-btn primary-btn btn-hover btn-sm">
+                      Start Now
+                    </a>
+                  </div>
+                </div>
+
+                <div class="row mt-20">
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Day</strong></p>
+                    <p class="text-sm"><%= data.todayWorkout.dayLabel %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Duration</strong></p>
+                    <p class="text-sm"><%= data.todayWorkout.duration %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Calories</strong></p>
+                    <p class="text-sm"><%= data.todayWorkout.calories %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Focus</strong></p>
+                    <p class="text-sm"><%= data.todayWorkout.focus %></p>
+                  </div>
+                </div>
+
+                <div class="mt-20">
+                  <h6 class="text-medium mb-15">Exercises</h6>
+                  <ul style="padding-left: 18px; margin-bottom: 0;">
+                    <% data.todayWorkout.exercises.forEach(function(exercise) { %>
+                      <li class="text-sm mb-10"><%= exercise %></li>
+                    <% }) %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Workout Notes</h6>
+                </div>
+
+                <% data.tips.forEach(function(tip) { %>
+                  <p class="text-sm mb-15"><%= tip %></p>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+          <!-- ========== today workout + tips end ========== -->
+
+          <!-- ========== weekly schedule start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Weekly Schedule</h6>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6 class="text-sm text-medium">Day</h6></th>
+                        <th><h6 class="text-sm text-medium">Workout</h6></th>
+                        <th><h6 class="text-sm text-medium">Status</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% data.weeklySchedule.forEach(function(item) { %>
+                        <tr>
+                          <td><p class="text-sm"><%= item.day %></p></td>
+                          <td><p class="text-sm"><%= item.workout %></p></td>
+                          <td>
+                            <% if (item.status === 'Completed') { %>
+                              <span class="status-btn success-btn"><%= item.status %></span>
+                            <% } else if (item.status === 'Today') { %>
+                              <span class="status-btn warning-btn"><%= item.status %></span>
+                            <% } else if (item.status === 'Rest') { %>
+                              <span class="status-btn close-btn"><%= item.status %></span>
+                            <% } else { %>
+                              <span class="status-btn primary-btn"><%= item.status %></span>
+                            <% } %>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== weekly schedule end ========== -->
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

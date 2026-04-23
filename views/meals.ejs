@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Meals</title>
+  </head>
+  <body>
+    <% const data = mealsData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== sidebar-nav start =========== -->
+    <%- include('partials/sidebar.ejs', { activePage: 'meals' }) %>
+    <!-- ======== sidebar-nav end =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Meals',
+        pageSubtitle: 'Follow your meal plan and stay consistent with nutrition.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <!-- ========== title-wrapper start ========== -->
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Meal Planner</h2>
+                  <p class="text-sm text-medium">
+                    Your active plan is
+                    <strong><%= data.summary.activePlan %></strong>.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="/dashboard">Home</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+                        Meals
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== title-wrapper end ========== -->
+
+          <!-- ========== summary cards start ========== -->
+          <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary">
+                  <i class="lni lni-agenda"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Active Plan</h6>
+                  <h3 class="text-bold mb-10">Week <%= data.summary.currentWeek %></h3>
+                  <p class="text-sm text-gray"><%= data.summary.activePlan %></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success">
+                  <i class="lni lni-checkmark-circle"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Meals Followed</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.mealsFollowed %></h3>
+                  <p class="text-sm text-success">Tracked this week</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange">
+                  <i class="lni lni-calculator"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Daily Calories</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.dailyCalories %></h3>
+                  <p class="text-sm text-gray">Target intake</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple">
+                  <i class="lni lni-drop"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Water Goal</h6>
+                  <h3 class="text-bold mb-10"><%= data.macros.water %></h3>
+                  <p class="text-sm text-gray">Daily hydration</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== summary cards end ========== -->
+
+          <!-- ========== macro summary start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Daily Macro Targets</h6>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Protein</strong></p>
+                    <p class="text-sm"><%= data.macros.protein %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Carbs</strong></p>
+                    <p class="text-sm"><%= data.macros.carbs %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Fats</strong></p>
+                    <p class="text-sm"><%= data.macros.fats %></p>
+                  </div>
+                  <div class="col-md-3 col-6 mb-15">
+                    <p class="text-sm mb-1"><strong>Water</strong></p>
+                    <p class="text-sm"><%= data.macros.water %></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== macro summary end ========== -->
+
+          <!-- ========== today meals start ========== -->
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Breakfast</h6>
+                    <h3 class="text-bold"><%= data.todayMeals.breakfast.title %></h3>
+                  </div>
+                  <div class="right">
+                    <span class="status-btn success-btn"><%= data.todayMeals.breakfast.calories %></span>
+                  </div>
+                </div>
+
+                <p class="text-sm mb-15"><strong>Time:</strong> <%= data.todayMeals.breakfast.time %></p>
+
+                <ul style="padding-left: 18px; margin-bottom: 0;">
+                  <% data.todayMeals.breakfast.items.forEach(function(item) { %>
+                    <li class="text-sm mb-10"><%= item %></li>
+                  <% }) %>
+                </ul>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Lunch</h6>
+                    <h3 class="text-bold"><%= data.todayMeals.lunch.title %></h3>
+                  </div>
+                  <div class="right">
+                    <span class="status-btn success-btn"><%= data.todayMeals.lunch.calories %></span>
+                  </div>
+                </div>
+
+                <p class="text-sm mb-15"><strong>Time:</strong> <%= data.todayMeals.lunch.time %></p>
+
+                <ul style="padding-left: 18px; margin-bottom: 0;">
+                  <% data.todayMeals.lunch.items.forEach(function(item) { %>
+                    <li class="text-sm mb-10"><%= item %></li>
+                  <% }) %>
+                </ul>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Dinner</h6>
+                    <h3 class="text-bold"><%= data.todayMeals.dinner.title %></h3>
+                  </div>
+                  <div class="right">
+                    <span class="status-btn success-btn"><%= data.todayMeals.dinner.calories %></span>
+                  </div>
+                </div>
+
+                <p class="text-sm mb-15"><strong>Time:</strong> <%= data.todayMeals.dinner.time %></p>
+
+                <ul style="padding-left: 18px; margin-bottom: 0;">
+                  <% data.todayMeals.dinner.items.forEach(function(item) { %>
+                    <li class="text-sm mb-10"><%= item %></li>
+                  <% }) %>
+                </ul>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Snack</h6>
+                    <h3 class="text-bold"><%= data.todayMeals.snack.title %></h3>
+                  </div>
+                  <div class="right">
+                    <span class="status-btn success-btn"><%= data.todayMeals.snack.calories %></span>
+                  </div>
+                </div>
+
+                <p class="text-sm mb-15"><strong>Time:</strong> <%= data.todayMeals.snack.time %></p>
+
+                <ul style="padding-left: 18px; margin-bottom: 0;">
+                  <% data.todayMeals.snack.items.forEach(function(item) { %>
+                    <li class="text-sm mb-10"><%= item %></li>
+                  <% }) %>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- ========== today meals end ========== -->
+
+          <!-- ========== weekly plan + shopping list start ========== -->
+          <div class="row">
+            <div class="col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Weekly Meal Focus</h6>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6 class="text-sm text-medium">Day</h6></th>
+                        <th><h6 class="text-sm text-medium">Focus</h6></th>
+                        <th><h6 class="text-sm text-medium">Status</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% data.weeklyPlan.forEach(function(item) { %>
+                        <tr>
+                          <td><p class="text-sm"><%= item.day %></p></td>
+                          <td><p class="text-sm"><%= item.focus %></p></td>
+                          <td>
+                            <% if (item.status === 'Completed') { %>
+                              <span class="status-btn success-btn"><%= item.status %></span>
+                            <% } else if (item.status === 'Today') { %>
+                              <span class="status-btn warning-btn"><%= item.status %></span>
+                            <% } else { %>
+                              <span class="status-btn primary-btn"><%= item.status %></span>
+                            <% } %>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Shopping List</h6>
+                </div>
+
+                <ul style="padding-left: 18px; margin-bottom: 20px;">
+                  <% data.shoppingList.forEach(function(item) { %>
+                    <li class="text-sm mb-10"><%= item %></li>
+                  <% }) %>
+                </ul>
+
+                <a href="/meals" class="main-btn light-btn btn-hover btn-sm">
+                  Refresh List
+                </a>
+              </div>
+            </div>
+          </div>
+          <!-- ========== weekly plan + shopping list end ========== -->
+
+          <!-- ========== meal tips start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Meal Tips</h6>
+                </div>
+
+                <div class="row">
+                  <% data.tips.forEach(function(tip) { %>
+                    <div class="col-md-4">
+                      <p class="text-sm mb-15"><%= tip %></p>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== meal tips end ========== -->
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

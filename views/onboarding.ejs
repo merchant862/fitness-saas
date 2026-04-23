@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Onboarding</title>
+  </head>
+  <body>
+    <% const data = onboardingData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper" style="margin-left: 0;">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Welcome to FitAccess',
+        pageSubtitle: 'Let us set up your personalized fitness plan.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <div class="row justify-content-center pt-30">
+            <div class="col-xl-8 col-lg-10">
+              <div class="card-style mb-30">
+                <div class="title text-center mb-30">
+                  <h2>Personalize Your Plan</h2>
+                  <p class="text-sm">
+                    Complete a few quick steps to unlock your custom workouts and meal plan.
+                  </p>
+                </div>
+
+                <!-- Step indicator -->
+                <div class="mb-30">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="status-btn primary-btn" id="step-indicator">Step 1 of 5</span>
+                    <div class="progress" style="height: 8px; width: 220px;">
+                      <div
+                        id="onboarding-progress"
+                        class="progress-bar"
+                        role="progressbar"
+                        style="width: 20%;"
+                        aria-valuenow="20"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <form id="onboarding-form" action="/onboarding" method="POST">
+                  <!-- Step 1 -->
+                  <div class="onboarding-step" data-step="1">
+                    <h4 class="mb-25">Choose Your Goal</h4>
+
+                    <div class="row">
+                      <% data.goals.forEach(function(goal) { %>
+                        <div class="col-md-4">
+                          <label class="card-style mb-20 d-block" style="cursor: pointer;">
+                            <input
+                              type="radio"
+                              name="goal"
+                              value="<%= goal.value %>"
+                              <%= data.defaultValues.goal === goal.value ? 'checked' : '' %>
+                              style="margin-right: 10px;"
+                            />
+                            <strong><%= goal.label %></strong>
+                            <p class="text-sm mt-10 mb-0"><%= goal.description %></p>
+                          </label>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+
+                  <!-- Step 2 -->
+                  <div class="onboarding-step d-none" data-step="2">
+                    <h4 class="mb-25">Select Your Level</h4>
+
+                    <div class="row">
+                      <% data.levels.forEach(function(level) { %>
+                        <div class="col-md-4">
+                          <label class="card-style mb-20 d-block" style="cursor: pointer;">
+                            <input
+                              type="radio"
+                              name="level"
+                              value="<%= level.value %>"
+                              <%= data.defaultValues.level === level.value ? 'checked' : '' %>
+                              style="margin-right: 10px;"
+                            />
+                            <strong><%= level.label %></strong>
+                          </label>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+
+                  <!-- Step 3 -->
+                  <div class="onboarding-step d-none" data-step="3">
+                    <h4 class="mb-25">Where Will You Train?</h4>
+
+                    <div class="row">
+                      <% data.environments.forEach(function(environment) { %>
+                        <div class="col-md-6">
+                          <label class="card-style mb-20 d-block" style="cursor: pointer;">
+                            <input
+                              type="radio"
+                              name="environment"
+                              value="<%= environment.value %>"
+                              <%= data.defaultValues.environment === environment.value ? 'checked' : '' %>
+                              style="margin-right: 10px;"
+                            />
+                            <strong><%= environment.label %></strong>
+                          </label>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+
+                  <!-- Step 4 -->
+                  <div class="onboarding-step d-none" data-step="4">
+                    <h4 class="mb-25">Basic Fitness Details</h4>
+
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="input-style-1">
+                          <label>Current Weight (kg)</label>
+                          <input
+                            type="number"
+                            name="currentWeight"
+                            value="<%= data.defaultValues.currentWeight %>"
+                            placeholder="Enter current weight"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="col-md-4">
+                        <div class="input-style-1">
+                          <label>Target Weight (kg)</label>
+                          <input
+                            type="number"
+                            name="targetWeight"
+                            value="<%= data.defaultValues.targetWeight %>"
+                            placeholder="Enter target weight"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="col-md-4">
+                        <div class="input-style-1">
+                          <label>Workout Days / Week</label>
+                          <input
+                            type="number"
+                            name="workoutDays"
+                            value="<%= data.defaultValues.workoutDays %>"
+                            placeholder="How many days?"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Step 5 -->
+                  <div class="onboarding-step d-none" data-step="5">
+                    <h4 class="mb-25">You Are Ready</h4>
+
+                    <div class="card-style mb-20" style="background: #f8f8f8;">
+                      <p class="text-sm mb-10"><strong>Goal:</strong> Personalized fitness goal selected</p>
+                      <p class="text-sm mb-10"><strong>Level:</strong> Your training level selected</p>
+                      <p class="text-sm mb-10"><strong>Environment:</strong> Workout environment selected</p>
+                      <p class="text-sm mb-0"><strong>Profile:</strong> Basic stats added</p>
+                    </div>
+
+                    <p class="text-sm">
+                      Your dashboard, workouts, and meals will now be tailored to your profile.
+                    </p>
+                  </div>
+
+                  <!-- buttons -->
+                  <div class="d-flex justify-content-between align-items-center mt-30">
+                    <button
+                      type="button"
+                      id="prev-step"
+                      class="main-btn light-btn btn-hover"
+                    >
+                      Previous
+                    </button>
+
+                    <button
+                      type="button"
+                      id="next-step"
+                      class="main-btn primary-btn btn-hover"
+                    >
+                      Next
+                    </button>
+
+                    <button
+                      type="submit"
+                      id="finish-step"
+                      class="main-btn success-btn btn-hover d-none"
+                    >
+                      Continue to Dashboard
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+
+    <script>
+      (function ()
+      {
+        const steps = document.querySelectorAll('.onboarding-step');
+        const prevButton = document.getElementById('prev-step');
+        const nextButton = document.getElementById('next-step');
+        const finishButton = document.getElementById('finish-step');
+        const stepIndicator = document.getElementById('step-indicator');
+        const progressBar = document.getElementById('onboarding-progress');
+        const form = document.getElementById('onboarding-form');
+
+        let currentStep = 1;
+        const totalSteps = steps.length;
+
+        function renderStep()
+        {
+          steps.forEach((step) =>
+          {
+            const stepNumber = Number(step.getAttribute('data-step'));
+
+            if (stepNumber === currentStep)
+            {
+              step.classList.remove('d-none');
+            }
+            else
+            {
+              step.classList.add('d-none');
+            }
+          });
+
+          stepIndicator.textContent = `Step ${currentStep} of ${totalSteps}`;
+
+          const progressWidth = (currentStep / totalSteps) * 100;
+          progressBar.style.width = `${progressWidth}%`;
+          progressBar.setAttribute('aria-valuenow', progressWidth);
+
+          if (currentStep === 1)
+          {
+            prevButton.classList.add('d-none');
+          }
+          else
+          {
+            prevButton.classList.remove('d-none');
+          }
+
+          if (currentStep === totalSteps)
+          {
+            nextButton.classList.add('d-none');
+            finishButton.classList.remove('d-none');
+          }
+          else
+          {
+            nextButton.classList.remove('d-none');
+            finishButton.classList.add('d-none');
+          }
+        }
+
+        nextButton.addEventListener('click', function ()
+        {
+          if (currentStep < totalSteps)
+          {
+            currentStep++;
+            renderStep();
+          }
+        });
+
+        prevButton.addEventListener('click', function ()
+        {
+          if (currentStep > 1)
+          {
+            currentStep--;
+            renderStep();
+          }
+        });
+
+        form.addEventListener('submit', function (event)
+        {
+          event.preventDefault();
+          window.location.href = '/dashboard';
+        });
+
+        renderStep();
+      })();
+    </script>
+  </body>
+</html>

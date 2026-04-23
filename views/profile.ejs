@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Profile</title>
+  </head>
+  <body>
+    <% const data = profileData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== sidebar-nav start =========== -->
+    <%- include('partials/sidebar.ejs', { activePage: 'profile' }) %>
+    <!-- ======== sidebar-nav end =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Profile',
+        pageSubtitle: 'Manage your fitness profile and account settings.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <!-- ========== title-wrapper start ========== -->
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>My Profile</h2>
+                  <p class="text-sm text-medium">
+                    Keep your profile updated so your plan stays personalized.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="/dashboard">Home</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+                        Profile
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== title-wrapper end ========== -->
+
+          <!-- ========== top cards start ========== -->
+          <div class="row">
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary">
+                  <i class="lni lni-user"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Goal</h6>
+                  <h3 class="text-bold mb-10"><%= data.currentUser.goal %></h3>
+                  <p class="text-sm text-gray">Your selected fitness goal</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success">
+                  <i class="lni lni-target"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Current Setup</h6>
+                  <h3 class="text-bold mb-10"><%= data.currentUser.level %></h3>
+                  <p class="text-sm text-gray"><%= data.currentUser.environment %> workouts</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange">
+                  <i class="lni lni-lock-alt"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Access Status</h6>
+                  <h3 class="text-bold mb-10"><%= data.profile.accessStatus %></h3>
+                  <p class="text-sm text-gray"><%= data.profile.membership %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== top cards end ========== -->
+
+          <!-- ========== profile form + summary start ========== -->
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Profile Details</h6>
+                </div>
+
+                <form action="#" method="POST">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="input-style-1">
+                        <label>Full Name</label>
+                        <input type="text" value="<%= data.currentUser.name %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="input-style-1">
+                        <label>Email</label>
+                        <input type="email" value="<%= data.currentUser.email %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Age</label>
+                        <input type="number" value="<%= data.profile.age %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Gender</label>
+                        <input type="text" value="<%= data.profile.gender %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Height</label>
+                        <input type="text" value="<%= data.profile.height %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Current Weight (kg)</label>
+                        <input type="number" value="<%= data.profile.currentWeight %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Target Weight (kg)</label>
+                        <input type="number" value="<%= data.profile.targetWeight %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Workout Days / Week</label>
+                        <input type="number" value="<%= data.profile.workoutDays %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Goal</label>
+                        <input type="text" value="<%= data.currentUser.goal %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Level</label>
+                        <input type="text" value="<%= data.currentUser.level %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>Environment</label>
+                        <input type="text" value="<%= data.currentUser.environment %>" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="main-btn primary-btn btn-hover">
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Profile Summary</h6>
+                </div>
+
+                <p class="text-sm mb-10"><strong>Name:</strong> <%= data.currentUser.name %></p>
+                <p class="text-sm mb-10"><strong>Email:</strong> <%= data.currentUser.email %></p>
+                <p class="text-sm mb-10"><strong>Membership:</strong> <%= data.profile.membership %></p>
+                <p class="text-sm mb-10"><strong>Joined:</strong> <%= data.profile.joinedAt %></p>
+                <p class="text-sm mb-10"><strong>Goal:</strong> <%= data.currentUser.goal %></p>
+                <p class="text-sm mb-10"><strong>Level:</strong> <%= data.currentUser.level %></p>
+                <p class="text-sm mb-0"><strong>Environment:</strong> <%= data.currentUser.environment %></p>
+              </div>
+
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Activity Snapshot</h6>
+                </div>
+
+                <p class="text-sm mb-10"><strong>Streak:</strong> <%= data.stats.streakDays %> days</p>
+                <p class="text-sm mb-10"><strong>Workouts Completed:</strong> <%= data.stats.workoutsCompleted %></p>
+                <p class="text-sm mb-0"><strong>Meals Followed:</strong> <%= data.stats.mealsFollowed %></p>
+              </div>
+
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Profile Note</h6>
+                </div>
+
+                <p class="text-sm mb-0"><%= data.note %></p>
+              </div>
+            </div>
+          </div>
+          <!-- ========== profile form + summary end ========== -->
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | AI Coach</title>
+  </head>
+  <body>
+    <% const data = aiCoachData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== sidebar-nav start =========== -->
+    <%- include('partials/sidebar.ejs', { activePage: 'ai-coach' }) %>
+    <!-- ======== sidebar-nav end =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'AI Coach',
+        pageSubtitle: 'Ask questions about workouts, meals, and consistency.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <!-- ========== title-wrapper start ========== -->
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>AI Fitness Coach</h2>
+                  <p class="text-sm text-medium">
+                    Get simple guidance based on your goal:
+                    <strong><%= data.currentUser.goal %></strong>.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="/dashboard">Home</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+                        AI Coach
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== title-wrapper end ========== -->
+
+          <!-- ========== summary cards start ========== -->
+          <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary">
+                  <i class="lni lni-comments-alt"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Total Chats</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.totalChats %></h3>
+                  <p class="text-sm text-gray">All-time conversations</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success">
+                  <i class="lni lni-question-circle"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Today's Questions</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.todayQuestions %></h3>
+                  <p class="text-sm text-success">Questions asked today</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange">
+                  <i class="lni lni-dinner"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Favorite Topic</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.favoriteTopic %></h3>
+                  <p class="text-sm text-gray">Most common focus</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple">
+                  <i class="lni lni-cog"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Coach Mode</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.coachMode %></h3>
+                  <p class="text-sm text-gray">Current guidance style</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== summary cards end ========== -->
+
+          <!-- ========== chat + topics start ========== -->
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="card-style mb-30">
+                <div class="title d-flex justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Coach Chat</h6>
+                    <h3 class="text-bold">Ask Your Fitness Questions</h3>
+                  </div>
+                </div>
+
+                <div
+                  class="mb-20"
+                  style="max-height: 420px; overflow-y: auto; padding-right: 8px;"
+                >
+                  <% data.messages.forEach(function(message) { %>
+                    <% if (message.type === 'assistant') { %>
+                      <div class="card-style mb-15" style="background: #f8f8f8;">
+                        <p class="text-sm mb-0">
+                          <strong>AI Coach:</strong> <%= message.text %>
+                        </p>
+                      </div>
+                    <% } else { %>
+                      <div class="card-style mb-15" style="background: #eef6ff;">
+                        <p class="text-sm mb-0">
+                          <strong>You:</strong> <%= message.text %>
+                        </p>
+                      </div>
+                    <% } %>
+                  <% }) %>
+                </div>
+
+                <form action="#" method="POST">
+                  <div class="input-style-1">
+                    <label>Ask a Question</label>
+                    <textarea
+                      rows="4"
+                      placeholder="Example: What should I eat after a workout?"
+                    ></textarea>
+                  </div>
+
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="main-btn primary-btn btn-hover">
+                      Send Message
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Quick Topics</h6>
+                </div>
+
+                <% data.quickTopics.forEach(function(topic) { %>
+                  <div class="mb-20">
+                    <h6 class="mb-10"><%= topic.title %></h6>
+                    <p class="text-sm mb-0"><%= topic.description %></p>
+                  </div>
+                <% }) %>
+              </div>
+
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Coach Note</h6>
+                </div>
+
+                <p class="text-sm mb-0"><%= data.note %></p>
+              </div>
+            </div>
+          </div>
+          <!-- ========== chat + topics end ========== -->
+
+          <!-- ========== suggested prompts start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Suggested Prompts</h6>
+                </div>
+
+                <div class="row">
+                  <% data.suggestedPrompts.forEach(function(prompt) { %>
+                    <div class="col-md-6 col-lg-3">
+                      <div class="card-style mb-20" style="background: #f8f8f8;">
+                        <p class="text-sm mb-15"><%= prompt %></p>
+                        <button type="button" class="main-btn light-btn btn-hover btn-sm">
+                          Use Prompt
+                        </button>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== suggested prompts end ========== -->
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

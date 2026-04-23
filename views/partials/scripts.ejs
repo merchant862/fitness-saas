@@ -7,3 +7,59 @@
 <script src="js/world-merc.js"></script>
 <script src="js/polyfill.js"></script>
 <script src="js/main.js"></script>
+
+<script>
+  (function () {
+    const THEME_KEY = 'fitaccess-theme';
+    const body = document.body;
+    const toggleButton = document.getElementById('theme-toggle');
+    const toggleIcon = document.getElementById('theme-toggle-icon');
+    const toggleText = document.getElementById('theme-toggle-text');
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        body.classList.add('dark-theme');
+
+        if (toggleIcon) {
+          toggleIcon.className = 'lni lni-sun me-2';
+        }
+
+        if (toggleText) {
+          toggleText.textContent = 'Light';
+        }
+      } else {
+        body.classList.remove('dark-theme');
+
+        if (toggleIcon) {
+          toggleIcon.className = 'lni lni-night me-2';
+        }
+
+        if (toggleText) {
+          toggleText.textContent = 'Dark';
+        }
+      }
+    }
+
+    function getInitialTheme() {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        return savedTheme;
+      }
+
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
+    }
+
+    let currentTheme = getInitialTheme();
+    applyTheme(currentTheme);
+
+    if (toggleButton) {
+      toggleButton.addEventListener('click', function () {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(THEME_KEY, currentTheme);
+        applyTheme(currentTheme);
+      });
+    }
+  })();
+</script>

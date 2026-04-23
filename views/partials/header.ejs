@@ -1,0 +1,117 @@
+<header class="header">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-6 col-md-6 col-6">
+        <div class="header-left d-flex align-items-center">
+          <div class="menu-toggle-btn mr-15">
+            <button id="menu-toggle" class="main-btn primary-btn btn-hover">
+              <i class="lni lni-chevron-left me-2"></i> Menu
+            </button>
+          </div>
+
+          <div class="d-none d-md-block">
+            <h6 class="mb-0"><%= pageTitle || 'Dashboard' %></h6>
+            <p class="text-sm mb-0">
+              <%= pageSubtitle || 'Stay consistent and keep moving forward.' %>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 col-md-6 col-6">
+        <div class="header-right d-flex align-items-center justify-content-end">
+
+          <!-- theme toggle start -->
+          <!-- <div class="me-3">
+            <button
+              id="theme-toggle"
+              type="button"
+              class="main-btn light-btn btn-hover btn-sm d-flex align-items-center"
+              aria-label="Toggle theme"
+              title="Toggle dark/light mode"
+            >
+              <i id="theme-toggle-icon" class="lni lni-night me-2"></i>
+              <span id="theme-toggle-text">Dark</span>
+            </button>
+          </div> -->
+          <!-- theme toggle end -->
+
+          <div class="profile-box ml-15">
+            <button
+              class="dropdown-toggle bg-transparent border-0"
+              type="button"
+              id="profile"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <div class="profile-info">
+                <div class="info">
+                  <div class="image">
+                    <img src="/images/profile/profile-image.png" alt="profile" />
+                  </div>
+                  <div>
+                    <h6 class="fw-500"><%= currentUser?.name || 'Guest User' %></h6>
+                    <p><%= currentUser?.goal || 'Fitness Plan' %></p>
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profile">
+              <li>
+                <div class="author-info flex items-center !p-1">
+                  <div class="image">
+                    <img src="/images/profile/profile-image.png" alt="image" />
+                  </div>
+                  <div class="content">
+                    <h4 class="text-sm"><%= currentUser?.name || 'Guest User' %></h4>
+                    <a
+                      class="text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white text-xs"
+                      href="/profile"
+                    >
+                      View profile
+                    </a>
+                  </div>
+                </div>
+              </li>
+
+              <li class="divider"></li>
+
+              <li>
+                <a href="/profile">
+                  <i class="lni lni-user"></i> Profile
+                </a>
+              </li>
+
+              <li>
+                <a href="/progress">
+                  <i class="lni lni-bar-chart"></i> Progress
+                </a>
+              </li>
+
+              <li>
+                <a href="/workouts">
+                  <i class="lni lni-grid-alt"></i> Workouts
+                </a>
+              </li>
+
+              <li class="divider"></li>
+
+              <li>
+                <a href="/change-password">
+                 <i class="lni lni-lock-alt"></i> Change Password
+                </a>
+              </li>
+
+              <li>
+                <a href="/login">
+                  <i class="lni lni-exit"></i> Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Progress</title>
+  </head>
+  <body>
+    <% const data = progressData; %>
+
+    <!-- ======== Preloader =========== -->
+    <%- include('partials/spinner.ejs') %>
+    <!-- ======== Preloader =========== -->
+
+    <!-- ======== sidebar-nav start =========== -->
+    <%- include('partials/sidebar.ejs', { activePage: 'progress' }) %>
+    <!-- ======== sidebar-nav end =========== -->
+
+    <!-- ======== main-wrapper start =========== -->
+    <main class="main-wrapper">
+      <!-- ========== header start ========== -->
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Progress',
+        pageSubtitle: 'Track your consistency, weight, and milestones.',
+        currentUser: data.currentUser
+      }) %>
+      <!-- ========== header end ========== -->
+
+      <!-- ========== section start ========== -->
+      <section class="section">
+        <div class="container-fluid">
+          <!-- ========== title-wrapper start ========== -->
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Progress Tracking</h2>
+                  <p class="text-sm text-medium">
+                    Keep an eye on your results and stay consistent with your
+                    <strong><%= data.currentUser.goal %></strong> goal.
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item">
+                        <a href="/dashboard">Home</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+                        Progress
+                      </li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== title-wrapper end ========== -->
+
+          <!-- ========== summary cards start ========== -->
+          <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary">
+                  <i class="lni lni-bar-chart"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Current Weight</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.currentWeight %> kg</h3>
+                  <p class="text-sm text-gray">Target: <%= data.summary.targetWeight %> kg</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success">
+                  <i class="lni lni-arrow-down"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Total Change</h6>
+                  <h3 class="text-bold mb-10"><%= data.weeklyProgress.totalChange %></h3>
+                  <p class="text-sm text-success">Since you started</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple">
+                  <i class="lni lni-flame"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Current Streak</h6>
+                  <h3 class="text-bold mb-10"><%= data.summary.streakDays %> Days</h3>
+                  <p class="text-sm text-success">Keep it alive</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange">
+                  <i class="lni lni-checkmark-circle"></i>
+                </div>
+                <div class="content">
+                  <h6 class="mb-10">Completion Rate</h6>
+                  <h3 class="text-bold mb-10"><%= data.weeklyProgress.completionRate %></h3>
+                  <p class="text-sm text-gray">Weekly consistency</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== summary cards end ========== -->
+
+          <!-- ========== progress overview start ========== -->
+          <div class="row">
+            <div class="col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Progress Overview</h6>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-15">
+                    <p class="text-sm mb-10"><strong>Starting Weight:</strong> <%= data.summary.startingWeight %> kg</p>
+                    <p class="text-sm mb-10"><strong>Current Weight:</strong> <%= data.summary.currentWeight %> kg</p>
+                    <p class="text-sm mb-10"><strong>Target Weight:</strong> <%= data.summary.targetWeight %> kg</p>
+                  </div>
+
+                  <div class="col-md-6 mb-15">
+                    <p class="text-sm mb-10"><strong>This Week:</strong> <%= data.weeklyProgress.thisWeekChange %></p>
+                    <p class="text-sm mb-10"><strong>Total Change:</strong> <%= data.weeklyProgress.totalChange %></p>
+                    <p class="text-sm mb-10"><strong>Consistency Score:</strong> <%= data.weeklyProgress.consistencyScore %></p>
+                  </div>
+                </div>
+
+                <div class="mt-20">
+                  <div class="progress" style="height: 10px;">
+                    <div
+                      class="progress-bar"
+                      role="progressbar"
+                      style="width: 55%;"
+                      aria-valuenow="55"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                    ></div>
+                  </div>
+                  <p class="text-sm mt-10 mb-0">You are making steady progress toward your target.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Activity Summary</h6>
+                </div>
+
+                <p class="text-sm mb-10"><strong>Workouts Completed:</strong> <%= data.summary.workoutsCompleted %></p>
+                <p class="text-sm mb-10"><strong>Meals Followed:</strong> <%= data.summary.mealsFollowed %></p>
+                <p class="text-sm mb-10"><strong>Current Streak:</strong> <%= data.summary.streakDays %> days</p>
+                <p class="text-sm mb-10"><strong>Goal:</strong> <%= data.currentUser.goal %></p>
+                <p class="text-sm mb-0"><strong>Workout Setup:</strong> <%= data.currentUser.level %> / <%= data.currentUser.environment %></p>
+              </div>
+            </div>
+          </div>
+          <!-- ========== progress overview end ========== -->
+
+          <!-- ========== milestones start ========== -->
+          <div class="row">
+            <% data.milestones.forEach(function(milestone) { %>
+              <div class="col-lg-4 col-md-6">
+                <div class="card-style mb-30">
+                  <div class="title d-flex justify-content-between align-items-center">
+                    <div class="left">
+                      <h6 class="text-medium mb-10"><%= milestone.title %></h6>
+                    </div>
+                    <div class="right">
+                      <% if (milestone.status === 'Completed') { %>
+                        <span class="status-btn success-btn"><%= milestone.status %></span>
+                      <% } else { %>
+                        <span class="status-btn warning-btn"><%= milestone.status %></span>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <p class="text-sm mb-0"><%= milestone.description %></p>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          <!-- ========== milestones end ========== -->
+
+          <!-- ========== recent logs start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Recent Logs</h6>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6 class="text-sm text-medium">Date</h6></th>
+                        <th><h6 class="text-sm text-medium">Weight</h6></th>
+                        <th><h6 class="text-sm text-medium">Workout</h6></th>
+                        <th><h6 class="text-sm text-medium">Meals</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% data.recentLogs.forEach(function(log) { %>
+                        <tr>
+                          <td><p class="text-sm"><%= log.date %></p></td>
+                          <td><p class="text-sm"><%= log.weight %></p></td>
+                          <td><p class="text-sm"><%= log.workout %></p></td>
+                          <td><p class="text-sm"><%= log.meals %></p></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== recent logs end ========== -->
+
+          <!-- ========== coach note start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Coach Note</h6>
+                </div>
+
+                <p class="text-sm mb-0"><%= data.note %></p>
+              </div>
+            </div>
+          </div>
+          <!-- ========== coach note end ========== -->
+        </div>
+      </section>
+      <!-- ========== section end ========== -->
+    </main>
+    <!-- ======== main-wrapper end =========== -->
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

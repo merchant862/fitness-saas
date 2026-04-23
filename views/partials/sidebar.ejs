@@ -1,0 +1,91 @@
+<!-- ======== sidebar-nav start =========== -->
+<aside class="sidebar-nav-wrapper">
+  <div class="navbar-logo">
+    <a href="/dashboard">
+      <img src="/images/logo/logo.svg" alt="logo" />
+    </a>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul>
+      <li class="nav-item">
+        <a href="/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-dashboard"></i>
+          </span>
+          <span class="text">Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/workouts" class="<%= activePage === 'workouts' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-dumbbell"></i>
+          </span>
+          <span class="text">Workouts</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/meals" class="<%= activePage === 'meals' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-dinner"></i>
+          </span>
+          <span class="text">Meals</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/ai-coach" class="<%= activePage === 'ai-coach' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-user"></i>
+          </span>
+          <span class="text">AI Coach</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/progress" class="<%= activePage === 'progress' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-bar-chart"></i>
+          </span>
+          <span class="text">Progress</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/profile" class="<%= activePage === 'profile' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-user"></i>
+          </span>
+          <span class="text">Profile</span>
+        </a>
+      </li>
+
+      <span class="divider"><hr /></span>
+
+      <li class="nav-item">
+        <a href="/login">
+          <span class="icon">
+            <i class="lni lni-exit"></i>
+          </span>
+          <span class="text">Logout</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- <div class="promo-box">
+    <div class="promo-icon">
+      <i class="lni lni-heart-filled" style="font-size: 42px; color: #fff;"></i>
+    </div>
+    <h3>Stay Consistent</h3>
+    <p>Your small daily wins build long-term fitness results.</p>
+    <a href="/workouts" class="main-btn primary-btn btn-hover">
+      Start Workout
+    </a>
+  </div> -->
+</aside>
+
+<div class="overlay"></div>
+<!-- ======== sidebar-nav end =========== -->
