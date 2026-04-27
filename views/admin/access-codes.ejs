@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Access Codes</title>
+  </head>
+  <body>
+    <% const data = adminData; %>
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-access-codes' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Access Codes',
+        pageSubtitle: 'Generate, extend, and revoke access.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Access Codes</h2>
+                  <p class="text-sm text-medium">Single-use codes tied to purchase email.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Access Codes</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% if (data.message) { %>
+            <div class="alert-box success-alert mb-25">
+              <p class="text-sm mb-0"><%= data.message %></p>
+            </div>
+          <% } %>
+
+          <div class="row">
+            <div class="col-lg-4">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Generate Code</h6>
+                </div>
+                <form action="/admin/access-codes" method="POST">
+                  <div class="input-style-1">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="customer@example.com" required />
+                  </div>
+                  <div class="input-style-1">
+                    <label>Access Days</label>
+                    <input type="number" name="days" min="1" max="365" value="30" required />
+                  </div>
+                  <div class="form-check checkbox-style mb-20">
+                    <input class="form-check-input" type="checkbox" name="sendEmail" id="send-email" checked />
+                    <label class="form-check-label" for="send-email">Send via Resend</label>
+                  </div>
+                  <button type="submit" class="main-btn primary-btn btn-hover w-100">Generate</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Recent Codes</h6>
+                </div>
+                <div class="table-wrapper table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6>Email</h6></th>
+                        <th><h6>Status</h6></th>
+                        <th><h6>Expires</h6></th>
+                        <th><h6>Redeemed</h6></th>
+                        <th><h6>Actions</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (!data.accessCodes.length) { %>
+                        <tr><td colspan="5"><p class="text-sm mb-0">No access codes found.</p></td></tr>
+                      <% } %>
+                      <% data.accessCodes.forEach(function(code) { %>
+                        <tr>
+                          <td><p class="text-sm mb-0"><%= code.email %></p></td>
+                          <td><span class="status-btn <%= code.status === 'redeemed' ? 'success-btn' : (code.status === 'unused' ? 'primary-btn' : 'close-btn') %>"><%= code.status %></span></td>
+                          <td><p class="text-sm mb-0"><%= code.expiresAt.toLocaleDateString() %></p></td>
+                          <td><p class="text-sm mb-0"><%= code.redeemedAt ? code.redeemedAt.toLocaleDateString() : '-' %></p></td>
+                          <td>
+                            <div class="d-flex flex-wrap gap-2">
+                              <form action="/admin/access-codes/<%= code.id %>/extend" method="POST" class="d-flex gap-1">
+                                <input type="hidden" name="days" value="30" />
+                                <button type="submit" class="main-btn light-btn btn-hover btn-sm">+30d</button>
+                              </form>
+                              <% if (code.status !== 'revoked') { %>
+                                <form action="/admin/access-codes/<%= code.id %>/revoke" method="POST">
+                                  <button type="submit" class="main-btn danger-btn btn-hover btn-sm">Revoke</button>
+                                </form>
+                              <% } %>
+                            </div>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>

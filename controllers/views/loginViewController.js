@@ -1,6 +1,13 @@
 async function loginViewController(req, res, next) 
 {
-    try{ return res.status(200).render(`../views/login.ejs`) }
+    try
+    {
+        const message = req.query.passwordReset
+            ? 'Password reset successfully. You can request a secure login link now.'
+            : (req.query.sent ? 'If your access is active, a secure login link has been sent.' : null);
+
+        return res.status(200).render(`../views/login.ejs`, { message });
+    }
     catch(error){ next(error) }
 }
 

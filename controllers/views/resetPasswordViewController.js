@@ -4,9 +4,10 @@ async function resetPasswordViewController(req, res, next)
     {
         const resetPasswordData = {
             defaultValues: {
-                email: 'saif@example.com',
-                resetCode: 'RESET-2026'
-            }
+                email: req.query.email || '',
+                resetCode: req.query.token || ''
+            },
+            message: req.query.sent ? 'Check your inbox for the reset link.' : null
         };
 
         return res.status(200).render('../views/reset-password.ejs', { resetPasswordData });

@@ -45,19 +45,17 @@
                     Start creating the best possible user experience for you
                     customers.
                   </p>
-                  <form action="#">
+                  <% if (message) { %>
+                    <div class="alert-box success-alert mb-20">
+                      <p class="text-sm"><%= message %></p>
+                    </div>
+                  <% } %>
+                  <form action="/login" method="POST">
                     <div class="row">
                       <div class="col-12">
                         <div class="input-style-1">
                           <label>Email</label>
-                          <input type="email" placeholder="Email" />
-                        </div>
-                      </div>
-                      <!-- end col -->
-                      <div class="col-12">
-                        <div class="input-style-1">
-                          <label>Password</label>
-                          <input type="password" placeholder="Password" />
+                          <input type="email" name="email" placeholder="Email" required />
                         </div>
                       </div>
                       <!-- end col -->
@@ -65,14 +63,14 @@
                         <div class="form-check checkbox-style mb-30">
                           <input class="form-check-input" type="checkbox" value="" id="checkbox-remember" />
                           <label class="form-check-label" for="checkbox-remember">
-                            Remember me next time</label>
+                            Keep me signed in</label>
                         </div>
                       </div>
                       <!-- end col -->
                       <div class="col-xxl-6 col-lg-12 col-md-6">
                         <div class="text-start text-md-end text-lg-start text-xxl-end mb-30">
-                          <a href="/forgot-password" class="hover-underline">
-                            Forgot Password?
+                          <a href="/redeem-access" class="hover-underline">
+                            Redeem access code
                           </a>
                         </div>
                       </div>
@@ -80,7 +78,7 @@
                       <div class="col-12">
                         <div class="button-group d-flex justify-content-center flex-wrap">
                           <button class="main-btn primary-btn btn-hover w-100 text-center">
-                            Sign In
+                            Send Magic Link
                           </button>
                         </div>
                       </div>

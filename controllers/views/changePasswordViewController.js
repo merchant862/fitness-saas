@@ -4,12 +4,16 @@ async function changePasswordViewController(req, res, next)
     {
         const changePasswordData = {
             currentUser: {
-                name: 'Saboor',
-                email: 'saboor@example.com',
-                goal: 'Weight Loss'
+                name: req.user?.name || req.user?.email || 'Member',
+                email: req.user?.email,
+                goal: req.user?.role === 'admin' ? 'Admin Panel' : (req.user?.profile?.goal || 'Fitness Plan'),
+                role: req.user?.role
             },
 
-            note: 'Use a strong password that you have not used before.'
+            note: req.user?.passwordHash
+                ? 'Use a strong password that you have not used before.'
+                : 'No password is set yet. Leave current password empty and create a new one.',
+            message: req.query.updated ? 'Password updated successfully.' : null
         };
 
         return res.status(200).render('../views/change-password.ejs', { changePasswordData });

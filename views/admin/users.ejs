@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Admin Users</title>
+  </head>
+  <body>
+    <% const data = adminData; %>
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-users' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Users',
+        pageSubtitle: 'Review access, onboarding, and tags.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Users</h2>
+                  <p class="text-sm text-medium"><%= data.users.length %> recent users shown.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Users</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-style mb-30">
+            <div class="table-wrapper table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th><h6>Email</h6></th>
+                    <th><h6>Status</h6></th>
+                    <th><h6>Goal</h6></th>
+                    <th><h6>Access Expires</h6></th>
+                    <th><h6>Tags</h6></th>
+                    <th><h6>Joined</h6></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (!data.users.length) { %>
+                    <tr><td colspan="6"><p class="text-sm mb-0">No users found.</p></td></tr>
+                  <% } %>
+                  <% data.users.forEach(function(user) { %>
+                    <tr>
+                      <td><p class="text-sm mb-0"><%= user.email %></p></td>
+                      <td><span class="status-btn <%= user.status === 'active' ? 'success-btn' : 'warning-btn' %>"><%= user.status %></span></td>
+                      <td><p class="text-sm mb-0"><%= user.profile?.goal || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= user.accessExpiresAt ? user.accessExpiresAt.toLocaleDateString() : '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= (user.tags || []).join(', ') || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= user.createdAt.toLocaleDateString() %></p></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>

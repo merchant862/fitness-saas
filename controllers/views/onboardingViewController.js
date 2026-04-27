@@ -4,13 +4,13 @@ async function onboardingViewController(req, res, next)
     {
         const onboardingData = {
             currentUser: {
-                name: 'Saboor'
+                name: req.user?.name || req.user?.email || 'Member'
             },
 
             goals: [
-                { value: 'weight-loss', label: 'Weight Loss', description: 'Lose fat and stay lean.' },
-                { value: 'muscle-gain', label: 'Muscle Gain', description: 'Build muscle and strength.' },
-                { value: 'general-fitness', label: 'General Fitness', description: 'Improve health and consistency.' }
+                { value: 'weight_loss', label: 'Weight Loss', description: 'Lose fat and stay lean.' },
+                { value: 'muscle_gain', label: 'Muscle Gain', description: 'Build muscle and strength.' },
+                { value: 'general_fitness', label: 'General Fitness', description: 'Improve health and consistency.' }
             ],
 
             levels: [
@@ -25,7 +25,7 @@ async function onboardingViewController(req, res, next)
             ],
 
             defaultValues: {
-                goal: 'weight-loss',
+                goal: req.user?.profile?.goal || 'weight_loss',
                 level: 'beginner',
                 environment: 'home',
                 currentWeight: '78',

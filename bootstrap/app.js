@@ -6,10 +6,13 @@ const logger = require('morgan');
 const cors = require('cors');
 //const helmet = require('helmet');
 const compression = require('compression');
+const { attachUser } = require('../middleware/auth');
+const { apiLimiter, securityHeaders } = require('../middleware/security');
 
 const router = require('../routes/routes.js');
 
 const app = express();
+app.disable('x-powered-by');
 
 // View engine
 app.set('views', path.join(__dirname, '..', 'views'));
@@ -23,6 +26,7 @@ app.use(cookieParser());
 
 // Security
 //app.use(helmet());
+app.use(securityHeaders);
 
 // Custom headers
 const xPoweredByHeaders = function (req, res, next) 
@@ -51,21 +55,43 @@ app.use(compression({ level: 9 }));
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 app.use('/', express.static(path.join(__dirname, '..', 'public')/* , { maxAge: oneWeek } */));
 // CORS
-app.use(cors({ origin: true, credentials: true }));
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean);
+app.use(cors({
+    origin: function(origin, callback)
+    {
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin))
+        {
+            return callback(null, true);
+        }
+
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
+app.use('/api', apiLimiter);
+app.use(attachUser);
 
 // Routes
 app.use('/', router);
 
 // 404 handler
-app.use((req, res, next) => {
+app.use((req, res, next) =>
+{
     res.status(404).send('Resource not found!');
 });
 
 // 500 handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) =>
+{
     console.error(err);
+    if (req.path.startsWith('/api/'))
+    {
+        return res.status(err.status || 500).json({
+            error: process.env.NODE_ENV === 'development' ? err.message : (err.status ? err.message : 'Internal server error')
+        });
+    }
     let response = process.env.NODE_ENV === 'development' ? err.message : 'Internal server error!'
-    res.status(500).send(response);
+    res.status(err.status || 500).send(response);
 });
 
 module.exports = app;

@@ -1,0 +1,96 @@
+body.dark-theme {
+  background: #101318;
+  color: #d7dde8;
+}
+
+body.dark-theme .main-wrapper,
+body.dark-theme .section,
+body.dark-theme .container-fluid {
+  background: #101318;
+}
+
+body.dark-theme .header,
+body.dark-theme .sidebar-nav-wrapper,
+body.dark-theme .card-style,
+body.dark-theme .icon-card,
+body.dark-theme .dropdown-menu,
+body.dark-theme .alert-box {
+  background: #171c24 !important;
+  border-color: #2a3340 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6,
+body.dark-theme .text-medium,
+body.dark-theme .text-bold,
+body.dark-theme label,
+body.dark-theme .profile-box .profile-info .info h6,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a .text,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button .text {
+  color: #f4f7fb !important;
+}
+
+body.dark-theme p,
+body.dark-theme .text-sm,
+body.dark-theme .breadcrumb-item,
+body.dark-theme .profile-box .profile-info .info p,
+body.dark-theme .dropdown-menu li a,
+body.dark-theme .table,
+body.dark-theme td,
+body.dark-theme th {
+  color: #aab4c2 !important;
+}
+
+body.dark-theme a {
+  color: #8ea2ff;
+}
+
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button {
+  color: #aab4c2;
+}
+
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a.active,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a:hover,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button:hover {
+  background: rgba(54, 92, 245, 0.16);
+}
+
+body.dark-theme .input-style-1 input,
+body.dark-theme .input-style-1 textarea,
+body.dark-theme .input-style-1 select,
+body.dark-theme .form-control {
+  background: #101318;
+  border-color: #334155;
+  color: #f4f7fb;
+}
+
+body.dark-theme .input-style-1 input::placeholder,
+body.dark-theme .input-style-1 textarea::placeholder {
+  color: #6f7c8e;
+}
+
+body.dark-theme .table > :not(caption) > * > * {
+  background: transparent;
+  border-bottom-color: #2a3340;
+}
+
+body.dark-theme .dropdown-menu li.divider,
+body.dark-theme .divider hr {
+  border-color: #2a3340;
+}
+
+body.dark-theme .main-btn.light-btn {
+  background: #222a35;
+  color: #f4f7fb;
+  border-color: #334155;
+}
+
+body.dark-theme .status-btn {
+  color: #f4f7fb;
+}

@@ -22,7 +22,7 @@
         <div class="header-right d-flex align-items-center justify-content-end">
 
           <!-- theme toggle start -->
-          <!-- <div class="me-3">
+          <div class="me-3">
             <button
               id="theme-toggle"
               type="button"
@@ -33,7 +33,7 @@
               <i id="theme-toggle-icon" class="lni lni-night me-2"></i>
               <span id="theme-toggle-text">Dark</span>
             </button>
-          </div> -->
+          </div>
           <!-- theme toggle end -->
 
           <div class="profile-box ml-15">
@@ -51,7 +51,7 @@
                   </div>
                   <div>
                     <h6 class="fw-500"><%= currentUser?.name || 'Guest User' %></h6>
-                    <p><%= currentUser?.goal || 'Fitness Plan' %></p>
+                    <p><%= currentUser?.role === 'admin' ? 'Admin Panel' : (currentUser?.goal || 'Fitness Plan') %></p>
                   </div>
                 </div>
               </div>
@@ -104,9 +104,11 @@
               </li>
 
               <li>
-                <a href="/login">
+                <form action="/logout" method="POST" class="m-0">
+                  <button type="submit" class="dropdown-item border-0 bg-transparent">
                   <i class="lni lni-exit"></i> Logout
-                </a>
+                  </button>
+                </form>
               </li>
             </ul>
           </div>

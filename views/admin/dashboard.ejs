@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Admin</title>
+  </head>
+  <body>
+    <% const data = adminData; %>
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-dashboard' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Admin Dashboard',
+        pageSubtitle: 'Manage users, access codes, and app activity.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Admin Dashboard</h2>
+                  <p class="text-sm text-medium">Operational snapshot for FitAccess.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary"><i class="lni lni-users"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Total Users</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.totalUsers %></h3>
+                  <p class="text-sm text-success"><%= data.stats.activeUsers %> active</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success"><i class="lni lni-checkmark-circle"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Redeemed Codes</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.redeemedCodes %></h3>
+                  <p class="text-sm text-success">Access unlocked</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange"><i class="lni lni-key"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Unused Codes</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.unusedCodes %></h3>
+                  <p class="text-sm text-gray">Ready to redeem</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple"><i class="lni lni-dumbbell"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Workouts Done</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.workoutCompletions %></h3>
+                  <p class="text-sm text-success">All users</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-5">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Quick Actions</h6>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <a href="/admin/users" class="main-btn primary-btn btn-hover btn-sm">View Users</a>
+                  <a href="/admin/access-codes" class="main-btn success-btn btn-hover btn-sm">Manage Codes</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Recent Events</h6>
+                </div>
+                <div class="table-wrapper table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6>Event</h6></th>
+                        <th><h6>User ID</h6></th>
+                        <th><h6>Time</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (!data.recentEvents.length) { %>
+                        <tr><td colspan="3"><p class="text-sm mb-0">No activity yet.</p></td></tr>
+                      <% } %>
+                      <% data.recentEvents.forEach(function(event) { %>
+                        <tr>
+                          <td><p class="text-sm mb-0"><%= event.eventType %></p></td>
+                          <td><p class="text-sm mb-0"><%= event.userId || '-' %></p></td>
+                          <td><p class="text-sm mb-0"><%= event.createdAt.toLocaleString() %></p></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>
