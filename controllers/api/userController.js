@@ -46,7 +46,48 @@ async function updateProfile(req, res, next)
       update.name = String(req.body.name).trim().slice(0, 120);
     }
 
+    const profilePayload = normalizeOnboarding(req.body);
+
+    Object.keys(profilePayload).forEach((key) =>
+    {
+      if (profilePayload[key] !== null)
+      {
+        update[key] = profilePayload[key];
+      }
+    });
+
+    const preferences = {};
+
+    if (req.body.age)
+    {
+      preferences.age = parsePositiveInteger(req.body.age, 1, 120);
+    }
+
+    if (req.body.gender)
+    {
+      preferences.gender = String(req.body.gender).trim().slice(0, 40);
+    }
+
+    if (req.body.height)
+    {
+      preferences.height = String(req.body.height).trim().slice(0, 40);
+    }
+
+    if (Object.keys(preferences).length)
+    {
+      update.preferences = {
+        ...(req.user.profile?.preferences || {}),
+        ...preferences
+      };
+    }
+
     const user = await updateUserProfile(req.user, update);
+
+    if (!req.path.startsWith('/api/'))
+    {
+      return res.redirect('/profile?updated=1');
+    }
+
     return res.status(200).json({ user: compactUser(user) });
   }
   catch (error)

@@ -4,6 +4,7 @@ const { aiChatLimiter, authLimiter } = require('../middleware/security');
 const { requireAdmin, requireAuth, requireOnboarding } = require('../middleware/auth');
 
 const loginViewController = require('../controllers/views/loginViewController');
+const landingViewController = require('../controllers/views/landingViewController');
 const resetPasswordViewController = require('../controllers/views/resetPasswordViewController');
 const forgotPasswordViewController = require('../controllers/views/forgotPasswordController');
 
@@ -21,6 +22,7 @@ const adminDashboardViewController = require('../controllers/views/adminDashboar
 const adminUsersViewController = require('../controllers/views/adminUsersViewController');
 const adminUsersExportController = require('../controllers/views/adminUsersExportController');
 const adminContentViewController = require('../controllers/views/adminContentViewController');
+const adminContentActionsController = require('../controllers/views/adminContentActionsController');
 const adminAccessCodesViewController = require('../controllers/views/adminAccessCodesViewController');
 const adminAccessCodeActionsController = require('../controllers/views/adminAccessCodeActionsController');
 const authController = require('../controllers/api/authController');
@@ -31,10 +33,7 @@ const progressController = require('../controllers/api/progressController');
 const contentController = require('../controllers/api/contentController');
 const purchaseController = require('../controllers/api/purchaseController');
 
-router.get('/', function(req, res)
-{
-  return res.redirect(req.user ? '/dashboard' : '/sign-in');
-});
+router.get('/', landingViewController);
 router.get('/sign-in', loginViewController);
 router.post('/sign-in', authLimiter, authController.magicLinkRequest);
 router.get('/session/verify', authLimiter, authController.magicLinkVerify);
@@ -50,7 +49,7 @@ router.get('/reset-password', resetPasswordViewController);
 router.get('/forgot-password', forgotPasswordViewController);
 router.post('/forgot-password', authLimiter, passwordController.forgot);
 router.post('/reset-password', authLimiter, passwordController.reset);
-router.post('/logout', requireAuth, authController.logout);
+router.get('/logout', requireAuth, authController.logout);
 
 router.get('/dashboard', requireOnboarding, dashboardViewController);
 router.get('/workouts', requireOnboarding, workoutsViewController);
@@ -60,6 +59,7 @@ router.post('/onboarding', requireAuth, userController.onboarding);
 router.get('/ai-coach', requireOnboarding, aiCoachViewController);
 router.get('/progress', requireOnboarding, progressViewController);
 router.get('/profile', requireOnboarding, profileViewController);
+router.post('/profile', requireOnboarding, userController.updateProfile);
 router.get('/change-password', requireAuth, changePasswordViewController);
 router.post('/change-password', requireAuth, authLimiter, passwordController.update);
 
@@ -67,6 +67,10 @@ router.get('/admin', requireAdmin, adminDashboardViewController);
 router.get('/admin/users', requireAdmin, adminUsersViewController);
 router.get('/admin/users/export.csv', requireAdmin, adminUsersExportController);
 router.get('/admin/content', requireAdmin, adminContentViewController);
+router.get('/admin/content/workout-plans/:id', requireAdmin, adminContentActionsController.editWorkout);
+router.post('/admin/content/workout-plans/:id', requireAdmin, adminContentActionsController.updateWorkout);
+router.get('/admin/content/meal-plans/:id', requireAdmin, adminContentActionsController.editMeal);
+router.post('/admin/content/meal-plans/:id', requireAdmin, adminContentActionsController.updateMeal);
 router.get('/admin/access-codes', requireAdmin, adminAccessCodesViewController);
 router.post('/admin/access-codes', requireAdmin, adminAccessCodeActionsController.create);
 router.post('/admin/access-codes/:id/revoke', requireAdmin, adminAccessCodeActionsController.revoke);

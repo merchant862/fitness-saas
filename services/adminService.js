@@ -140,6 +140,65 @@ async function getAdminContentOverview()
   };
 }
 
+async function getAdminWorkoutPlan(id)
+{
+  return WorkoutPlan.findByPk(id, {
+    include: [{ model: WorkoutSession, as: 'sessions' }],
+    order: [[{ model: WorkoutSession, as: 'sessions' }, 'weekNumber', 'ASC'], [{ model: WorkoutSession, as: 'sessions' }, 'dayOfWeek', 'ASC']]
+  });
+}
+
+async function getAdminMealPlan(id)
+{
+  return MealPlan.findByPk(id, {
+    include: [{ model: MealDay, as: 'days' }],
+    order: [[{ model: MealDay, as: 'days' }, 'weekNumber', 'ASC'], [{ model: MealDay, as: 'days' }, 'dayOfWeek', 'ASC']]
+  });
+}
+
+async function updateAdminWorkoutPlan(id, payload)
+{
+  const plan = await WorkoutPlan.findByPk(id);
+
+  if (!plan)
+  {
+    return null;
+  }
+
+  await plan.update({
+    title: payload.title,
+    description: payload.description,
+    durationWeeks: payload.durationWeeks,
+    sessionsPerWeek: payload.sessionsPerWeek,
+    tips: payload.tips,
+    isActive: payload.isActive
+  });
+
+  return getAdminWorkoutPlan(id);
+}
+
+async function updateAdminMealPlan(id, payload)
+{
+  const plan = await MealPlan.findByPk(id);
+
+  if (!plan)
+  {
+    return null;
+  }
+
+  await plan.update({
+    title: payload.title,
+    description: payload.description,
+    durationWeeks: payload.durationWeeks,
+    dailyCalories: payload.dailyCalories,
+    macros: payload.macros,
+    tips: payload.tips,
+    isActive: payload.isActive
+  });
+
+  return getAdminMealPlan(id);
+}
+
 async function promoteAdminUser(email)
 {
   const [user, created] = await User.findOrCreate({
@@ -174,9 +233,13 @@ async function promoteAdminUser(email)
 module.exports = {
   getAdminContentOverview,
   getAdminDashboardStats,
+  getAdminMealPlan,
+  getAdminWorkoutPlan,
   listAdminAccessCodes,
   listAdminUsers,
-  promoteAdminUser
+  promoteAdminUser,
+  updateAdminMealPlan,
+  updateAdminWorkoutPlan
 };
 
 function normalizeUserJson(user)

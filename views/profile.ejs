@@ -101,6 +101,12 @@
           <!-- ========== top cards end ========== -->
 
           <!-- ========== profile form + summary start ========== -->
+          <% if (data.message) { %>
+            <div class="alert-box success-alert mb-25">
+              <p class="text-sm mb-0"><%= data.message %></p>
+            </div>
+          <% } %>
+
           <div class="row">
             <div class="col-lg-8">
               <div class="card-style mb-30">
@@ -108,88 +114,105 @@
                   <h6 class="text-medium mb-20">Profile Details</h6>
                 </div>
 
-                <form action="#" method="POST">
+                <form action="/profile" method="POST">
                   <div class="row">
                     <div class="col-md-6">
                       <div class="input-style-1">
                         <label>Full Name</label>
-                        <input type="text" value="<%= data.currentUser.name %>" />
+                        <input type="text" name="name" value="<%= data.currentUser.name %>" />
                       </div>
                     </div>
 
                     <div class="col-md-6">
                       <div class="input-style-1">
                         <label>Email</label>
-                        <input type="email" value="<%= data.currentUser.email %>" />
+                        <input type="email" value="<%= data.currentUser.email %>" disabled />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Age</label>
-                        <input type="number" value="<%= data.profile.age %>" />
+                        <input type="number" name="age" min="1" max="120" value="<%= data.profile.age %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Gender</label>
-                        <input type="text" value="<%= data.profile.gender %>" />
+                        <input type="text" name="gender" value="<%= data.profile.gender %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Height</label>
-                        <input type="text" value="<%= data.profile.height %>" />
+                        <input type="text" name="height" value="<%= data.profile.height %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Current Weight (kg)</label>
-                        <input type="number" value="<%= data.profile.currentWeight %>" />
+                        <input type="number" name="currentWeight" min="1" step="0.1" value="<%= data.profile.currentWeight %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Target Weight (kg)</label>
-                        <input type="number" value="<%= data.profile.targetWeight %>" />
+                        <input type="number" name="targetWeight" min="1" step="0.1" value="<%= data.profile.targetWeight %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>Workout Days / Week</label>
-                        <input type="number" value="<%= data.profile.workoutDays %>" />
+                        <input type="number" name="workoutDays" min="1" max="7" value="<%= data.profile.workoutDays %>" />
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
+                      <div class="select-style-1">
                         <label>Goal</label>
-                        <input type="text" value="<%= data.currentUser.goal %>" />
+                        <div class="select-position">
+                          <select name="goal">
+                            <option value="weight_loss" <%= data.currentUser.goal === 'Weight Loss' ? 'selected' : '' %>>Weight Loss</option>
+                            <option value="muscle_gain" <%= data.currentUser.goal === 'Muscle Gain' ? 'selected' : '' %>>Muscle Gain</option>
+                            <option value="general_fitness" <%= data.currentUser.goal === 'General Fitness' ? 'selected' : '' %>>General Fitness</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
+                      <div class="select-style-1">
                         <label>Level</label>
-                        <input type="text" value="<%= data.currentUser.level %>" />
+                        <div class="select-position">
+                          <select name="level">
+                            <option value="beginner" <%= data.currentUser.level === 'Beginner' ? 'selected' : '' %>>Beginner</option>
+                            <option value="intermediate" <%= data.currentUser.level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+                            <option value="advanced" <%= data.currentUser.level === 'Advanced' ? 'selected' : '' %>>Advanced</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
+                      <div class="select-style-1">
                         <label>Environment</label>
-                        <input type="text" value="<%= data.currentUser.environment %>" />
+                        <div class="select-position">
+                          <select name="environment">
+                            <option value="home" <%= data.currentUser.environment === 'Home' ? 'selected' : '' %>>Home</option>
+                            <option value="gym" <%= data.currentUser.environment === 'Gym' ? 'selected' : '' %>>Gym</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div class="d-flex justify-content-end">
-                    <button type="button" class="main-btn primary-btn btn-hover">
+                    <button type="submit" class="main-btn primary-btn btn-hover">
                       Save Changes
                     </button>
                   </div>

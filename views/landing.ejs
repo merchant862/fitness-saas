@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Premium Fitness Member Area</title>
+    <style>
+      :root {
+        --fit-blue: #365cf5;
+        --fit-green: #00b87c;
+        --fit-ink: #111827;
+        --fit-muted: #637083;
+        --fit-line: #e5e7eb;
+        --fit-soft: #f4f7fb;
+        --fit-warm: #ffb020;
+      }
+
+      body {
+        background: #ffffff;
+        color: var(--fit-ink);
+      }
+
+      .landing-shell {
+        min-height: 100vh;
+        background: #ffffff;
+      }
+
+      .landing-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        border-bottom: 1px solid rgba(229, 231, 235, 0.85);
+        backdrop-filter: blur(16px);
+      }
+
+      .landing-nav-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .landing-logo img {
+        width: 154px;
+        height: auto;
+      }
+
+      .landing-links {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .landing-links a {
+        color: #374151;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .landing-hero {
+        min-height: 84vh;
+        display: flex;
+        align-items: center;
+        padding: 108px 22px 54px;
+        position: relative;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(9, 15, 28, 0.88) 0%, rgba(9, 15, 28, 0.74) 42%, rgba(9, 15, 28, 0.28) 100%),
+          url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2200&q=82') center / cover no-repeat;
+      }
+
+      .landing-hero-inner {
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .landing-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: #dbeafe;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0;
+        margin-bottom: 18px;
+      }
+
+      .landing-eyebrow span {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--fit-green);
+        box-shadow: 0 0 0 6px rgba(0, 184, 124, 0.18);
+      }
+
+      .landing-hero h1 {
+        max-width: 780px;
+        color: #ffffff;
+        font-size: 64px;
+        line-height: 1.02;
+        font-weight: 800;
+        margin-bottom: 22px;
+      }
+
+      .landing-hero p {
+        max-width: 610px;
+        color: #e5e7eb;
+        font-size: 18px;
+        line-height: 1.7;
+        margin-bottom: 30px;
+      }
+
+      .landing-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .landing-actions .main-btn {
+        min-height: 48px;
+      }
+
+      .landing-hero-stats {
+        margin-top: 42px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(130px, 180px));
+        gap: 18px;
+      }
+
+      .landing-stat {
+        border-left: 3px solid var(--fit-green);
+        padding-left: 14px;
+      }
+
+      .landing-stat strong {
+        display: block;
+        color: #ffffff;
+        font-size: 26px;
+        line-height: 1.1;
+      }
+
+      .landing-stat span {
+        color: #cbd5e1;
+        font-size: 13px;
+      }
+
+      .landing-section {
+        padding: 76px 22px;
+      }
+
+      .landing-section.alt {
+        background: var(--fit-soft);
+      }
+
+      .landing-container {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .landing-section-head {
+        max-width: 720px;
+        margin-bottom: 34px;
+      }
+
+      .landing-section-head h2 {
+        font-size: 38px;
+        line-height: 1.15;
+        margin-bottom: 12px;
+      }
+
+      .landing-section-head p {
+        color: var(--fit-muted);
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 0;
+      }
+
+      .landing-feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+      }
+
+      .landing-feature {
+        background: #ffffff;
+        border: 1px solid var(--fit-line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .landing-feature img {
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+      }
+
+      .landing-feature-body {
+        padding: 22px;
+      }
+
+      .landing-feature-body .icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        color: #ffffff;
+        background: var(--fit-blue);
+      }
+
+      .landing-feature:nth-child(2) .icon {
+        background: var(--fit-green);
+      }
+
+      .landing-feature:nth-child(3) .icon {
+        background: var(--fit-warm);
+      }
+
+      .landing-feature h3 {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+
+      .landing-feature p {
+        color: var(--fit-muted);
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 0;
+      }
+
+      .landing-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 42px;
+        align-items: center;
+      }
+
+      .landing-image-panel {
+        min-height: 520px;
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(17, 24, 39, 0.05), rgba(17, 24, 39, 0.45)),
+          url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1400&q=82') center / cover no-repeat;
+      }
+
+      .landing-checks {
+        display: grid;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .landing-check {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .landing-check i {
+        color: var(--fit-green);
+        font-size: 20px;
+        margin-top: 2px;
+      }
+
+      .landing-check strong {
+        display: block;
+        margin-bottom: 3px;
+      }
+
+      .landing-check span {
+        color: var(--fit-muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .landing-band {
+        background:
+          linear-gradient(90deg, rgba(54, 92, 245, 0.95), rgba(0, 184, 124, 0.9)),
+          url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=1800&q=82') center / cover no-repeat;
+        color: #ffffff;
+      }
+
+      .landing-band-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+      }
+
+      .landing-band h2 {
+        color: #ffffff;
+        font-size: 36px;
+        margin-bottom: 10px;
+      }
+
+      .landing-band p {
+        max-width: 620px;
+        color: #f8fafc;
+        margin-bottom: 0;
+      }
+
+      .landing-footer {
+        padding: 28px 22px;
+        border-top: 1px solid var(--fit-line);
+        background: #ffffff;
+      }
+
+      .landing-footer-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        color: var(--fit-muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 991px) {
+        .landing-links a:not(.main-btn) {
+          display: none;
+        }
+
+        .landing-hero h1 {
+          font-size: 46px;
+        }
+
+        .landing-feature-grid,
+        .landing-split {
+          grid-template-columns: 1fr;
+        }
+
+        .landing-image-panel {
+          min-height: 360px;
+        }
+
+        .landing-band-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 575px) {
+        .landing-logo img {
+          width: 132px;
+        }
+
+        .landing-nav-inner {
+          padding: 12px 14px;
+        }
+
+        .landing-hero {
+          min-height: 82vh;
+          padding: 96px 16px 38px;
+        }
+
+        .landing-hero h1 {
+          font-size: 36px;
+        }
+
+        .landing-hero p {
+          font-size: 16px;
+        }
+
+        .landing-hero-stats {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          margin-top: 28px;
+        }
+
+        .landing-section {
+          padding: 54px 16px;
+        }
+
+        .landing-section-head h2,
+        .landing-band h2 {
+          font-size: 30px;
+        }
+
+        .landing-footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <% const data = landingData; const dashboardHref = data.currentUser ? '/dashboard' : '/sign-in'; %>
+    <div class="landing-shell">
+      <nav class="landing-nav">
+        <div class="landing-nav-inner">
+          <a href="/" class="landing-logo">
+            <img src="/images/logo/logo.svg" alt="FitAccess" />
+          </a>
+
+          <div class="landing-links">
+            <a href="#workouts">Workouts</a>
+            <a href="#meals">Meals</a>
+            <a href="#coach">AI Coach</a>
+            <a href="<%= dashboardHref %>" class="main-btn primary-btn btn-hover btn-sm">
+              <%= data.currentUser ? 'Open Dashboard' : 'Member Sign-In' %>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <header class="landing-hero">
+        <div class="landing-hero-inner">
+          <div class="landing-eyebrow"><span></span> Premium fitness access for upsell members</div>
+          <h1>FitAccess turns your next 30 days into a clear fitness plan.</h1>
+          <p>
+            Personalized workouts, meal plans, progress tracking, and a focused AI fitness coach in one member dashboard built for fast post-purchase value.
+          </p>
+
+          <div class="landing-actions">
+            <a href="<%= dashboardHref %>" class="main-btn primary-btn btn-hover">
+              <%= data.currentUser ? 'Continue Training' : 'Access Member Area' %>
+            </a>
+            <a href="/activate" class="main-btn light-btn btn-hover">
+              Activate Code
+            </a>
+          </div>
+
+          <div class="landing-hero-stats">
+            <div class="landing-stat">
+              <strong>12</strong>
+              <span>weeks of workout structure</span>
+            </div>
+            <div class="landing-stat">
+              <strong>4</strong>
+              <span>weeks of meal guidance</span>
+            </div>
+            <div class="landing-stat">
+              <strong>24/7</strong>
+              <span>focused AI fitness support</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section id="workouts" class="landing-section">
+        <div class="landing-container">
+          <div class="landing-section-head">
+            <h2>A member area that feels ready the moment they arrive.</h2>
+            <p>
+              FitAccess keeps the first experience direct: choose a goal, unlock a tailored dashboard, and start with the next workout or meal immediately.
+            </p>
+          </div>
+
+          <div class="landing-feature-grid">
+            <article class="landing-feature">
+              <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=82" alt="Athlete training in a studio" />
+              <div class="landing-feature-body">
+                <div class="icon"><i class="lni lni-dumbbell"></i></div>
+                <h3>Goal-Based Workouts</h3>
+                <p>Home and gym plans adapt to beginner, intermediate, and advanced members with clear sessions and progress tracking.</p>
+              </div>
+            </article>
+
+            <article id="meals" class="landing-feature">
+              <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=82" alt="Healthy meal bowl with vegetables" />
+              <div class="landing-feature-body">
+                <div class="icon"><i class="lni lni-dinner"></i></div>
+                <h3>Simple Meal Plans</h3>
+                <p>Weekly meal guidance, macros, shopping lists, and practical recipes aligned with weight loss, muscle gain, or general fitness.</p>
+              </div>
+            </article>
+
+            <article id="coach" class="landing-feature">
+              <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=82" alt="Person using phone during workout" />
+              <div class="landing-feature-body">
+                <div class="icon"><i class="lni lni-comments-alt"></i></div>
+                <h3>Scoped AI Coach</h3>
+                <p>Members can ask focused fitness questions about workouts, meals, macros, hydration, recovery, and consistency.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section alt">
+        <div class="landing-container landing-split">
+          <div class="landing-image-panel" role="img" aria-label="Healthy meal preparation"></div>
+
+          <div>
+            <div class="landing-section-head">
+              <h2>Built for the upsell moment, not a generic fitness blog.</h2>
+              <p>
+                The app is designed around immediate access after checkout: no password friction, no confusing setup, and no empty dashboard.
+              </p>
+            </div>
+
+            <div class="landing-checks">
+              <div class="landing-check">
+                <i class="lni lni-checkmark-circle"></i>
+                <div>
+                  <strong>Secure email access</strong>
+                  <span>Magic sign-in links and single-use activation codes keep entry simple and controlled.</span>
+                </div>
+              </div>
+
+              <div class="landing-check">
+                <i class="lni lni-checkmark-circle"></i>
+                <div>
+                  <strong>DB-backed content</strong>
+                  <span>Workout and meal plans are seeded into the database and visible from the admin content area.</span>
+                </div>
+              </div>
+
+              <div class="landing-check">
+                <i class="lni lni-checkmark-circle"></i>
+                <div>
+                  <strong>Admin-ready operations</strong>
+                  <span>Users, exports, access codes, content plans, and engagement activity can be reviewed without touching code.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section landing-band">
+        <div class="landing-container landing-band-inner">
+          <div>
+            <h2>Already purchased FitAccess?</h2>
+            <p>Use the same checkout email to receive your secure sign-in link, or activate the access code sent after purchase.</p>
+          </div>
+
+          <div class="landing-actions">
+            <a href="/sign-in" class="main-btn light-btn btn-hover">Sign In</a>
+            <a href="/activate" class="main-btn success-btn btn-hover">Activate Access</a>
+          </div>
+        </div>
+      </section>
+
+      <footer class="landing-footer">
+        <div class="landing-footer-inner">
+          <span>FitAccess member area for premium fitness upsell customers.</span>
+          <div class="landing-links">
+            <a href="/sign-in">Sign In</a>
+            <a href="/activate">Activate</a>
+            <% if (data.currentUser?.role === 'admin') { %>
+              <a href="/admin">Admin</a>
+            <% } %>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

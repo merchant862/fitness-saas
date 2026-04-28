@@ -26,12 +26,12 @@
             <button
               id="theme-toggle"
               type="button"
-              class="main-btn light-btn btn-hover btn-sm d-flex align-items-center"
+              class="theme-toggle-switch"
               aria-label="Toggle theme"
               title="Toggle dark/light mode"
             >
-              <i id="theme-toggle-icon" class="lni lni-night me-2"></i>
-              <span id="theme-toggle-text">Dark</span>
+              <span id="theme-toggle-light" class="theme-toggle-option">Light</span>
+              <span id="theme-toggle-dark" class="theme-toggle-option">Dark</span>
             </button>
           </div>
           <!-- theme toggle end -->
@@ -104,11 +104,9 @@
               </li>
 
               <li>
-                <form action="/logout" method="POST" class="m-0">
-                  <button type="submit" class="dropdown-item border-0 bg-transparent">
-                  <i class="lni lni-exit"></i> Logout
-                  </button>
-                </form>
+                <a href="/logout">
+                 <i class="lni lni-exit"></i> Logout
+                </a>
               </li>
             </ul>
           </div>

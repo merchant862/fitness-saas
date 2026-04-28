@@ -102,6 +102,7 @@
                         <th><h6>Weeks</h6></th>
                         <th><h6>Sessions</h6></th>
                         <th><h6>Status</h6></th>
+                        <th><h6>Action</h6></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -114,6 +115,7 @@
                           <td><p class="text-sm mb-0"><%= plan.durationWeeks %></p></td>
                           <td><p class="text-sm mb-0"><%= plan.sessions?.length || 0 %></p></td>
                           <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
+                          <td><a href="/admin/content/workout-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
                         </tr>
                       <% }) %>
                     </tbody>
@@ -139,6 +141,7 @@
                         <th><h6>Daily Calories</h6></th>
                         <th><h6>Days</h6></th>
                         <th><h6>Status</h6></th>
+                        <th><h6>Action</h6></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -150,6 +153,7 @@
                           <td><p class="text-sm mb-0"><%= plan.dailyCalories %></p></td>
                           <td><p class="text-sm mb-0"><%= plan.days?.length || 0 %></p></td>
                           <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
+                          <td><a href="/admin/content/meal-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
                         </tr>
                       <% }) %>
                     </tbody>

@@ -1,3 +1,141 @@
+/* FitAccess theme stabilization.
+   This file intentionally defines both light defaults and dark overrides so
+   saved theme state cannot leave hidden text on auth or dashboard pages. */
+
+body {
+  background: #f1f5f9;
+  color: #5d657b;
+}
+
+body,
+body:not(.dark-theme) .main-wrapper,
+body:not(.dark-theme) .section,
+body:not(.dark-theme) .container-fluid {
+  background: #f1f5f9;
+}
+
+body:not(.dark-theme) .signin-section,
+body:not(.dark-theme) .signin-wrapper,
+body:not(.dark-theme) .auth-row {
+  background: #ffffff;
+}
+
+body:not(.dark-theme) .header,
+body:not(.dark-theme) .sidebar-nav-wrapper,
+body:not(.dark-theme) .card-style,
+body:not(.dark-theme) .icon-card,
+body:not(.dark-theme) .dropdown-menu,
+body:not(.dark-theme) .alert-box {
+  background: #ffffff !important;
+  color: #5d657b;
+  border-color: #eef1f6;
+}
+
+body:not(.dark-theme) h1,
+body:not(.dark-theme) h2,
+body:not(.dark-theme) h3,
+body:not(.dark-theme) h4,
+body:not(.dark-theme) h5,
+body:not(.dark-theme) h6,
+body:not(.dark-theme) label,
+body:not(.dark-theme) .text-bold,
+body:not(.dark-theme) .text-medium,
+body:not(.dark-theme) .profile-box .profile-info .info h6,
+body:not(.dark-theme) .header .header-right .profile-box .dropdown-menu .author-info .content h4 {
+  color: #1a2142 !important;
+}
+
+body:not(.dark-theme) p,
+body:not(.dark-theme) .text-sm,
+body:not(.dark-theme) .text-gray,
+body:not(.dark-theme) .breadcrumb-item,
+body:not(.dark-theme) .profile-box .profile-info .info p,
+body:not(.dark-theme) .table,
+body:not(.dark-theme) td,
+body:not(.dark-theme) th {
+  color: #5d657b !important;
+}
+
+body:not(.dark-theme) .header .header-right .profile-box .dropdown-menu li a,
+body:not(.dark-theme) .header .header-right .profile-box .dropdown-menu .author-info .content a,
+body:not(.dark-theme) .dropdown-menu li a {
+  color: rgba(26, 33, 66, 0.72) !important;
+}
+
+body:not(.dark-theme) .header .header-right .profile-box .dropdown-menu li a:hover,
+body:not(.dark-theme) .header .header-right .profile-box .dropdown-menu .author-info:hover a {
+  color: #1a2142 !important;
+  background: #f3f6fb;
+}
+
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item a,
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item button {
+  color: #6b7280;
+}
+
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item a.active,
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item a:hover,
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item button:hover,
+body:not(.dark-theme) .sidebar-nav-wrapper .sidebar-nav ul .nav-item.active > a {
+  color: #1a2142;
+  background: rgba(54, 92, 245, 0.08);
+}
+
+body:not(.dark-theme) .input-style-1 input,
+body:not(.dark-theme) .input-style-1 textarea,
+body:not(.dark-theme) .select-style-1 .select-position select,
+body:not(.dark-theme) .form-control {
+  background: #ffffff;
+  border-color: #dbe3ef;
+  color: #1a2142;
+}
+
+body:not(.dark-theme) .input-style-1 input::placeholder,
+body:not(.dark-theme) .input-style-1 textarea::placeholder {
+  color: #8b95a7;
+}
+
+.theme-toggle-switch {
+  border: 1px solid #dbe3ef !important;
+  background: #f8fafc !important;
+  border-radius: 999px !important;
+  width: auto !important;
+  min-width: 116px;
+  height: 40px !important;
+  padding: 4px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  color: #5d657b !important;
+}
+
+.theme-toggle-switch::after,
+.theme-toggle-option::after {
+  display: none !important;
+}
+
+.theme-toggle-option {
+  position: static !important;
+  width: auto !important;
+  height: 30px !important;
+  min-width: 50px;
+  padding: 0 11px;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: #637083 !important;
+  font-size: 12px;
+  line-height: 30px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.theme-toggle-option.active {
+  background: #365cf5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 14px rgba(54, 92, 245, 0.25);
+}
+
 body.dark-theme {
   background: #101318;
   color: #d7dde8;
@@ -5,7 +143,10 @@ body.dark-theme {
 
 body.dark-theme .main-wrapper,
 body.dark-theme .section,
-body.dark-theme .container-fluid {
+body.dark-theme .container-fluid,
+body.dark-theme .signin-section,
+body.dark-theme .signin-wrapper,
+body.dark-theme .auth-row {
   background: #101318;
 }
 
@@ -20,6 +161,10 @@ body.dark-theme .alert-box {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
+body.dark-theme .auth-cover-wrapper {
+  background: #111827 !important;
+}
+
 body.dark-theme h1,
 body.dark-theme h2,
 body.dark-theme h3,
@@ -30,6 +175,7 @@ body.dark-theme .text-medium,
 body.dark-theme .text-bold,
 body.dark-theme label,
 body.dark-theme .profile-box .profile-info .info h6,
+body.dark-theme .header .header-right .profile-box .dropdown-menu .author-info .content h4,
 body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a .text,
 body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button .text {
   color: #f4f7fb !important;
@@ -37,9 +183,9 @@ body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button .text {
 
 body.dark-theme p,
 body.dark-theme .text-sm,
+body.dark-theme .text-gray,
 body.dark-theme .breadcrumb-item,
 body.dark-theme .profile-box .profile-info .info p,
-body.dark-theme .dropdown-menu li a,
 body.dark-theme .table,
 body.dark-theme td,
 body.dark-theme th {
@@ -47,7 +193,29 @@ body.dark-theme th {
 }
 
 body.dark-theme a {
-  color: #8ea2ff;
+  color: #9badff;
+}
+
+body.dark-theme .header .header-right .profile-box .dropdown-menu li a,
+body.dark-theme .header .header-right .profile-box .dropdown-menu .author-info .content a,
+body.dark-theme .dropdown-menu li a {
+  color: #c7d0df !important;
+}
+
+body.dark-theme .header .header-right .profile-box .dropdown-menu li a:hover,
+body.dark-theme .header .header-right .profile-box .dropdown-menu .author-info:hover,
+body.dark-theme .header .header-right .profile-box .dropdown-menu .author-info:hover a,
+body.dark-theme .dropdown-menu li a:hover {
+  color: #ffffff !important;
+  background: #222a35 !important;
+}
+
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav .divider hr,
+body.dark-theme .header .header-right .profile-box .dropdown-menu li.divider,
+body.dark-theme .dropdown-menu li.divider,
+body.dark-theme .divider hr {
+  background: #2a3340 !important;
+  border-color: #2a3340 !important;
 }
 
 body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a,
@@ -57,17 +225,32 @@ body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button {
 
 body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a.active,
 body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item a:hover,
-body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button:hover {
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item button:hover,
+body.dark-theme .sidebar-nav-wrapper .sidebar-nav ul .nav-item.active > a {
+  color: #ffffff;
   background: rgba(54, 92, 245, 0.16);
 }
 
 body.dark-theme .input-style-1 input,
 body.dark-theme .input-style-1 textarea,
-body.dark-theme .input-style-1 select,
+body.dark-theme .input-style-2 input,
+body.dark-theme .input-style-2 textarea,
+body.dark-theme .input-style-3 input,
+body.dark-theme .input-style-3 textarea,
+body.dark-theme .select-style-1 .select-position select,
+body.dark-theme .select-style-2 .select-position select,
+body.dark-theme .select-style-3 .select-position select,
 body.dark-theme .form-control {
-  background: #101318;
-  border-color: #334155;
-  color: #f4f7fb;
+  background: #101318 !important;
+  border-color: #334155 !important;
+  color: #f4f7fb !important;
+}
+
+body.dark-theme .input-style-1 input:disabled,
+body.dark-theme .input-style-1 textarea:disabled,
+body.dark-theme .form-control:disabled {
+  background: #1d2530 !important;
+  color: #8f9bad !important;
 }
 
 body.dark-theme .input-style-1 input::placeholder,
@@ -75,20 +258,37 @@ body.dark-theme .input-style-1 textarea::placeholder {
   color: #6f7c8e;
 }
 
+body.dark-theme .select-style-1 .select-position::after,
+body.dark-theme .select-style-2 .select-position::after,
+body.dark-theme .select-style-3 .select-position::after {
+  border-color: #aab4c2;
+}
+
 body.dark-theme .table > :not(caption) > * > * {
   background: transparent;
   border-bottom-color: #2a3340;
-}
-
-body.dark-theme .dropdown-menu li.divider,
-body.dark-theme .divider hr {
-  border-color: #2a3340;
 }
 
 body.dark-theme .main-btn.light-btn {
   background: #222a35;
   color: #f4f7fb;
   border-color: #334155;
+}
+
+body.dark-theme .theme-toggle-switch {
+  background: #101318 !important;
+  border-color: #334155 !important;
+  color: #c7d0df !important;
+}
+
+body.dark-theme .theme-toggle-option {
+  color: #9ba6b8 !important;
+}
+
+body.dark-theme .theme-toggle-option.active {
+  background: #00b87c !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 14px rgba(0, 184, 124, 0.24);
 }
 
 body.dark-theme .status-btn {

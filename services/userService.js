@@ -35,7 +35,42 @@ async function completeUserOnboarding(user, payload)
 
 async function updateUserProfile(user, payload)
 {
-  await user.update(payload);
+  const userPayload = {};
+  const profilePayload = {};
+
+  if (payload.name !== undefined)
+  {
+    userPayload.name = payload.name;
+  }
+
+  ['goal', 'level', 'environment', 'currentWeight', 'targetWeight', 'workoutDays'].forEach((field) =>
+  {
+    if (payload[field] !== undefined)
+    {
+      profilePayload[field] = payload[field];
+    }
+  });
+
+  if (payload.preferences)
+  {
+    profilePayload.preferences = payload.preferences;
+  }
+
+  if (Object.keys(userPayload).length)
+  {
+    await user.update(userPayload);
+  }
+
+  if (Object.keys(profilePayload).length)
+  {
+    const [profile] = await UserProfile.findOrCreate({
+      where: { userId: user.id },
+      defaults: { userId: user.id }
+    });
+
+    await profile.update(profilePayload);
+  }
+
   return user.reload({ include: [{ model: UserProfile, as: 'profile' }] });
 }
 

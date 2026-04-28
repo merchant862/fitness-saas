@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Edit Workout Plan</title>
+  </head>
+  <body>
+    <% const data = adminData; const plan = data.plan; const parseJson = function(value, fallback) { if (typeof value !== 'string') return value || fallback; try { return JSON.parse(value); } catch (error) { return fallback; } }; %>
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-content' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Edit Workout Plan',
+        pageSubtitle: plan.title,
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Edit Workout Plan</h2>
+                  <p class="text-sm text-medium"><%= plan.key %></p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item"><a href="/admin/content">Content</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Workout</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% if (data.message) { %>
+            <div class="alert-box success-alert mb-25">
+              <p class="text-sm mb-0"><%= data.message %></p>
+            </div>
+          <% } %>
+
+          <% if (data.error) { %>
+            <div class="alert-box danger-alert mb-25">
+              <p class="text-sm mb-0"><%= data.error %></p>
+            </div>
+          <% } %>
+
+          <div class="row">
+            <div class="col-lg-5">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Plan Settings</h6>
+                </div>
+
+                <form action="/admin/content/workout-plans/<%= plan.id %>" method="POST">
+                  <div class="input-style-1">
+                    <label>Title</label>
+                    <input type="text" name="title" value="<%= plan.title %>" maxlength="160" required />
+                  </div>
+
+                  <div class="input-style-1">
+                    <label>Description</label>
+                    <textarea name="description" rows="4"><%= plan.description || '' %></textarea>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="input-style-1">
+                        <label>Duration Weeks</label>
+                        <input type="number" name="durationWeeks" min="1" max="52" value="<%= plan.durationWeeks %>" required />
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <div class="input-style-1">
+                        <label>Sessions / Week</label>
+                        <input type="number" name="sessionsPerWeek" min="1" max="7" value="<%= plan.sessionsPerWeek %>" required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="input-style-1">
+                    <label>Tips JSON</label>
+                    <textarea name="tips" rows="7" spellcheck="false"><%= JSON.stringify(parseJson(plan.tips, []), null, 2) %></textarea>
+                  </div>
+
+                  <div class="form-check checkbox-style mb-20">
+                    <input class="form-check-input" type="checkbox" name="isActive" id="is-active" <%= plan.isActive ? 'checked' : '' %> />
+                    <label class="form-check-label" for="is-active">Active</label>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="main-btn primary-btn btn-hover">Save Changes</button>
+                    <a href="/admin/content" class="main-btn light-btn btn-hover">Back</a>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Plan Metadata</h6>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4 mb-15">
+                    <p class="text-sm mb-1"><strong>Goal</strong></p>
+                    <p class="text-sm mb-0"><%= plan.goal %></p>
+                  </div>
+                  <div class="col-md-4 mb-15">
+                    <p class="text-sm mb-1"><strong>Level</strong></p>
+                    <p class="text-sm mb-0"><%= plan.level %></p>
+                  </div>
+                  <div class="col-md-4 mb-15">
+                    <p class="text-sm mb-1"><strong>Environment</strong></p>
+                    <p class="text-sm mb-0"><%= plan.environment %></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Sessions</h6>
+                </div>
+
+                <div class="table-wrapper table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6>Week</h6></th>
+                        <th><h6>Day</h6></th>
+                        <th><h6>Title</h6></th>
+                        <th><h6>Focus</h6></th>
+                        <th><h6>Duration</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% plan.sessions.forEach(function(session) { %>
+                        <tr>
+                          <td><p class="text-sm mb-0"><%= session.weekNumber %></p></td>
+                          <td><p class="text-sm mb-0"><%= session.dayOfWeek %></p></td>
+                          <td><p class="text-sm mb-0"><%= session.title %></p></td>
+                          <td><p class="text-sm mb-0"><%= session.focus %></p></td>
+                          <td><p class="text-sm mb-0"><%= session.durationMinutes %> min</p></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>

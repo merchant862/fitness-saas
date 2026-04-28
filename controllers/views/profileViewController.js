@@ -27,7 +27,8 @@ async function profileViewController(req, res, next)
                 workoutsCompleted,
                 mealsFollowed: 0
             },
-            note: 'Your profile settings help personalize your workouts, meals, and AI guidance.'
+            note: 'Your profile settings help personalize your workouts, meals, and AI guidance.',
+            message: req.query.updated ? 'Profile updated successfully.' : null
         };
 
         return res.status(200).render('../views/profile.ejs', { profileData });
