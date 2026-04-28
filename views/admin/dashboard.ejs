@@ -86,6 +86,52 @@
           </div>
 
           <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success"><i class="lni lni-rocket"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Onboarding Rate</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.onboardingRate %></h3>
+                  <p class="text-sm text-gray"><%= data.stats.onboardedUsers %> onboarded</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary"><i class="lni lni-bar-chart"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Activation Rate</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.activationRate %></h3>
+                  <p class="text-sm text-gray">Redeemed vs generated</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange"><i class="lni lni-comments-alt"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">AI Messages</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.aiMessages %></h3>
+                  <p class="text-sm text-gray">User and coach messages</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple"><i class="lni lni-library"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Content Plans</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.workoutPlans + data.stats.mealPlans %></h3>
+                  <p class="text-sm text-gray">Workout and meal plans</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
             <div class="col-lg-5">
               <div class="card-style mb-30">
                 <div class="title mb-20">
@@ -94,6 +140,7 @@
                 <div class="d-flex flex-wrap gap-2">
                   <a href="/admin/users" class="main-btn primary-btn btn-hover btn-sm">View Users</a>
                   <a href="/admin/access-codes" class="main-btn success-btn btn-hover btn-sm">Manage Codes</a>
+                  <a href="/admin/content" class="main-btn light-btn btn-hover btn-sm">Review Content</a>
                 </div>
               </div>
             </div>

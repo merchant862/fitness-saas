@@ -23,7 +23,7 @@
               <div class="col-md-8">
                 <div class="title">
                   <h2>Users</h2>
-                  <p class="text-sm text-medium"><%= data.users.length %> recent users shown.</p>
+                  <p class="text-sm text-medium"><%= data.users.length %> users shown.</p>
                 </div>
               </div>
               <div class="col-md-4">
@@ -37,6 +37,55 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="card-style mb-25">
+            <form action="/admin/users" method="GET">
+              <div class="row align-items-end">
+                <div class="col-lg-4 col-md-6">
+                  <div class="input-style-1 mb-0">
+                    <label>Search Email</label>
+                    <input type="text" name="search" value="<%= data.filters.search %>" placeholder="customer@example.com" />
+                  </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                  <div class="select-style-1 mb-0">
+                    <label>Status</label>
+                    <div class="select-position">
+                      <select name="status">
+                        <option value="">All</option>
+                        <option value="active" <%= data.filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                        <option value="pending" <%= data.filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                        <option value="suspended" <%= data.filters.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                  <div class="select-style-1 mb-0">
+                    <label>Goal</label>
+                    <div class="select-position">
+                      <select name="goal">
+                        <option value="">All</option>
+                        <option value="weight_loss" <%= data.filters.goal === 'weight_loss' ? 'selected' : '' %>>Weight Loss</option>
+                        <option value="muscle_gain" <%= data.filters.goal === 'muscle_gain' ? 'selected' : '' %>>Muscle Gain</option>
+                        <option value="general_fitness" <%= data.filters.goal === 'general_fitness' ? 'selected' : '' %>>General Fitness</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                  <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="main-btn primary-btn btn-hover btn-sm">Filter</button>
+                    <a href="/admin/users" class="main-btn light-btn btn-hover btn-sm">Clear</a>
+                    <a href="/admin/users/export.csv?search=<%= encodeURIComponent(data.filters.search) %>&status=<%= encodeURIComponent(data.filters.status) %>&goal=<%= encodeURIComponent(data.filters.goal) %>" class="main-btn success-btn btn-hover btn-sm">Export CSV</a>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
 
           <div class="card-style mb-30">

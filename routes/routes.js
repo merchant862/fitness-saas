@@ -19,6 +19,8 @@ const changePasswordViewController = require('../controllers/views/changePasswor
 const redeemAccessViewController = require('../controllers/views/redeemAccessViewController');
 const adminDashboardViewController = require('../controllers/views/adminDashboardViewController');
 const adminUsersViewController = require('../controllers/views/adminUsersViewController');
+const adminUsersExportController = require('../controllers/views/adminUsersExportController');
+const adminContentViewController = require('../controllers/views/adminContentViewController');
 const adminAccessCodesViewController = require('../controllers/views/adminAccessCodesViewController');
 const adminAccessCodeActionsController = require('../controllers/views/adminAccessCodeActionsController');
 const authController = require('../controllers/api/authController');
@@ -63,6 +65,8 @@ router.post('/change-password', requireAuth, authLimiter, passwordController.upd
 
 router.get('/admin', requireAdmin, adminDashboardViewController);
 router.get('/admin/users', requireAdmin, adminUsersViewController);
+router.get('/admin/users/export.csv', requireAdmin, adminUsersExportController);
+router.get('/admin/content', requireAdmin, adminContentViewController);
 router.get('/admin/access-codes', requireAdmin, adminAccessCodesViewController);
 router.post('/admin/access-codes', requireAdmin, adminAccessCodeActionsController.create);
 router.post('/admin/access-codes/:id/revoke', requireAdmin, adminAccessCodeActionsController.revoke);

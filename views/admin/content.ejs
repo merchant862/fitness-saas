@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Admin Content</title>
+  </head>
+  <body>
+    <% const data = adminData; %>
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-content' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Fitness Content',
+        pageSubtitle: 'Review active workout and meal content loaded from seeders.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Content Library</h2>
+                  <p class="text-sm text-medium">Database-backed plans used by the customer dashboard.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Content</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon primary"><i class="lni lni-dumbbell"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Workout Plans</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.workoutPlans %></h3>
+                  <p class="text-sm text-gray">Goal, level, environment variants</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon success"><i class="lni lni-agenda"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Workout Sessions</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.workoutSessions %></h3>
+                  <p class="text-sm text-gray">12-week seeded schedule</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon orange"><i class="lni lni-dinner"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Meal Plans</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.mealPlans %></h3>
+                  <p class="text-sm text-gray">Goal-based nutrition plans</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-sm-6">
+              <div class="icon-card mb-30">
+                <div class="icon purple"><i class="lni lni-list"></i></div>
+                <div class="content">
+                  <h6 class="mb-10">Meal Days</h6>
+                  <h3 class="text-bold mb-10"><%= data.stats.mealDays %></h3>
+                  <p class="text-sm text-gray">4-week seeded rotation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Workout Plans</h6>
+                </div>
+                <div class="table-wrapper table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6>Title</h6></th>
+                        <th><h6>Goal</h6></th>
+                        <th><h6>Level</h6></th>
+                        <th><h6>Environment</h6></th>
+                        <th><h6>Weeks</h6></th>
+                        <th><h6>Sessions</h6></th>
+                        <th><h6>Status</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% data.workoutPlans.forEach(function(plan) { %>
+                        <tr>
+                          <td><p class="text-sm mb-0"><%= plan.title %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.goal %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.level %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.environment %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.durationWeeks %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.sessions?.length || 0 %></p></td>
+                          <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium">Meal Plans</h6>
+                </div>
+                <div class="table-wrapper table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th><h6>Title</h6></th>
+                        <th><h6>Goal</h6></th>
+                        <th><h6>Weeks</h6></th>
+                        <th><h6>Daily Calories</h6></th>
+                        <th><h6>Days</h6></th>
+                        <th><h6>Status</h6></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% data.mealPlans.forEach(function(plan) { %>
+                        <tr>
+                          <td><p class="text-sm mb-0"><%= plan.title %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.goal %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.durationWeeks %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.dailyCalories %></p></td>
+                          <td><p class="text-sm mb-0"><%= plan.days?.length || 0 %></p></td>
+                          <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>
