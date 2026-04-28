@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authLimiter } = require('../middleware/security');
+const { aiChatLimiter, authLimiter } = require('../middleware/security');
 const { requireAdmin, requireAuth, requireOnboarding } = require('../middleware/auth');
 
 const loginViewController = require('../controllers/views/loginViewController');
@@ -86,7 +86,7 @@ router.post('/api/users/onboarding', requireAuth, userController.onboarding);
 router.get('/api/workouts', requireOnboarding, contentController.workoutIndex);
 router.post('/api/workouts/:id/complete', requireOnboarding, progressController.completeWorkout);
 router.get('/api/meals', requireOnboarding, contentController.mealIndex);
-router.post('/api/ai/chat', requireOnboarding, contentController.aiChat);
+router.post('/api/ai/chat', requireOnboarding, aiChatLimiter, contentController.aiChat);
 router.get('/api/progress', requireOnboarding, progressController.progress);
 router.post('/api/progress/weight', requireOnboarding, progressController.logWeight);
 

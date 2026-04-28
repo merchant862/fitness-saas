@@ -1,6 +1,7 @@
 'use strict';
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 
 function securityHeaders(req, res, next)
 {
@@ -33,7 +34,20 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests' }
 });
 
+const aiChatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: Number(process.env.AI_CHAT_RATE_LIMIT || 8),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: function(req)
+  {
+    return req.user ? `user:${req.user.id}` : `ip:${ipKeyGenerator(req.ip)}`;
+  },
+  message: { error: 'AI coach limit reached. Please wait a minute before sending another message.' }
+});
+
 module.exports = {
+  aiChatLimiter,
   apiLimiter,
   authLimiter,
   securityHeaders

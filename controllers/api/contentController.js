@@ -2,6 +2,7 @@
 
 const { trackEvent } = require('../../services/eventService');
 const { getDashboardContent, listMeals, listWorkouts, saveAiConversation } = require('../../services/contentService');
+const { generateCoachReply } = require('../../services/aiCoachService');
 
 async function dashboard(req, res, next)
 {
@@ -43,14 +44,14 @@ async function aiChat(req, res, next)
 {
   try
   {
-    const message = String(req.body.message || '').trim().slice(0, 2000);
+    const message = String(req.body.message || '').trim().slice(0, 800);
 
     if (!message)
     {
       return res.status(422).json({ error: 'Message is required' });
     }
 
-    const reply = buildFitnessReply(req.user.profile?.goal, message);
+    const reply = await generateCoachReply(req, message);
     await saveAiConversation(req.user.id, message, reply);
     await trackEvent(req, 'ai_chat_used', { length: message.length }, req.user.id);
 
@@ -60,23 +61,6 @@ async function aiChat(req, res, next)
   {
     next(error);
   }
-}
-
-function buildFitnessReply(goal, message)
-{
-  const goalLabel = goal ? goal.replace('_', ' ') : 'fitness';
-
-  if (/meal|protein|calorie|diet/i.test(message))
-  {
-    return `For ${goalLabel}, keep meals simple: lean protein, high-fiber carbs, vegetables, and enough water. Adjust portions based on weekly progress.`;
-  }
-
-  if (/form|exercise|workout/i.test(message))
-  {
-    return 'Prioritize controlled reps, full range of motion, and pain-free movement. Stop the set when form breaks.';
-  }
-
-  return 'Stay consistent today: finish the next planned workout or meal first, then review progress at the end of the week.';
 }
 
 module.exports = {

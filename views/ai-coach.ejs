@@ -126,6 +126,7 @@
                 </div>
 
                 <div
+                  id="ai-chat-messages"
                   class="mb-20"
                   style="max-height: 420px; overflow-y: auto; padding-right: 8px;"
                 >
@@ -146,17 +147,22 @@
                   <% }) %>
                 </div>
 
-                <form action="#" method="POST">
+                <form id="ai-chat-form" action="/api/ai/chat" method="POST">
                   <div class="input-style-1">
                     <label>Ask a Question</label>
                     <textarea
+                      id="ai-chat-input"
+                      name="message"
                       rows="4"
+                      maxlength="800"
                       placeholder="Example: What should I eat after a workout?"
                     ></textarea>
                   </div>
 
+                  <p id="ai-chat-error" class="text-sm text-danger mb-15 d-none"></p>
+
                   <div class="d-flex justify-content-end">
-                    <button type="button" class="main-btn primary-btn btn-hover">
+                    <button id="ai-chat-submit" type="submit" class="main-btn primary-btn btn-hover">
                       Send Message
                     </button>
                   </div>
@@ -202,7 +208,7 @@
                     <div class="col-md-6 col-lg-3">
                       <div class="card-style mb-20" style="background: #f8f8f8;">
                         <p class="text-sm mb-15"><%= prompt %></p>
-                        <button type="button" class="main-btn light-btn btn-hover btn-sm">
+                        <button type="button" class="main-btn light-btn btn-hover btn-sm ai-prompt-button" data-prompt="<%= prompt %>">
                           Use Prompt
                         </button>
                       </div>
@@ -220,5 +226,124 @@
     <!-- ======== main-wrapper end =========== -->
 
     <%- include('partials/scripts.ejs') %>
+    <script>
+      (function ()
+      {
+        const form = document.getElementById('ai-chat-form');
+        const input = document.getElementById('ai-chat-input');
+        const submitButton = document.getElementById('ai-chat-submit');
+        const messages = document.getElementById('ai-chat-messages');
+        const errorText = document.getElementById('ai-chat-error');
+        const promptButtons = document.querySelectorAll('.ai-prompt-button');
+
+        if (!form || !input || !submitButton || !messages)
+        {
+          return;
+        }
+
+        messages.scrollTop = messages.scrollHeight;
+
+        promptButtons.forEach(function (button)
+        {
+          button.addEventListener('click', function ()
+          {
+            input.value = button.getAttribute('data-prompt') || '';
+            input.focus();
+          });
+        });
+
+        form.addEventListener('submit', async function (event)
+        {
+          event.preventDefault();
+
+          const message = input.value.trim();
+
+          if (!message)
+          {
+            showError('Ask a workout, exercise, meal, macro, hydration, or consistency question.');
+            return;
+          }
+
+          setLoading(true);
+          showError('');
+          appendMessage('user', message);
+          input.value = '';
+
+          try
+          {
+            const response = await fetch('/api/ai/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({ message })
+            });
+
+            const payload = await response.json().catch(function ()
+            {
+              return {};
+            });
+
+            if (!response.ok)
+            {
+              throw new Error(payload.error || 'AI coach is unavailable right now.');
+            }
+
+            appendMessage('assistant', payload.reply || 'Ask me about your workout, meals, or progress.');
+          }
+          catch (error)
+          {
+            showError(error.message || 'AI coach is unavailable right now.');
+          }
+          finally
+          {
+            setLoading(false);
+          }
+        });
+
+        function appendMessage(type, text)
+        {
+          const wrapper = document.createElement('div');
+          const paragraph = document.createElement('p');
+          const label = document.createElement('strong');
+
+          wrapper.className = 'mb-15';
+          wrapper.style.background = type === 'assistant' ? '#f8f8f8' : '#eef6ff';
+          wrapper.style.border = '1px solid #efefef';
+          wrapper.style.borderRadius = '6px';
+          wrapper.style.padding = '16px';
+
+          paragraph.className = 'text-sm mb-0';
+          label.textContent = type === 'assistant' ? 'AI Coach: ' : 'You: ';
+
+          paragraph.appendChild(label);
+          paragraph.appendChild(document.createTextNode(text));
+          wrapper.appendChild(paragraph);
+          messages.appendChild(wrapper);
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        function setLoading(isLoading)
+        {
+          submitButton.disabled = isLoading;
+          input.disabled = isLoading;
+          submitButton.textContent = isLoading ? 'Sending...' : 'Send Message';
+        }
+
+        function showError(message)
+        {
+          if (!message)
+          {
+            errorText.textContent = '';
+            errorText.classList.add('d-none');
+            return;
+          }
+
+          errorText.textContent = message;
+          errorText.classList.remove('d-none');
+        }
+      })();
+    </script>
   </body>
 </html>

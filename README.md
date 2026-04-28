@@ -15,6 +15,7 @@ FitAccess is a premium fitness member area built for upsell traffic. Customers b
 | Database | MySQL with Sequelize |
 | Auth | Secure email links, access sessions, optional activation codes |
 | Email | Resend |
+| AI Coach | Gemini API with scoped fitness safety rules |
 | Fitness Content | Sequelize migrations and seeders |
 | UI Assets | Bootstrap-based dashboard theme |
 
@@ -103,11 +104,23 @@ DB_USER=root
 DB_PASS=
 DB_NAME=fitaccess
 DB_DIALECT=mysql
+DB_POOL_MAX=10
+DB_POOL_MIN=0
+DB_POOL_ACQUIRE=30000
+DB_POOL_IDLE=10000
+DB_CONNECT_TIMEOUT=10000
+DB_LOGGING=false
 JWT_SECRET=change-this-secret
 SECRET=change-this-secret
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=FitAccess <noreply@example.com>
 UPSELL_WEBHOOK_TOKEN=
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_TIMEOUT_MS=9000
+GEMINI_MAX_OUTPUT_TOKENS=180
+AI_CHAT_RATE_LIMIT=6
+AI_CHAT_DAILY_LIMIT=40
 ```
 
 Run migrations:
@@ -139,5 +152,7 @@ http://localhost:3000/sign-in
 - The front-sell landing pages live outside this project.
 - This app owns the FitAccess member experience after the upsell purchase.
 - Workout and meal content is stored in the database, loaded by seeders, and personalized by goal, level, and training environment.
+- AI Coach only answers fitness, exercise, meal, macro, hydration, recovery, and habit questions. If `GEMINI_API_KEY` is empty, it falls back to a local scoped response.
+- AI Coach is tuned for scale with per-account minute limits, daily account quota, one in-flight AI request per account, short Gemini timeout, small output size, and database pool settings.
 - Admin routes exist in the codebase, but current product work is focused on the customer journey.
 - Resend emails are skipped locally if `RESEND_API_KEY` is not configured.
