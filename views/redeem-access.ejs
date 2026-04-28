@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <%- include('partials/head.ejs') %>
-    <title>FitAccess | Redeem Access</title>
+    <title>FitAccess | Activate Access</title>
   </head>
   <body>
     <% const data = redeemAccessData; %>
@@ -21,7 +21,7 @@
               <div class="row">
                 <div class="col-lg-6">
                   <div class="card-style mb-30">
-                    <img src="/images/logo/logo.svg" alt="logo" /><br><br>
+                    <img src="/images/logo/logo.svg" alt="FitAccess" /><br><br>
                     <div class="title mb-25">
                       <h2><%= data.page.title %></h2>
                       <p class="text-sm mt-10 mb-0">
@@ -29,7 +29,7 @@
                       </p>
                     </div>
 
-                    <form action="/redeem-access" method="POST">
+                    <form action="/activate" method="POST">
                       <div class="input-style-1">
                         <label>Email Address</label>
                         <input
@@ -56,11 +56,11 @@
 
                       <div class="d-flex flex-wrap gap-2">
                         <button type="submit" class="main-btn primary-btn btn-hover">
-                          Redeem Access
+                          Activate Access
                         </button>
 
-                        <a href="/login" class="main-btn light-btn btn-hover">
-                          Back to Login
+                        <a href="/sign-in" class="main-btn light-btn btn-hover">
+                          Back to Sign-In
                         </a>
                       </div>
                     </form>
@@ -95,7 +95,7 @@
 
                     <ul style="padding-left: 18px; margin-bottom: 0;">
                       <li class="text-sm mb-12">You entered the same purchase email</li>
-                      <li class="text-sm mb-12">Your access code has no extra spaces</li>
+                      <li class="text-sm mb-12">Your activation code has no extra spaces</li>
                       <li class="text-sm mb-12">You are using the latest code sent to you</li>
                     </ul>
                   </div>
@@ -106,7 +106,7 @@
                     </div>
 
                     <p class="text-sm mb-10">
-                      After redeeming successfully:
+                      After successful activation:
                     </p>
 
                     <ol style="padding-left: 18px; margin-bottom: 0;">

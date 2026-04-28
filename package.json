@@ -7,6 +7,8 @@
     "dev": "nodemon bootstrap/server.js",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "db:seed": "npx sequelize-cli db:seed:all",
+    "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
     "admin:promote": "node scripts/promoteAdmin.js"
   },
   "dependencies": {

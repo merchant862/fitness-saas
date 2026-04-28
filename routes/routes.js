@@ -27,18 +27,27 @@ const accessCodeController = require('../controllers/api/accessCodeController');
 const userController = require('../controllers/api/userController');
 const progressController = require('../controllers/api/progressController');
 const contentController = require('../controllers/api/contentController');
+const purchaseController = require('../controllers/api/purchaseController');
 
 router.get('/', function(req, res)
 {
-  return res.redirect(req.user ? '/dashboard' : '/login');
+  return res.redirect(req.user ? '/dashboard' : '/sign-in');
 });
-router.get('/login', loginViewController);
+router.get('/sign-in', loginViewController);
+router.post('/sign-in', authLimiter, authController.magicLinkRequest);
+router.get('/session/verify', authLimiter, authController.magicLinkVerify);
+router.get('/activate', redeemAccessViewController);
+router.post('/activate', authLimiter, authController.redeem);
+
+router.get('/login', function(req, res)
+{
+  return res.redirect('/sign-in');
+});
+
 router.get('/reset-password', resetPasswordViewController);
 router.get('/forgot-password', forgotPasswordViewController);
 router.post('/forgot-password', authLimiter, passwordController.forgot);
 router.post('/reset-password', authLimiter, passwordController.reset);
-router.post('/login', authLimiter, authController.magicLinkRequest);
-router.get('/magic-login', authLimiter, authController.magicLinkVerify);
 router.post('/logout', requireAuth, authController.logout);
 
 router.get('/dashboard', requireOnboarding, dashboardViewController);
@@ -52,9 +61,6 @@ router.get('/profile', requireOnboarding, profileViewController);
 router.get('/change-password', requireAuth, changePasswordViewController);
 router.post('/change-password', requireAuth, authLimiter, passwordController.update);
 
-router.get('/redeem-access', redeemAccessViewController);
-router.post('/redeem-access', authLimiter, authController.redeem);
-
 router.get('/admin', requireAdmin, adminDashboardViewController);
 router.get('/admin/users', requireAdmin, adminUsersViewController);
 router.get('/admin/access-codes', requireAdmin, adminAccessCodesViewController);
@@ -62,14 +68,15 @@ router.post('/admin/access-codes', requireAdmin, adminAccessCodeActionsControlle
 router.post('/admin/access-codes/:id/revoke', requireAdmin, adminAccessCodeActionsController.revoke);
 router.post('/admin/access-codes/:id/extend', requireAdmin, adminAccessCodeActionsController.extend);
 
-router.post('/api/auth/request-magic-link', authLimiter, authController.magicLinkRequest);
-router.get('/api/auth/verify-magic-link', authLimiter, authController.magicLinkVerify);
-router.post('/api/auth/redeem-access-code', authLimiter, authController.redeem);
+router.post('/api/sessions/email-link', authLimiter, authController.magicLinkRequest);
+router.get('/api/sessions/verify', authLimiter, authController.magicLinkVerify);
+router.post('/api/access-codes/redeem', authLimiter, authController.redeem);
 router.post('/api/auth/logout', requireAuth, authController.logout);
 router.get('/api/auth/session', requireAuth, authController.session);
 router.post('/api/auth/forgot-password', authLimiter, passwordController.forgot);
 router.post('/api/auth/reset-password', authLimiter, passwordController.reset);
 router.post('/api/auth/change-password', requireAuth, authLimiter, passwordController.update);
+router.post('/api/integrations/upsell-purchases', authLimiter, purchaseController.grantUpsellAccess);
 
 router.get('/api/dashboard', requireOnboarding, contentController.dashboard);
 router.get('/api/users/me', requireAuth, userController.me);

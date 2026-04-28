@@ -197,6 +197,64 @@ async function requestMagicLink(req, { email })
   return { user, token, email: normalizedEmail };
 }
 
+async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsell', metadata = {} })
+{
+  const normalizedEmail = normalizeEmail(email);
+  const expiresAt = addDays(days);
+
+  return sequelize.transaction(async (transaction) =>
+  {
+    const [user] = await User.findOrCreate({
+      where: { email: normalizedEmail },
+      defaults: {
+        email: normalizedEmail,
+        status: 'active',
+        accessExpiresAt: expiresAt,
+        tags: ['upsell_customer', 'access_granted'],
+        metadata
+      },
+      transaction
+    });
+
+    const tags = new Set(user.tags || []);
+    tags.add('upsell_customer');
+    tags.add('access_granted');
+
+    await user.update({
+      status: 'active',
+      accessExpiresAt: expiresAt,
+      tags: Array.from(tags),
+      metadata: {
+        ...(user.metadata || {}),
+        ...metadata,
+        source
+      }
+    }, { transaction });
+
+    await UserProfile.findOrCreate({
+      where: { userId: user.id },
+      defaults: { userId: user.id },
+      transaction
+    });
+
+    const token = generateToken(32);
+    await MagicLink.create({
+      userId: user.id,
+      tokenHash: sha256(token),
+      expiresAt: new Date(Date.now() + Number(process.env.MAGIC_LINK_TTL_MINUTES || 15) * 60 * 1000),
+      requestIp: clientIp(req),
+      userAgent: String(req.headers['user-agent'] || '').slice(0, 255)
+    }, { transaction });
+
+    return {
+      user,
+      token,
+      email: normalizedEmail,
+      accessExpiresAt: expiresAt
+    };
+  });
+}
+
 async function verifyMagicLink(req, res, token)
 {
   const link = await MagicLink.findOne({
@@ -224,6 +282,7 @@ async function verifyMagicLink(req, res, token)
 module.exports = {
   COOKIE_NAME,
   createAccessCode,
+  createPurchaseAccessLink,
   findUserForSession,
   issueSession,
   redeemAccessCode,

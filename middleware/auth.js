@@ -52,7 +52,7 @@ function requireAuth(req, res, next)
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  return res.redirect('/login');
+  return res.redirect('/sign-in');
 }
 
 function requireOnboarding(req, res, next)
@@ -86,7 +86,7 @@ function requireAdmin(req, res, next)
 
   if (!req.path.startsWith('/api/') && !req.user)
   {
-    return res.redirect('/login');
+    return res.redirect('/sign-in');
   }
 
   if (!req.path.startsWith('/api/'))

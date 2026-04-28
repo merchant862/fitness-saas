@@ -3,21 +3,40 @@
 const { trackEvent } = require('../../services/eventService');
 const { getDashboardContent, listMeals, listWorkouts, saveAiConversation } = require('../../services/contentService');
 
-async function dashboard(req, res)
+async function dashboard(req, res, next)
 {
-  return res.status(200).json({
-    ...getDashboardContent(req.user)
-  });
+  try
+  {
+    return res.status(200).json(await getDashboardContent(req.user));
+  }
+  catch (error)
+  {
+    next(error);
+  }
 }
 
-async function workoutIndex(req, res)
+async function workoutIndex(req, res, next)
 {
-  return res.status(200).json({ workouts: listWorkouts() });
+  try
+  {
+    return res.status(200).json(await listWorkouts(req.user));
+  }
+  catch (error)
+  {
+    next(error);
+  }
 }
 
-async function mealIndex(req, res)
+async function mealIndex(req, res, next)
 {
-  return res.status(200).json({ meals: listMeals() });
+  try
+  {
+    return res.status(200).json(await listMeals(req.user));
+  }
+  catch (error)
+  {
+    next(error);
+  }
 }
 
 async function aiChat(req, res, next)

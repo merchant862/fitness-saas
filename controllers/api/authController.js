@@ -59,10 +59,10 @@ async function magicLinkRequest(req, res, next)
 
     if (!req.path.startsWith('/api/'))
     {
-      return res.redirect('/login?sent=1');
+      return res.redirect('/sign-in?sent=1');
     }
 
-    return res.status(200).json({ message: 'If that email has active access, a login link has been sent.' });
+    return res.status(200).json({ message: 'If that email has active access, a secure sign-in link has been sent.' });
   }
   catch (error)
   {
@@ -83,6 +83,15 @@ async function magicLinkVerify(req, res, next)
 
     const user = await verifyMagicLink(req, res, token);
     await trackEvent(req, 'magic_link_login', {}, user.id);
+
+    if (req.path.startsWith('/api/'))
+    {
+      return res.status(200).json({
+        user: compactUser(user),
+        redirectTo: user.onboardingCompletedAt ? '/dashboard' : '/onboarding'
+      });
+    }
+
     return res.redirect(user.onboardingCompletedAt ? '/dashboard' : '/onboarding');
   }
   catch (error)
@@ -102,7 +111,7 @@ async function logout(req, res, next)
       return res.status(200).json({ ok: true });
     }
 
-    return res.redirect('/login');
+    return res.redirect('/sign-in');
   }
   catch (error)
   {

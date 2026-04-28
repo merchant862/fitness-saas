@@ -4,23 +4,23 @@ async function redeemAccessViewController(req, res, next)
     {
         const redeemAccessData = {
             page: {
-                title: 'Redeem Your Access',
-                subtitle: 'Enter your email and access code to unlock your fitness dashboard.'
+                title: 'Activate Your Fitness Access',
+                subtitle: 'Enter the purchase email and access code from your checkout email.'
             },
 
             defaultValues: {
-                email: 'saif@example.com',
-                accessCode: 'FIT-ACCESS-2026'
+                email: req.query.email || '',
+                accessCode: req.query.code || ''
             },
 
-            helpText: 'Use the same email you used during purchase. Your access code is usually sent by email after checkout.',
+            helpText: 'Use the same email used at checkout. Your access code is single-use and tied to that email.',
 
             statusCard: {
-                title: 'Instant Access',
-                description: 'Once your code is verified, you will be taken to onboarding and then your dashboard.',
+                title: 'Upsell Member Access',
+                description: 'After purchase verification, your FitAccess account unlocks without a password.',
                 items: [
-                    'No password required',
-                    'Fast access setup',
+                    'Secure email-based sign-in',
+                    'Single-use activation code',
                     'Personalized fitness plan'
                 ]
             }

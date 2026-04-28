@@ -62,7 +62,7 @@ async function reset(req, res, next)
       return res.status(200).json({ ok: true });
     }
 
-    return res.redirect('/login?passwordReset=1');
+    return res.redirect('/sign-in?passwordReset=1');
   }
   catch (error)
   {
