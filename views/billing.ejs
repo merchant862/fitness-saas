@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('partials/head.ejs') %>
+    <title>FitAccess | Billing</title>
+  </head>
+  <body>
+    <% const data = billingData; const coachWidgetEnabled = Boolean(data.paymentMethod); %>
+
+    <%- include('partials/spinner.ejs') %>
+    <%- include('partials/sidebar.ejs', { activePage: 'billing', billingLocked: !data.paymentMethod }) %>
+
+    <main class="main-wrapper">
+      <%- include('partials/header.ejs', {
+        pageTitle: 'Billing',
+        pageSubtitle: 'Add a verified card to unlock your fitness membership.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section billing-section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-lg-8">
+                <div class="title">
+                  <h2>Payment Method</h2>
+                  <p class="text-sm text-medium">
+                    Your card is verified by ResponseCRM. FitAccess stores only the last 4 digits and charge dates.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% if (data.message) { %>
+            <div class="alert-box <%= data.message.type === 'success' ? 'success-alert' : 'danger-alert' %> mb-25">
+              <p class="text-sm mb-0"><%= data.message.text %></p>
+            </div>
+          <% } %>
+
+          <div class="row">
+            <div class="col-xl-7 col-lg-8">
+              <div class="billing-card-shell mb-30">
+                <div class="billing-card-preview">
+                  <div class="billing-chip"></div>
+                  <div class="billing-card-number">
+                    **** **** **** <%= data.paymentMethod?.cardLast4 || '0000' %>
+                  </div>
+                  <div class="billing-card-meta">
+                    <span><%= data.currentUser.name %></span>
+                    <span><%= data.paymentMethod?.nextChargeAt || 'Next charge pending' %></span>
+                  </div>
+                  <div class="billing-brand-row" aria-label="Accepted cards">
+                    <span class="billing-brand visa">VISA</span>
+                    <span class="billing-brand mastercard">Mastercard</span>
+                    <span class="billing-brand amex">AMEX</span>
+                    <span class="billing-brand discover">Discover</span>
+                  </div>
+                </div>
+
+                <form action="/billing/payment-method" method="POST" autocomplete="on" class="billing-form">
+                  <input type="hidden" name="returnTo" value="/billing" />
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <div class="input-style-1">
+                        <label>Name on Card</label>
+                        <input type="text" name="cardHolderName" autocomplete="cc-name" required />
+                      </div>
+                    </div>
+
+                    <div class="col-md-12">
+                      <div class="input-style-1">
+                        <label>Card Number</label>
+                        <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4 col-6">
+                      <div class="input-style-1">
+                        <label>Month</label>
+                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" maxlength="2" required />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4 col-6">
+                      <div class="input-style-1">
+                        <label>Year</label>
+                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" maxlength="4" required />
+                      </div>
+                    </div>
+
+                    <div class="col-md-4">
+                      <div class="input-style-1">
+                        <label>CVV</label>
+                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="main-btn primary-btn btn-hover w-100">
+                    Save Payment Method
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-xl-5 col-lg-4">
+              <div class="card-style mb-30">
+                <div class="title">
+                  <h6 class="text-medium mb-20">Membership Status</h6>
+                </div>
+
+                <% if (data.paymentMethod) { %>
+                  <p class="text-sm mb-10"><strong>Card:</strong> **** **** **** <%= data.paymentMethod.cardLast4 %></p>
+                  <p class="text-sm mb-0"><strong>Next Charge:</strong> <%= data.paymentMethod.nextChargeAt || 'Pending' %></p>
+                <% } else { %>
+                  <p class="text-sm mb-10"><strong>Status:</strong> Card required</p>
+                  <p class="text-sm mb-0">Dashboard, workouts, meals, AI Coach, and progress unlock after a card is verified.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/scripts.ejs') %>
+  </body>
+</html>

@@ -10,9 +10,11 @@ async function changePasswordViewController(req, res, next)
                 role: req.user?.role
             },
 
+            hasPassword: Boolean(req.user?.passwordHash),
             note: req.user?.passwordHash
                 ? 'Use a strong password that you have not used before.'
                 : 'No password is set yet. Leave current password empty and create a new one.',
+            returnTo: req.query.setup ? '/billing' : '/change-password',
             message: req.query.updated ? 'Password updated successfully.' : null
         };
 

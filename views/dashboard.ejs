@@ -77,10 +77,6 @@
                       View Meals
                     </a>
 
-                    <a href="/ai-coach" class="main-btn success-btn btn-hover btn-sm">
-                      Ask AI Coach
-                    </a>
-
                     <a href="/progress" class="main-btn orange-btn btn-hover btn-sm">
                       Check Progress
                     </a>
@@ -149,7 +145,7 @@
           </div>
           <!-- ========== stats cards end ========== -->
 
-          <!-- ========== workout + ai start ========== -->
+          <!-- ========== workout + ai coach start ========== -->
           <div class="row">
             <div class="col-lg-7">
               <div class="card-style mb-30">
@@ -199,18 +195,18 @@
                 </div>
 
                 <p class="text-sm" style="line-height: 1.8;">
-                  <%= data.aiTip %>
+                  <%= data.coachTip %>
                 </p>
 
                 <div class="mt-20">
-                  <a href="/ai-coach" class="main-btn light-btn btn-hover btn-sm">
+                  <button type="button" class="main-btn light-btn btn-hover btn-sm" onclick="document.querySelector('[data-coach-toggle]')?.click()">
                     Ask AI Coach
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-          <!-- ========== workout + ai end ========== -->
+          <!-- ========== workout + ai coach end ========== -->
 
           <!-- ========== meals + progress start ========== -->
           <div class="row">

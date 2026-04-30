@@ -4,7 +4,7 @@
 
 # FitAccess
 
-FitAccess is a premium fitness member area for checkout upsells. The front-sell funnel lives outside this app; when a customer accepts the fitness upsell, the funnel calls FitAccess, FitAccess grants membership, and the customer receives a secure email sign-in link.
+FitAccess is a premium fitness member area for checkout upsells. The front-sell funnel lives outside this app; when a customer accepts the fitness upsell, the funnel calls FitAccess, FitAccess charges through ResponseCRM, grants membership, and sends a secure first-access email.
 
 ## Stack
 
@@ -13,22 +13,28 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 | Server | Node.js, Express |
 | Views | EJS templates |
 | Database | MySQL, Sequelize |
-| Auth | Secure email links, JWT sessions, optional activation codes |
+| Auth | Password login, secure first-access links, JWT sessions, optional activation codes |
 | Email | Resend |
-| AI Coach | Gemini API with scoped fitness safety rules |
+| Payments | ResponseCRM Add Order / payment update API |
+| Coach Chat | Pattern-based fitness coach widget |
 | Content | Sequelize migrations and seeders |
 | UI | Bootstrap-based dashboard assets |
 
 ## Implemented
 
 - Upsell purchase access endpoint.
-- Secure sign-in link flow.
+- ResponseCRM upsell payment capture before membership delivery.
+- Saved billing reference with card last 4 and charge dates only.
+- Member card update form on the profile page.
+- Billing lock that redirects members without a saved card to `/billing`.
+- Password login for active members.
+- Secure first-access and password-reset email links.
 - Optional single-use activation codes.
 - Onboarding by goal, level, environment, weight, and workout days.
-- User dashboard, workouts, meals, AI coach, progress, and profile.
+- User dashboard, workouts, meals, coach widget, progress, and profile.
 - DB-backed workout and meal content from seeders.
-- Gemini AI Coach with fallback response when no API key is configured.
-- AI safety scope, prompt-injection filtering, per-account rate limit, daily quota, and one in-flight request per account.
+- Pattern-based coach chat using member workout and meal context.
+- Coach safety scope, prompt-injection filtering, per-account rate limit, daily quota, and one in-flight request per account.
 - Admin dashboard, users, CSV export, access codes, content overview, workout plan editing, and meal plan editing.
 
 ## User Flow
@@ -36,11 +42,13 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 1. Customer buys the external front-sell product.
 2. Customer accepts the FitAccess upsell during checkout.
 3. Funnel calls `POST /api/integrations/upsell-purchases`.
-4. FitAccess creates or updates the customer account.
-5. FitAccess emails a secure sign-in link.
-6. Customer opens `/session/verify?token=...`.
-7. Customer completes onboarding.
-8. Dashboard, workouts, meals, AI coach, profile, and progress unlock.
+4. FitAccess sends the upsell order and card details to ResponseCRM.
+5. After ResponseCRM approval, FitAccess stores only card last 4, charge date, next charge date, and external CRM ids.
+6. FitAccess creates or updates the customer account.
+7. FitAccess emails a secure first-access link.
+8. Customer opens `/session/verify?token=...`.
+9. Customer completes onboarding, sets a password, and adds billing if required.
+10. Future sign-ins use email and password.
 
 ## Setup
 
@@ -88,20 +96,29 @@ PASSWORD_RESET_TTL_MINUTES=30
 DEFAULT_ACCESS_DAYS=30
 AUTH_RATE_LIMIT=20
 API_RATE_LIMIT=120
+UPSELL_WEBHOOK_RATE_LIMIT=5000
 
 ADMIN_API_TOKEN=
 ADMIN_EMAIL=
 UPSELL_WEBHOOK_TOKEN=
 
+RESPONSE_CRM_API_KEY=
+RESPONSE_CRM_API_KEY_HEADER=Authorization
+RESPONSE_CRM_API_KEY_PREFIX=Bearer
+RESPONSE_CRM_ADD_ORDER_URL=
+RESPONSE_CRM_UPDATE_PAYMENT_URL=
+RESPONSE_CRM_TIMEOUT_MS=15000
+RESPONSE_CRM_SITE_ID=
+RESPONSE_CRM_CAMPAIGN_ID=
+RESPONSE_CRM_PRODUCT_ID=
+RESPONSE_CRM_OFFER_ID=
+RESPONSE_CRM_RECURRING_DAYS=30
+
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=FitAccess <noreply@example.com>
 
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash-lite
-GEMINI_TIMEOUT_MS=9000
-GEMINI_MAX_OUTPUT_TOKENS=180
-AI_CHAT_RATE_LIMIT=6
-AI_CHAT_DAILY_LIMIT=40
+COACH_CHAT_RATE_LIMIT=12
+COACH_CHAT_DAILY_LIMIT=80
 ```
 
 Run migrations:
@@ -144,20 +161,21 @@ http://localhost:3000/sign-in
 
 | Route | Purpose |
 | --- | --- |
-| `GET /sign-in` | Email sign-in page |
-| `POST /sign-in` | Send secure sign-in link |
+| `GET /sign-in` | Member sign-in page |
+| `POST /sign-in` | Password login |
 | `GET /session/verify` | Verify secure sign-in token |
 | `GET /activate` | Activation-code page |
 | `POST /activate` | Redeem activation code |
 | `GET /onboarding` | First-time profile setup |
 | `POST /onboarding` | Save onboarding |
+| `GET /billing` | Required card setup for members without billing |
 | `GET /dashboard` | Member dashboard |
 | `GET /workouts` | Workout plan |
 | `GET /meals` | Meal planner |
-| `GET /ai-coach` | AI fitness coach |
 | `GET /progress` | Progress tracking |
 | `GET /profile` | Profile settings |
 | `POST /profile` | Save profile settings |
+| `POST /billing/payment-method` | Update member card through ResponseCRM |
 
 ## API Routes
 
@@ -165,6 +183,7 @@ http://localhost:3000/sign-in
 | --- | --- |
 | `POST /api/integrations/upsell-purchases` | Grant access after upsell purchase |
 | `POST /api/sessions/email-link` | Send secure sign-in email |
+| `POST /api/sessions/password` | Password login |
 | `GET /api/sessions/verify` | Verify secure sign-in token |
 | `POST /api/access-codes/redeem` | Redeem activation code |
 | `GET /api/auth/session` | Current session |
@@ -173,9 +192,11 @@ http://localhost:3000/sign-in
 | `GET /api/workouts` | Workout content |
 | `POST /api/workouts/:id/complete` | Mark workout complete |
 | `GET /api/meals` | Meal content |
-| `POST /api/ai/chat` | AI Coach chat |
+| `POST /api/coach/chat` | Coach widget chat |
 | `GET /api/progress` | Progress data |
 | `POST /api/progress/weight` | Log weight |
+| `GET /api/billing/payment-method` | Current saved billing reference |
+| `POST /api/billing/payment-method` | Update member card through ResponseCRM |
 
 ## Admin Routes
 
@@ -209,11 +230,42 @@ curl -X POST http://localhost:3000/api/integrations/upsell-purchases \
     "funnelId": "frontsell-main",
     "amount": "29.00",
     "currency": "USD",
-    "accessDays": 30
+    "accessDays": 30,
+    "paymentMethod": {
+      "cardNumber": "4111111111111111",
+      "expiryMonth": "12",
+      "expiryYear": "2030",
+      "cvv": "123",
+      "cardHolderName": "Customer Name"
+    }
   }'
 ```
 
 If `UPSELL_WEBHOOK_TOKEN` is empty, the endpoint accepts requests without the token. Set it in production.
+
+### ResponseCRM Payments
+
+ResponseCRM docs describe Add Order as the checkout and upsell endpoint, with product IDs required for billing/checkout/upsell pages. FitAccess uses that flow through `RESPONSE_CRM_ADD_ORDER_URL`.
+
+Required production values:
+
+```env
+RESPONSE_CRM_API_KEY=your-responsecrm-open-api-key
+RESPONSE_CRM_ADD_ORDER_URL=https://...
+RESPONSE_CRM_UPDATE_PAYMENT_URL=https://...
+RESPONSE_CRM_SITE_ID=...
+RESPONSE_CRM_CAMPAIGN_ID=...
+RESPONSE_CRM_PRODUCT_ID=...
+```
+
+Security rule: card number and CVV are forwarded to ResponseCRM only. FitAccess stores only:
+
+- `card_last4`
+- `last_charged_at`
+- `next_charge_at`
+- external ResponseCRM customer/order/transaction ids
+
+Do not log webhook request bodies in production.
 
 ## Fitness Content
 
@@ -238,26 +290,19 @@ Meal matching uses:
 
 Admins can review and edit plan-level fields from `/admin/content`.
 
-## AI Coach
+## Coach Widget
 
-AI Coach uses Gemini when `GEMINI_API_KEY` is configured. Without the key, the app returns a local scoped fallback response.
+The coach widget is a deterministic assistant, not an external AI model. It uses predefined intent patterns plus each member's goal, workout plan, meal plan, and progress context.
 
 Safety and cost controls:
 
 - Only answers fitness, workouts, exercises, meals, macros, hydration, recovery, sleep, habits, and consistency questions.
 - Blocks prompt-injection and requests for secrets, prompts, admin details, database details, or unrelated topics.
 - Does not diagnose medical conditions or replace qualified professionals.
-- Per-account minute limit: `AI_CHAT_RATE_LIMIT`.
-- Daily per-account limit: `AI_CHAT_DAILY_LIMIT`.
-- One in-flight AI request per account.
-- Gemini timeout: `GEMINI_TIMEOUT_MS`.
-- Output cap: `GEMINI_MAX_OUTPUT_TOKENS`.
-
-Recommended starting model:
-
-```env
-GEMINI_MODEL=gemini-2.5-flash-lite
-```
+- Per-account minute limit: `COACH_CHAT_RATE_LIMIT`.
+- Daily per-account limit: `COACH_CHAT_DAILY_LIMIT`.
+- One in-flight coach request per account.
+- Rendered as a bottom-right widget on member pages.
 
 ## Admin Access
 
@@ -275,10 +320,9 @@ Admin pages also accept `X-Admin-Token` when `ADMIN_API_TOKEN` is configured, us
 - Set `APP_URL` to the real HTTPS app URL.
 - Configure `RESEND_API_KEY` and verified `RESEND_FROM_EMAIL`.
 - Configure `UPSELL_WEBHOOK_TOKEN` before connecting an external funnel.
-- Configure `GEMINI_API_KEY` for live AI responses.
 - Keep `DB_LOGGING=false` in production.
 - Tune `DB_POOL_MAX` based on server size and MySQL capacity.
-- For multiple Node instances, use Redis-backed rate limiting later. Daily AI quota is already database-backed.
+- For multiple Node instances, use Redis-backed rate limiting later. Daily coach quota is already database-backed.
 
 ## Current Status
 

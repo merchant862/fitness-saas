@@ -1,5 +1,5 @@
 <!-- ======== sidebar-nav start =========== -->
-<aside class="sidebar-nav-wrapper">
+<aside class="sidebar-nav-wrapper <%= typeof billingLocked !== 'undefined' && billingLocked ? 'billing-locked' : '' %>">
   <div class="navbar-logo">
     <a href="/dashboard">
       <img src="/images/logo/logo.svg" alt="logo" />
@@ -36,15 +36,6 @@
       </li>
 
       <li class="nav-item">
-        <a href="/ai-coach" class="<%= activePage === 'ai-coach' ? 'active' : '' %>">
-          <span class="icon">
-            <i class="lni lni-user"></i>
-          </span>
-          <span class="text">AI Coach</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
         <a href="/progress" class="<%= activePage === 'progress' ? 'active' : '' %>">
           <span class="icon">
             <i class="lni lni-bar-chart"></i>
@@ -59,6 +50,15 @@
             <i class="lni lni-user"></i>
           </span>
           <span class="text">Profile</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="/billing" class="<%= activePage === 'billing' ? 'active' : '' %>">
+          <span class="icon">
+            <i class="lni lni-credit-cards"></i>
+          </span>
+          <span class="text">Billing</span>
         </a>
       </li>
 

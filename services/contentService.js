@@ -40,7 +40,7 @@ async function getDashboardContent(user)
       weeklyChange: progressData.weeklyChange,
       completionRate: workoutData.summary.completionRate
     },
-    aiTip: buildDailyTip(user.profile?.goal)
+    coachTip: buildDailyTip(user.profile?.goal)
   };
 }
 
@@ -124,7 +124,7 @@ async function listMeals(user = null)
   return getMealContent(user);
 }
 
-async function saveAiConversation(userId, message, reply)
+async function saveCoachConversation(userId, message, reply)
 {
   await AiMessage.bulkCreate([
     { userId, role: 'user', content: message },
@@ -392,5 +392,5 @@ module.exports = {
   getWorkoutContent,
   listMeals,
   listWorkouts,
-  saveAiConversation
+  saveCoachConversation
 };

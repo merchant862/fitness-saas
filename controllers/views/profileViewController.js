@@ -1,12 +1,22 @@
 'use strict';
 
-const { WorkoutCompletion } = require('../../database/models');
+const { PaymentMethod, WorkoutCompletion } = require('../../database/models');
 
 async function profileViewController(req, res, next)
 {
     try
     {
-        const workoutsCompleted = await WorkoutCompletion.count({ where: { userId: req.user.id } });
+        const [workoutsCompleted, paymentMethod] = await Promise.all([
+            WorkoutCompletion.count({ where: { userId: req.user.id } }),
+            PaymentMethod.findOne({
+                where: {
+                    userId: req.user.id,
+                    provider: 'responsecrm',
+                    status: 'active'
+                },
+                order: [['createdAt', 'DESC']]
+            })
+        ]);
         const currentUser = presentUser(req.user);
 
         const profileData = {
@@ -27,8 +37,10 @@ async function profileViewController(req, res, next)
                 workoutsCompleted,
                 mealsFollowed: 0
             },
+            billing: presentPaymentMethod(paymentMethod),
             note: 'Your profile settings help personalize your workouts, meals, and AI guidance.',
-            message: req.query.updated ? 'Profile updated successfully.' : null
+            message: req.query.updated ? 'Profile updated successfully.' : null,
+            billingMessage: billingMessage(req.query.billing)
         };
 
         return res.status(200).render('../views/profile.ejs', { profileData });
@@ -37,6 +49,45 @@ async function profileViewController(req, res, next)
     {
         next(error);
     }
+}
+
+function presentPaymentMethod(paymentMethod)
+{
+    if (!paymentMethod)
+    {
+        return {
+            cardLast4: null,
+            nextChargeAt: null,
+            status: 'Not added'
+        };
+    }
+
+    return {
+        cardLast4: paymentMethod.cardLast4,
+        nextChargeAt: paymentMethod.nextChargeAt ? paymentMethod.nextChargeAt.toISOString().slice(0, 10) : null,
+        status: label(paymentMethod.status)
+    };
+}
+
+function billingMessage(value)
+{
+    if (value === 'updated')
+    {
+        return {
+            type: 'success',
+            text: 'Payment method updated successfully.'
+        };
+    }
+
+    if (value === 'failed')
+    {
+        return {
+            type: 'danger',
+            text: 'Payment method could not be updated. Please check the card details and try again.'
+        };
+    }
+
+    return null;
 }
 
 function presentUser(user)

@@ -19,6 +19,7 @@ const {
   sha256
 } = require('../utils/securityUtils');
 const { authCookieOptions, jwtOptions, jwtSecret } = require('../utils/jwtUtils');
+const { verifyPassword } = require('../utils/passwordUtils');
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'fitaccess_token';
 const SESSION_DAYS = Number(process.env.JWT_EXPIRES_DAYS || 14);
@@ -197,6 +198,30 @@ async function requestMagicLink(req, { email })
   return { user, token, email: normalizedEmail };
 }
 
+async function loginWithPassword(req, res, { email, password })
+{
+  const normalizedEmail = normalizeEmail(email);
+  const user = await User.findOne({
+    where: {
+      email: normalizedEmail,
+      status: 'active',
+      accessExpiresAt: { [Op.gt]: new Date() }
+    },
+    include: [{ model: UserProfile, as: 'profile' }]
+  });
+
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash))
+  {
+    const error = new Error('Invalid email or password');
+    error.status = 401;
+    throw error;
+  }
+
+  await user.update({ lastLoginAt: new Date() });
+  await issueSession(req, res, user);
+  return user;
+}
+
 async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsell', metadata = {} })
 {
   const normalizedEmail = normalizeEmail(email);
@@ -285,6 +310,7 @@ module.exports = {
   createPurchaseAccessLink,
   findUserForSession,
   issueSession,
+  loginWithPassword,
   redeemAccessCode,
   requestMagicLink,
   revokeCurrentSession,

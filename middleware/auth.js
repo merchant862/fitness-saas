@@ -1,6 +1,7 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
+const { PaymentMethod } = require('../database/models');
 const { COOKIE_NAME, findUserForSession } = require('../services/authService');
 const { jwtOptions, jwtSecret } = require('../utils/jwtUtils');
 
@@ -70,6 +71,68 @@ function requireOnboarding(req, res, next)
   return res.redirect('/onboarding');
 }
 
+async function requireBilling(req, res, next)
+{
+  if (!req.user)
+  {
+    return requireAuth(req, res, next);
+  }
+
+  try
+  {
+    const paymentMethod = await PaymentMethod.findOne({
+      where: {
+        userId: req.user.id,
+        provider: 'responsecrm',
+        status: 'active'
+      }
+    });
+
+    if (paymentMethod)
+    {
+      req.paymentMethod = paymentMethod;
+      return next();
+    }
+
+    if (req.path.startsWith('/api/'))
+    {
+      return res.status(402).json({
+        error: 'Payment method required',
+        billingUrl: '/billing'
+      });
+    }
+
+    return res.redirect('/billing');
+  }
+  catch (error)
+  {
+    next(error);
+  }
+}
+
+function requirePasswordSetup(req, res, next)
+{
+  if (!req.user)
+  {
+    return requireAuth(req, res, next);
+  }
+
+  if (req.user.passwordHash)
+  {
+    return next();
+  }
+
+  if (req.path.startsWith('/api/'))
+  {
+    return res.status(428).json({
+      error: 'Password setup required',
+      passwordSetupUrl: '/change-password'
+    });
+  }
+
+  return res.redirect('/change-password?setup=1');
+}
+
 function requireAdmin(req, res, next)
 {
   const adminHeader = req.headers['x-admin-token'];
@@ -113,5 +176,7 @@ module.exports = {
   attachUser,
   requireAdmin,
   requireAuth,
-  requireOnboarding
+  requireBilling,
+  requireOnboarding,
+  requirePasswordSetup
 };

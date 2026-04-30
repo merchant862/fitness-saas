@@ -1,8 +1,8 @@
 'use strict';
 
 const { trackEvent } = require('../../services/eventService');
-const { getDashboardContent, listMeals, listWorkouts, saveAiConversation } = require('../../services/contentService');
-const { generateCoachReply } = require('../../services/aiCoachService');
+const { getDashboardContent, listMeals, listWorkouts, saveCoachConversation } = require('../../services/contentService');
+const { generateCoachReply } = require('../../services/coachBotService');
 
 async function dashboard(req, res, next)
 {
@@ -40,7 +40,7 @@ async function mealIndex(req, res, next)
   }
 }
 
-async function aiChat(req, res, next)
+async function coachChat(req, res, next)
 {
   try
   {
@@ -52,8 +52,8 @@ async function aiChat(req, res, next)
     }
 
     const reply = await generateCoachReply(req, message);
-    await saveAiConversation(req.user.id, message, reply);
-    await trackEvent(req, 'ai_chat_used', { length: message.length }, req.user.id);
+    await saveCoachConversation(req.user.id, message, reply);
+    await trackEvent(req, 'coach_chat_used', { length: message.length }, req.user.id);
 
     return res.status(200).json({ reply });
   }
@@ -64,7 +64,7 @@ async function aiChat(req, res, next)
 }
 
 module.exports = {
-  aiChat,
+  coachChat,
   dashboard,
   mealIndex,
   workoutIndex

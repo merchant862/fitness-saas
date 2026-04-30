@@ -34,21 +34,30 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests' }
 });
 
-const aiChatLimiter = rateLimit({
+const coachChatLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: Number(process.env.AI_CHAT_RATE_LIMIT || 8),
+  limit: Number(process.env.COACH_CHAT_RATE_LIMIT || 12),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: function(req)
   {
     return req.user ? `user:${req.user.id}` : `ip:${ipKeyGenerator(req.ip)}`;
   },
-  message: { error: 'AI coach limit reached. Please wait a minute before sending another message.' }
+  message: { error: 'Coach chat limit reached. Please wait a minute before sending another message.' }
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: Number(process.env.UPSELL_WEBHOOK_RATE_LIMIT || 5000),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many webhook requests' }
 });
 
 module.exports = {
-  aiChatLimiter,
+  coachChatLimiter,
   apiLimiter,
   authLimiter,
-  securityHeaders
+  securityHeaders,
+  webhookLimiter
 };

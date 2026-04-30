@@ -3,6 +3,7 @@
 const { trackEvent } = require('../../services/eventService');
 const { sendResendEmail } = require('../../apis/resendApi');
 const {
+  loginWithPassword,
   redeemAccessCode,
   requestMagicLink,
   revokeCurrentSession,
@@ -10,6 +11,40 @@ const {
 } = require('../../services/authService');
 const { compactUser, isEmail } = require('../../utils/securityUtils');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
+
+async function passwordLogin(req, res, next)
+{
+  try
+  {
+    const { email, password } = req.body;
+
+    if (!isEmail(email) || !password)
+    {
+      return respondLoginFailure(req, res, 'Valid email and password are required.');
+    }
+
+    const user = await loginWithPassword(req, res, { email, password });
+    await trackEvent(req, 'password_login', {}, user.id);
+
+    const redirectTo = user.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+
+    if (req.path.startsWith('/api/'))
+    {
+      return res.status(200).json({ user: compactUser(user), redirectTo });
+    }
+
+    return res.redirect(redirectTo);
+  }
+  catch (error)
+  {
+    if (error.status && error.status < 500)
+    {
+      return respondLoginFailure(req, res, error.message);
+    }
+
+    next(error);
+  }
+}
 
 async function redeem(req, res, next)
 {
@@ -128,6 +163,17 @@ module.exports = {
   logout,
   magicLinkRequest,
   magicLinkVerify,
+  passwordLogin,
   redeem,
   session
 };
+
+function respondLoginFailure(req, res, message)
+{
+  if (req.path.startsWith('/api/'))
+  {
+    return res.status(401).json({ error: message });
+  }
+
+  return res.redirect(`/sign-in?error=${encodeURIComponent(message)}`);
+}

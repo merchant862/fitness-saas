@@ -1,0 +1,45 @@
+<div class="coach-widget" data-coach-widget>
+  <button class="coach-widget-toggle" type="button" aria-label="Open FitAccess AI Coach" data-coach-toggle>
+    <i class="lni lni-comments-alt"></i>
+    <span>AI Coach</span>
+  </button>
+
+  <div class="coach-widget-panel" data-coach-panel aria-hidden="true">
+    <div class="coach-widget-header">
+      <div>
+        <p>FitAccess AI Coach</p>
+        <strong>Personalized fitness guidance</strong>
+      </div>
+      <button type="button" aria-label="Close coach" data-coach-close>
+        <i class="lni lni-close"></i>
+      </button>
+    </div>
+
+    <div class="coach-widget-messages" data-coach-messages>
+      <div class="coach-message coach-message-assistant">
+        Ask me about today's workout, meals, exercises, macros, hydration, or consistency.
+      </div>
+    </div>
+
+    <div class="coach-widget-prompts">
+      <button type="button" data-coach-prompt="What is my workout today?">Today workout</button>
+      <button type="button" data-coach-prompt="What should I eat today?">Meals</button>
+      <button type="button" data-coach-prompt="How do I stay consistent?">Consistency</button>
+    </div>
+
+    <form class="coach-widget-form" data-coach-form>
+      <input
+        type="text"
+        name="message"
+        maxlength="500"
+        autocomplete="off"
+        placeholder="Ask AI about workouts or meals"
+        data-coach-input
+      />
+      <button type="submit" aria-label="Send message">
+        <i class="lni lni-telegram-original"></i>
+      </button>
+    </form>
+    <p class="coach-widget-error" data-coach-error></p>
+  </div>
+</div>

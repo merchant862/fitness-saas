@@ -89,12 +89,24 @@ async function update(req, res, next)
       return res.status(200).json({ ok: true });
     }
 
-    return res.redirect('/change-password?updated=1');
+    return res.redirect(safeReturnTo(req.body.returnTo, '/change-password?updated=1'));
   }
   catch (error)
   {
     next(error);
   }
+}
+
+function safeReturnTo(value, fallback)
+{
+  const path = String(value || '').trim();
+
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://'))
+  {
+    return fallback;
+  }
+
+  return path.includes('?') ? `${path}&passwordUpdated=1` : `${path}?passwordUpdated=1`;
 }
 
 module.exports = {
