@@ -10,7 +10,9 @@ const {
   verifyMagicLink
 } = require('../../services/authService');
 const { compactUser, isEmail } = require('../../utils/securityUtils');
+const { getPostAuthRedirect } = require('../../utils/profileCompletion');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
+const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 
 async function passwordLogin(req, res, next)
 {
@@ -26,14 +28,13 @@ async function passwordLogin(req, res, next)
     const user = await loginWithPassword(req, res, { email, password });
     await trackEvent(req, 'password_login', {}, user.id);
 
-    const redirectTo = user.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+    const redirectTo = getPostAuthRedirect(user);
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({ user: compactUser(user), redirectTo });
-    }
-
-    return res.redirect(redirectTo);
+    return successResponse(req, res, {
+      message: 'Signed in successfully.',
+      redirectTo,
+      data: { user: compactUser(user) }
+    });
   }
   catch (error)
   {
@@ -54,18 +55,17 @@ async function redeem(req, res, next)
 
     if (!isEmail(email) || !accessCode)
     {
-      return res.status(422).json({ error: 'Valid email and access code are required' });
+      return errorResponse(req, res, { message: 'Valid email and access code are required' });
     }
 
     const user = await redeemAccessCode(req, res, { email, accessCode });
     await trackEvent(req, 'access_code_redeemed', {}, user.id);
 
-    if (!req.path.startsWith('/api/'))
-    {
-      return res.redirect(user.onboardingCompletedAt ? '/dashboard' : '/onboarding');
-    }
-
-    return res.status(200).json({ user: compactUser(user), redirectTo: user.onboardingCompletedAt ? '/dashboard' : '/onboarding' });
+    return successResponse(req, res, {
+      message: 'Access activated successfully.',
+      redirectTo: getPostAuthRedirect(user),
+      data: { user: compactUser(user) }
+    });
   }
   catch (error)
   {
@@ -81,7 +81,7 @@ async function magicLinkRequest(req, res, next)
 
     if (!isEmail(email))
     {
-      return res.status(422).json({ error: 'Valid email is required' });
+      return errorResponse(req, res, { message: 'Valid email is required' });
     }
 
     const result = await requestMagicLink(req, { email });
@@ -92,12 +92,10 @@ async function magicLinkRequest(req, res, next)
       await trackEvent(req, 'magic_link_requested', {}, result.user.id);
     }
 
-    if (!req.path.startsWith('/api/'))
-    {
-      return res.redirect('/sign-in?sent=1');
-    }
-
-    return res.status(200).json({ message: 'If that email has active access, a secure sign-in link has been sent.' });
+    return successResponse(req, res, {
+      message: 'If that email has active access, a secure sign-in link has been sent.',
+      redirectTo: '/sign-in'
+    });
   }
   catch (error)
   {
@@ -113,21 +111,17 @@ async function magicLinkVerify(req, res, next)
 
     if (!token)
     {
-      return res.status(422).json({ error: 'Token is required' });
+      return errorResponse(req, res, { message: 'Token is required' });
     }
 
     const user = await verifyMagicLink(req, res, token);
     await trackEvent(req, 'magic_link_login', {}, user.id);
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({
-        user: compactUser(user),
-        redirectTo: user.onboardingCompletedAt ? '/dashboard' : '/onboarding'
-      });
-    }
-
-    return res.redirect(user.onboardingCompletedAt ? '/dashboard' : '/onboarding');
+    return successResponse(req, res, {
+      message: 'Signed in successfully.',
+      redirectTo: getPostAuthRedirect(user),
+      data: { user: compactUser(user) }
+    });
   }
   catch (error)
   {
@@ -141,12 +135,10 @@ async function logout(req, res, next)
   {
     await revokeCurrentSession(req, res);
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({ ok: true });
-    }
-
-    return res.redirect('/sign-in');
+    return successResponse(req, res, {
+      message: 'Signed out successfully.',
+      redirectTo: '/sign-in'
+    });
   }
   catch (error)
   {
@@ -172,8 +164,8 @@ function respondLoginFailure(req, res, message)
 {
   if (req.path.startsWith('/api/'))
   {
-    return res.status(401).json({ error: message });
+    return errorResponse(req, res, { message, status: 401 });
   }
 
-  return res.redirect(`/sign-in?error=${encodeURIComponent(message)}`);
+  return errorResponse(req, res, { message, status: 401, redirectTo: '/sign-in' });
 }

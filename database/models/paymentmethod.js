@@ -8,22 +8,9 @@ module.exports = (sequelize, DataTypes) =>
       allowNull: false,
       field: 'user_id'
     },
-    provider: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      defaultValue: 'responsecrm'
-    },
-    externalCustomerId: {
+    customerId: {
       type: DataTypes.STRING(120),
-      field: 'external_customer_id'
-    },
-    externalOrderId: {
-      type: DataTypes.STRING(120),
-      field: 'external_order_id'
-    },
-    externalTransactionId: {
-      type: DataTypes.STRING(120),
-      field: 'external_transaction_id'
+      field: 'customer_id'
     },
     cardLast4: {
       type: DataTypes.STRING(4),
@@ -34,19 +21,14 @@ module.exports = (sequelize, DataTypes) =>
       type: DataTypes.DATE,
       field: 'last_charged_at'
     },
-    nextChargeAt: {
+    nextChargedAt: {
       type: DataTypes.DATE,
-      field: 'next_charge_at'
+      field: 'next_charged_at'
     },
     status: {
       type: DataTypes.ENUM('active', 'failed', 'replaced'),
       allowNull: false,
       defaultValue: 'active'
-    },
-    metadata: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: {}
     }
   }, {
     tableName: 'payment_methods',

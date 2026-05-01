@@ -54,10 +54,10 @@ module.exports = (sequelize, DataTypes) =>
   {
     User.hasOne(models.UserProfile, { foreignKey: 'userId', as: 'profile' });
     User.hasMany(models.AccessCode, { foreignKey: 'userId', as: 'accessCodes' });
-    User.hasMany(models.UserSession, { foreignKey: 'userId', as: 'sessions' });
     User.hasMany(models.PasswordResetToken, { foreignKey: 'userId', as: 'passwordResetTokens' });
     User.hasMany(models.WeightLog, { foreignKey: 'userId', as: 'weightLogs' });
     User.hasMany(models.WorkoutCompletion, { foreignKey: 'userId', as: 'workoutCompletions' });
+    User.hasMany(models.MealCompletion, { foreignKey: 'userId', as: 'mealCompletions' });
     User.hasMany(models.Event, { foreignKey: 'userId', as: 'events' });
     User.hasMany(models.AiMessage, { foreignKey: 'userId', as: 'aiMessages' });
     User.hasMany(models.PaymentMethod, { foreignKey: 'userId', as: 'paymentMethods' });

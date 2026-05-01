@@ -65,7 +65,12 @@
                       <div class="col-12">
                         <div class="input-style-1">
                           <label>Password</label>
-                          <input type="password" name="password" placeholder="Password" autocomplete="current-password" required />
+                          <div class="password-field">
+                            <input type="password" name="password" placeholder="Password" autocomplete="current-password" required />
+                            <button type="button" class="password-toggle-btn" data-password-toggle aria-label="Show password">
+                              <i class="lni lni-eye"></i>
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <!-- end col -->
@@ -90,11 +95,6 @@
                           <button class="main-btn primary-btn btn-hover w-100 text-center">
                             Sign In
                           </button>
-                        </div>
-                      </div>
-                      <div class="col-12">
-                        <div class="text-center mt-20">
-                          <a href="/activate" class="hover-underline">Activate new access</a>
                         </div>
                       </div>
                     </div>

@@ -1,14 +1,18 @@
 'use strict';
 
+const { Op } = require('sequelize');
 const {
   AiMessage,
+  Event,
   MealDay,
   MealPlan,
   WeightLog,
+  MealCompletion,
   WorkoutCompletion,
   WorkoutPlan,
   WorkoutSession
 } = require('../database/models');
+const { getAvatarType, isProfileComplete } = require('../utils/profileCompletion');
 
 const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -30,12 +34,14 @@ async function getDashboardContent(user)
       targetWeight: progressData.targetWeight
     },
     todayWorkout: presentWorkoutSession(workoutData.todayWorkout),
+    todayWorkoutKey: workoutData.todayWorkout?.id || null,
     todayMeals: {
       breakfast: mealData.todayMeals.breakfast.title,
       lunch: mealData.todayMeals.lunch.title,
       dinner: mealData.todayMeals.dinner.title,
       snack: mealData.todayMeals.snack.title
     },
+    todayMealKey: mealData.todayMealKey,
     progress: {
       weeklyChange: progressData.weeklyChange,
       completionRate: workoutData.summary.completionRate
@@ -79,17 +85,19 @@ async function getMealContent(user)
   const weekNumber = currentWeek(plan?.durationWeeks || 4);
   const dayOfWeek = currentDayOfWeek();
   const todayMealDay = findMealDay(days, weekNumber, dayOfWeek) || days[0];
+  const mealCompletions = await MealCompletion.count({ where: { userId: user.id } });
 
   return {
     currentUser: presentUser(user),
     summary: {
       activePlan: plan?.title || 'Starter Meal Plan',
       currentWeek: weekNumber,
-      mealsFollowed: 0,
+      mealsFollowed: mealCompletions,
       dailyCalories: plan?.dailyCalories || 2200
     },
     macros: asJson(plan?.macros, {}),
     todayMeals: presentMealCards(todayMealDay),
+    todayMealKey: todayMealDay?.key || null,
     shoppingList: asJson(todayMealDay?.shoppingList, []),
     weeklyPlan: buildMealSchedule(days, weekNumber, dayOfWeek),
     tips: asJson(plan?.tips, [])
@@ -189,21 +197,34 @@ async function listWorkoutPlans(profile)
 
 async function getProgressSummary(user)
 {
-  const [workoutsCompleted, latestWeight] = await Promise.all([
+  const [workoutsCompleted, mealCompletions, latestWeights, recentProgressEvents] = await Promise.all([
     WorkoutCompletion.count({ where: { userId: user.id } }),
-    WeightLog.findOne({ where: { userId: user.id }, order: [['loggedAt', 'DESC']] })
+    MealCompletion.count({ where: { userId: user.id } }),
+    WeightLog.findAll({ where: { userId: user.id }, order: [['loggedAt', 'DESC']], limit: 2 }),
+    Event.findAll({
+      where: {
+        userId: user.id,
+        eventType: {
+          [Op.in]: ['weight_logged', 'workout_completed', 'meal_day_completed']
+        }
+      },
+      attributes: ['createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 50
+    })
   ]);
 
-  const currentWeight = latestWeight?.weight || user.profile?.currentWeight || 0;
+  const currentWeight = latestWeights[0]?.weight || user.profile?.currentWeight || 0;
   const targetWeight = user.profile?.targetWeight || 0;
+  const streakDays = calculateStreakDays(recentProgressEvents);
 
   return {
-    streakDays: workoutsCompleted ? Math.min(workoutsCompleted, 14) : 0,
+    streakDays,
     workoutsCompleted,
-    mealsFollowed: 0,
+    mealsFollowed: mealCompletions,
     currentWeight,
     targetWeight,
-    weeklyChange: 'Not enough data yet'
+    weeklyChange: calculateWeeklyChange(latestWeights, currentWeight)
   };
 }
 
@@ -238,6 +259,76 @@ function buildMealSchedule(days, weekNumber, today)
   });
 }
 
+function calculateStreakDays(events)
+{
+  if (!events.length)
+  {
+    return 0;
+  }
+
+  const uniqueDays = [];
+  const seen = new Set();
+
+  events.forEach((event) =>
+  {
+    const dayKey = event.createdAt.toISOString().slice(0, 10);
+    if (!seen.has(dayKey))
+    {
+      seen.add(dayKey);
+      uniqueDays.push(dayKey);
+    }
+  });
+
+  if (!uniqueDays.length)
+  {
+    return 0;
+  }
+
+  let streak = 0;
+  let cursor = new Date();
+
+  for (let i = 0; i < 30; i += 1)
+  {
+    const dayKey = cursor.toISOString().slice(0, 10);
+    if (seen.has(dayKey))
+    {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+      continue;
+    }
+
+    if (streak > 0)
+    {
+      break;
+    }
+
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+function calculateWeeklyChange(latestWeights, currentWeight)
+{
+  if (!latestWeights || latestWeights.length < 2)
+  {
+    return 'Log more weights to calculate';
+  }
+
+  const latest = Number(latestWeights[0].weight);
+  const previous = Number(latestWeights[1].weight);
+
+  if (!Number.isFinite(latest) || !Number.isFinite(previous))
+  {
+    return 'Log more weights to calculate';
+  }
+
+  const delta = latest - previous;
+  const direction = delta === 0 ? 'no change' : (delta < 0 ? 'down' : 'up');
+
+  return `${Math.abs(delta).toFixed(1)} kg ${direction} this week`;
+}
+
 function presentUser(user)
 {
   const profile = profileValues(user);
@@ -247,7 +338,10 @@ function presentUser(user)
     email: user.email,
     goal: label(profile.goal),
     level: label(profile.level),
-    environment: label(profile.environment)
+    environment: label(profile.environment),
+    gender: profile.gender || profile.preferences?.gender || null,
+    avatarType: getAvatarType(user),
+    profileComplete: isProfileComplete(user)
   };
 }
 

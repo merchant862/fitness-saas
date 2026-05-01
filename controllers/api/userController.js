@@ -3,10 +3,12 @@
 const { trackEvent } = require('../../services/eventService');
 const { completeUserOnboarding, listUsers, updateUserProfile } = require('../../services/userService');
 const { compactUser } = require('../../utils/securityUtils');
+const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 
 const allowedGoals = ['weight_loss', 'muscle_gain', 'general_fitness'];
 const allowedLevels = ['beginner', 'intermediate', 'advanced'];
 const allowedEnvironments = ['home', 'gym'];
+const allowedGenders = ['male', 'female', 'other'];
 
 async function me(req, res)
 {
@@ -19,15 +21,19 @@ async function onboarding(req, res, next)
   {
     const payload = normalizeOnboarding(req.body);
 
-    if (!payload.goal || !payload.level || !payload.environment)
+    if (!payload.goal || !payload.level || !payload.environment || !payload.gender)
     {
-      return res.status(422).json({ error: 'Goal, level, and environment are required' });
+      return errorResponse(req, res, { message: 'Goal, level, environment, and gender are required' });
     }
 
-    await completeUserOnboarding(req.user, payload);
+    const user = await completeUserOnboarding(req.user, payload);
 
     await trackEvent(req, 'onboarding_completed', payload, req.user.id);
-    return res.redirect('/dashboard');
+    return successResponse(req, res, {
+      message: 'Onboarding completed successfully.',
+      redirectTo: '/dashboard',
+      data: { user: compactUser(user) }
+    });
   }
   catch (error)
   {
@@ -65,35 +71,123 @@ async function updateProfile(req, res, next)
 
     if (req.body.gender)
     {
-      preferences.gender = String(req.body.gender).trim().slice(0, 40);
+      const gender = String(req.body.gender).trim().toLowerCase();
+      if (allowedGenders.includes(gender))
+      {
+        preferences.gender = gender;
+      }
     }
 
-    if (req.body.height)
+    const height = normalizeHeight(req.body);
+
+    if (height.feet !== null)
     {
-      preferences.height = String(req.body.height).trim().slice(0, 40);
+      preferences.heightFeet = height.feet;
+      preferences.heightInches = height.inches;
+    }
+
+    [
+      'address1',
+      'address2',
+      'city',
+      'state',
+      'zip',
+      'country',
+      'phone'
+    ].forEach((field) =>
+    {
+      if (req.body[field])
+      {
+        preferences[field] = String(req.body[field]).trim().slice(0, 120);
+      }
+    });
+
+    if (req.body.firstName)
+    {
+      preferences.firstName = String(req.body.firstName).trim().slice(0, 120);
+    }
+
+    if (req.body.lastName)
+    {
+      preferences.lastName = String(req.body.lastName).trim().slice(0, 120);
     }
 
     if (Object.keys(preferences).length)
     {
       update.preferences = {
-        ...(req.user.profile?.preferences || {}),
+        ...safePreferences(req.user.profile?.preferences),
         ...preferences
       };
     }
 
     const user = await updateUserProfile(req.user, update);
 
-    if (!req.path.startsWith('/api/'))
-    {
-      return res.redirect('/profile?updated=1');
-    }
-
-    return res.status(200).json({ user: compactUser(user) });
+    return successResponse(req, res, {
+      message: 'Profile updated successfully.',
+      data: { user: compactUser(user) }
+    });
   }
   catch (error)
   {
     next(error);
   }
+}
+
+function normalizeHeight(body)
+{
+  const feet = parseBoundedInteger(body.heightFeet || body.height_feet, 1, 9);
+  const inches = parseBoundedInteger(body.heightInches || body.height_inches, 0, 11);
+
+  if (feet !== null || inches !== null)
+  {
+    return {
+      feet: feet !== null ? feet : 0,
+      inches: inches !== null ? inches : 0
+    };
+  }
+
+  const legacy = String(body.height || '').trim();
+  const match = legacy.match(/^(\d{1,2})\s*(?:ft|feet|')\s*(\d{1,2})?\s*(?:in|inch|inches|")?$/i);
+
+  if (match)
+  {
+    return {
+      feet: parseBoundedInteger(match[1], 1, 9) || 0,
+      inches: parseBoundedInteger(match[2], 0, 11) || 0
+    };
+  }
+
+  const decimalMatch = legacy.match(/^(\d{1,2})(?:\.(\d{1,2}))$/);
+
+  if (decimalMatch)
+  {
+    return {
+      feet: parseBoundedInteger(decimalMatch[1], 1, 9) || 0,
+      inches: parseBoundedInteger(decimalMatch[2], 0, 11) || 0
+    };
+  }
+
+  return {
+    feet: null,
+    inches: null
+  };
+}
+
+function parseBoundedInteger(value, min, max)
+{
+  if (value === undefined || value === null || value === '')
+  {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isInteger(number) || number < min || number > max)
+  {
+    return null;
+  }
+
+  return number;
 }
 
 async function adminUsers(req, res, next)
@@ -119,10 +213,59 @@ function normalizeOnboarding(body)
     goal: allowedGoals.includes(goal) ? goal : null,
     level: allowedLevels.includes(level) ? level : null,
     environment: allowedEnvironments.includes(environment) ? environment : null,
+    gender: normalizeGender(body.gender),
     currentWeight: parsePositiveNumber(body.currentWeight),
     targetWeight: parsePositiveNumber(body.targetWeight),
     workoutDays: parsePositiveInteger(body.workoutDays, 1, 7)
   };
+}
+
+function normalizeGender(value)
+{
+  const gender = String(value || '').trim().toLowerCase();
+
+  if (allowedGenders.includes(gender))
+  {
+    return gender;
+  }
+
+  return null;
+}
+
+function safePreferences(value)
+{
+  if (!value)
+  {
+    return {};
+  }
+
+  if (typeof value === 'string')
+  {
+    try
+    {
+      const parsed = JSON.parse(value);
+      return isPlainObject(parsed) ? parsed : {};
+    }
+    catch (error)
+    {
+      return {};
+    }
+  }
+
+  if (isPlainObject(value))
+  {
+    return { ...value };
+  }
+
+  return {};
+}
+
+function isPlainObject(value)
+{
+  return Boolean(value) &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype;
 }
 
 function parsePositiveNumber(value)

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <%- include('partials/head.ejs') %>
-    <title>FitAccess | Activate Access</title>
+    <title>FitAccess | Access Email Sent</title>
   </head>
   <body>
     <% const data = redeemAccessData; %>
@@ -23,47 +23,26 @@
                   <div class="card-style mb-30">
                     <img src="/images/logo/logo.svg" alt="FitAccess" /><br><br>
                     <div class="title mb-25">
-                      <h2><%= data.page.title %></h2>
+                      <h2>Access is sent by email</h2>
                       <p class="text-sm mt-10 mb-0">
-                        <%= data.page.subtitle %>
+                        Use the secure link in your inbox to continue. Manual code entry is no longer used.
                       </p>
                     </div>
 
-                    <form action="/activate" method="POST">
-                      <div class="input-style-1">
-                        <label>Email Address</label>
-                        <input
-                          type="email"
-                          name="email"
-                          value="<%= data.defaultValues.email %>"
-                          placeholder="Enter your email"
-                        />
-                      </div>
-
-                      <div class="input-style-1">
-                        <label>Access Code</label>
-                        <input
-                          type="text"
-                          name="accessCode"
-                          value="<%= data.defaultValues.accessCode %>"
-                          placeholder="Enter your access code"
-                        />
-                      </div>
-
-                      <p class="text-sm mb-25">
-                        <%= data.helpText %>
+                    <div class="alert-box success-alert mb-25">
+                      <p class="text-sm mb-0">
+                        Check the email you used at checkout. If you already have a password, you can sign in directly.
                       </p>
+                    </div>
 
-                      <div class="d-flex flex-wrap gap-2">
-                        <button type="submit" class="main-btn primary-btn btn-hover">
-                          Activate Access
-                        </button>
-
-                        <a href="/sign-in" class="main-btn light-btn btn-hover">
-                          Back to Sign-In
-                        </a>
-                      </div>
-                    </form>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a href="/sign-in" class="main-btn primary-btn btn-hover">
+                        Sign In
+                      </a>
+                      <a href="/forgot-password" class="main-btn light-btn btn-hover">
+                        Reset Password
+                      </a>
+                    </div>
                   </div>
                 </div>
 
@@ -94,9 +73,9 @@
                     </p>
 
                     <ul style="padding-left: 18px; margin-bottom: 0;">
-                      <li class="text-sm mb-12">You entered the same purchase email</li>
-                      <li class="text-sm mb-12">Your activation code has no extra spaces</li>
-                      <li class="text-sm mb-12">You are using the latest code sent to you</li>
+                      <li class="text-sm mb-12">You check the inbox used at checkout</li>
+                      <li class="text-sm mb-12">You also check spam or promotions folders</li>
+                      <li class="text-sm mb-12">You use the most recent sign-in email</li>
                     </ul>
                   </div>
 
@@ -110,8 +89,8 @@
                     </p>
 
                     <ol style="padding-left: 18px; margin-bottom: 0;">
-                      <li class="text-sm mb-12">Your access will be verified</li>
-                      <li class="text-sm mb-12">You will complete onboarding</li>
+                      <li class="text-sm mb-12">Your email link opens the account</li>
+                      <li class="text-sm mb-12">You will complete onboarding if needed</li>
                       <li class="text-sm mb-12">Your personalized dashboard will unlock</li>
                     </ol>
                   </div>

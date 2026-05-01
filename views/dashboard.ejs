@@ -87,6 +87,95 @@
           </div>
           <!-- ========== quick actions end ========== -->
 
+          <!-- ========== quick update center start ========== -->
+          <div class="row">
+            <div class="col-lg-12">
+              <div class="card-style mb-30">
+                <div class="title d-flex flex-wrap justify-content-between align-items-center">
+                  <div class="left">
+                    <h6 class="text-medium mb-10">Quick Update Center</h6>
+                    <p class="text-sm mb-0">
+                      Update your workout, meal, or weight from one place.
+                    </p>
+                  </div>
+                  <div class="right">
+                    <span class="status-btn primary-btn">Central</span>
+                  </div>
+                </div>
+
+                <div class="row mt-20">
+                  <div class="col-lg-4 col-md-6 mb-20">
+                    <div class="h-100 border border-light bg-light-100 p-4" style="border-radius: 8px;">
+                      <h6 class="text-medium mb-10">Workout Check-In</h6>
+                      <p class="text-sm mb-15">
+                        Mark today's workout complete in one tap.
+                      </p>
+
+                      <% if (data.todayWorkoutKey) { %>
+                        <form action="/api/workouts/<%= data.todayWorkoutKey %>/complete" method="POST">
+                          <input type="hidden" name="workoutKey" value="<%= data.todayWorkoutKey %>" />
+                          <button type="submit" class="main-btn success-btn btn-hover w-100">
+                            Mark Workout Complete
+                          </button>
+                        </form>
+                      <% } else { %>
+                        <div class="status-btn light-btn w-100 text-center">No workout scheduled</div>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4 col-md-6 mb-20">
+                    <div class="h-100 border border-light bg-light-100 p-4" style="border-radius: 8px;">
+                      <h6 class="text-medium mb-10">Meal Check-In</h6>
+                      <p class="text-sm mb-15">
+                        Save today's meal day without opening the meal page.
+                      </p>
+
+                      <% if (data.todayMealKey) { %>
+                        <form action="/api/meals/complete" method="POST">
+                          <input type="hidden" name="mealKey" value="<%= data.todayMealKey %>" />
+                          <button type="submit" class="main-btn primary-btn btn-hover w-100">
+                            Mark Meals Complete
+                          </button>
+                        </form>
+                      <% } else { %>
+                        <div class="status-btn light-btn w-100 text-center">No meal plan today</div>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div class="col-lg-4 col-md-12 mb-20">
+                    <div class="h-100 border border-light bg-light-100 p-4" style="border-radius: 8px;">
+                      <h6 class="text-medium mb-10">Weight Check-In</h6>
+                      <p class="text-sm mb-15">
+                        Log current weight and keep progress updated.
+                      </p>
+
+                      <form action="/api/progress/weight" method="POST">
+                        <div class="input-style-1 mb-15">
+                          <label>Current Weight (kg)</label>
+                          <input
+                            type="number"
+                            name="weight"
+                            min="1"
+                            step="0.1"
+                            placeholder="Enter weight"
+                            required
+                          />
+                        </div>
+
+                        <button type="submit" class="main-btn orange-btn btn-hover w-100">
+                          Save Weight
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ========== quick update center end ========== -->
+
           <!-- ========== stats cards start ========== -->
           <div class="row">
             <div class="col-xl-3 col-lg-4 col-sm-6">

@@ -4,7 +4,8 @@ async function onboardingViewController(req, res, next)
     {
         const onboardingData = {
             currentUser: {
-                name: req.user?.name || req.user?.email || 'Member'
+                name: req.user?.name || req.user?.email || 'Member',
+                gender: req.user?.profile?.preferences?.gender || null
             },
 
             goals: [
@@ -24,10 +25,17 @@ async function onboardingViewController(req, res, next)
                 { value: 'gym', label: 'Gym' }
             ],
 
+            genders: [
+                { value: 'male', label: 'Male', description: 'Build around male-friendly goal cues.' },
+                { value: 'female', label: 'Female', description: 'Build around female-friendly goal cues.' },
+                { value: 'other', label: 'Other / Mixed', description: 'Use the most flexible setup.' }
+            ],
+
             defaultValues: {
                 goal: req.user?.profile?.goal || 'weight_loss',
                 level: 'beginner',
                 environment: 'home',
+                gender: req.user?.profile?.preferences?.gender || '',
                 currentWeight: '78',
                 targetWeight: '72',
                 workoutDays: '4'

@@ -5,6 +5,7 @@ const { sendResendEmail } = require('../../apis/resendApi');
 const { changePassword, requestPasswordReset, resetPasswordWithToken } = require('../../services/passwordService');
 const { isEmail } = require('../../utils/securityUtils');
 const { passwordResetEmail } = require('../../utils/emailTemplateUtils');
+const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 
 async function forgot(req, res, next)
 {
@@ -14,7 +15,7 @@ async function forgot(req, res, next)
 
     if (!isEmail(email))
     {
-      return res.status(422).send('Valid email is required');
+      return errorResponse(req, res, { message: 'Valid email is required' });
     }
 
     const result = await requestPasswordReset(req, email);
@@ -25,12 +26,10 @@ async function forgot(req, res, next)
       await trackEvent(req, 'password_reset_requested', {}, result.user.id);
     }
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
-    }
-
-    return res.redirect('/reset-password?sent=1');
+    return successResponse(req, res, {
+      message: 'If that email exists, a reset link has been sent.',
+      redirectTo: '/reset-password'
+    });
   }
   catch (error)
   {
@@ -46,23 +45,21 @@ async function reset(req, res, next)
 
     if (!isEmail(email) || !token)
     {
-      return res.status(422).send('Email and reset token are required');
+      return errorResponse(req, res, { message: 'Email and reset token are required' });
     }
 
     if (newPassword !== confirmPassword)
     {
-      return res.status(422).send('Passwords do not match');
+      return errorResponse(req, res, { message: 'Passwords do not match' });
     }
 
     const user = await resetPasswordWithToken({ email, token, password: newPassword });
     await trackEvent(req, 'password_reset_completed', {}, user.id);
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({ ok: true });
-    }
-
-    return res.redirect('/sign-in?passwordReset=1');
+    return successResponse(req, res, {
+      message: 'Password reset successfully. Sign in with your new password.',
+      redirectTo: '/sign-in'
+    });
   }
   catch (error)
   {
@@ -78,18 +75,16 @@ async function update(req, res, next)
 
     if (newPassword !== confirmPassword)
     {
-      return res.status(422).send('Passwords do not match');
+      return errorResponse(req, res, { message: 'Passwords do not match' });
     }
 
     await changePassword(req.user, { currentPassword, newPassword });
     await trackEvent(req, 'password_changed', {}, req.user.id);
 
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(200).json({ ok: true });
-    }
-
-    return res.redirect(safeReturnTo(req.body.returnTo, '/change-password?updated=1'));
+    return successResponse(req, res, {
+      message: 'Password updated successfully.',
+      redirectTo: safeReturnTo(req.body.returnTo, '/change-password')
+    });
   }
   catch (error)
   {
@@ -106,7 +101,7 @@ function safeReturnTo(value, fallback)
     return fallback;
   }
 
-  return path.includes('?') ? `${path}&passwordUpdated=1` : `${path}?passwordUpdated=1`;
+  return path;
 }
 
 module.exports = {

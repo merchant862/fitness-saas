@@ -9,7 +9,28 @@ async function completeUserOnboarding(user, payload)
     defaults: { userId: user.id }
   });
 
-  await profile.update(payload);
+  const profilePayload = {};
+  const preferences = safePreferences(profile.preferences);
+
+  ['goal', 'level', 'environment', 'currentWeight', 'targetWeight', 'workoutDays'].forEach((field) =>
+  {
+    if (payload[field] !== undefined)
+    {
+      profilePayload[field] = payload[field];
+    }
+  });
+
+  if (payload.gender)
+  {
+    preferences.gender = payload.gender;
+  }
+
+  if (Object.keys(preferences).length)
+  {
+    profilePayload.preferences = preferences;
+  }
+
+  await profile.update(profilePayload);
 
   const tags = new Set(user.tags || []);
   tags.add(`goal:${payload.goal}`);
@@ -53,7 +74,7 @@ async function updateUserProfile(user, payload)
 
   if (payload.preferences)
   {
-    profilePayload.preferences = payload.preferences;
+    profilePayload.preferences = safePreferences(payload.preferences);
   }
 
   if (Object.keys(userPayload).length)
@@ -88,3 +109,39 @@ module.exports = {
   listUsers,
   updateUserProfile
 };
+
+function safePreferences(value)
+{
+  if (!value)
+  {
+    return {};
+  }
+
+  if (typeof value === 'string')
+  {
+    try
+    {
+      const parsed = JSON.parse(value);
+      return isPlainObject(parsed) ? parsed : {};
+    }
+    catch (error)
+    {
+      return {};
+    }
+  }
+
+  if (isPlainObject(value))
+  {
+    return { ...value };
+  }
+
+  return {};
+}
+
+function isPlainObject(value)
+{
+  return Boolean(value) &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype;
+}

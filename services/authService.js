@@ -7,7 +7,6 @@ const {
   MagicLink,
   User,
   UserProfile,
-  UserSession,
   sequelize
 } = require('../database/models');
 const {
@@ -26,19 +25,10 @@ const SESSION_DAYS = Number(process.env.JWT_EXPIRES_DAYS || 14);
 
 async function issueSession(req, res, user, options = {})
 {
-  const jwtId = generateToken(16);
   const expiresAt = addDays(SESSION_DAYS);
 
-  await UserSession.create({
-    userId: user.id,
-    jwtId,
-    expiresAt,
-    ipAddress: clientIp(req),
-    userAgent: String(req.headers['user-agent'] || '').slice(0, 255)
-  }, { transaction: options.transaction });
-
   const token = jwt.sign(
-    { sub: user.id, role: user.role, jti: jwtId },
+    { sub: user.id, role: user.role },
     jwtSecret(),
     {
       expiresIn: `${SESSION_DAYS}d`,
@@ -52,18 +42,12 @@ async function issueSession(req, res, user, options = {})
 
 async function findUserForSession(payload)
 {
-  const [user, sessionRecord] = await Promise.all([
-    User.findByPk(payload.sub, {
-      include: [{ model: UserProfile, as: 'profile' }]
-    }),
-    UserSession.findOne({ where: { jwtId: payload.jti } })
-  ]);
+  const user = await User.findByPk(payload.sub, {
+    include: [{ model: UserProfile, as: 'profile' }]
+  });
 
   if (
     !user ||
-    !sessionRecord ||
-    sessionRecord.revokedAt ||
-    sessionRecord.expiresAt <= new Date() ||
     user.status !== 'active' ||
     (user.accessExpiresAt && user.accessExpiresAt <= new Date())
   )
@@ -71,16 +55,11 @@ async function findUserForSession(payload)
     return null;
   }
 
-  return { user, sessionRecord };
+  return { user };
 }
 
 async function revokeCurrentSession(req, res)
 {
-  if (req.sessionRecord)
-  {
-    await req.sessionRecord.update({ revokedAt: new Date() });
-  }
-
   res.clearCookie(COOKIE_NAME, { path: '/' });
 }
 
@@ -250,7 +229,7 @@ async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsel
       accessExpiresAt: expiresAt,
       tags: Array.from(tags),
       metadata: {
-        ...(user.metadata || {}),
+        ...safeJsonObject(user.metadata),
         ...metadata,
         source
       }
@@ -272,7 +251,7 @@ async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsel
     }, { transaction });
 
     return {
-      user,
+      user: await user.reload({ include: [{ model: UserProfile, as: 'profile' }], transaction }),
       token,
       email: normalizedEmail,
       accessExpiresAt: expiresAt
@@ -316,3 +295,63 @@ module.exports = {
   revokeCurrentSession,
   verifyMagicLink
 };
+
+function safeJsonObject(value)
+{
+  if (!value)
+  {
+    return {};
+  }
+
+  if (typeof value === 'string')
+  {
+    if (value.length > 10000)
+    {
+      return {};
+    }
+
+    try
+    {
+      const parsed = JSON.parse(value);
+      return sanitizeMetadataShape(parsed);
+    }
+    catch
+    {
+      return {};
+    }
+  }
+
+  if (typeof value === 'object' && !Array.isArray(value))
+  {
+    return sanitizeMetadataShape(value);
+  }
+
+  return {};
+}
+
+function sanitizeMetadataShape(value)
+{
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+  {
+    return {};
+  }
+
+  const keys = Object.keys(value);
+  if (!keys.length)
+  {
+    return {};
+  }
+
+  if (keys.length > 50)
+  {
+    return {};
+  }
+
+  const numericKeys = keys.filter((key) => /^\d+$/.test(key)).length;
+  if (numericKeys / keys.length > 0.6)
+  {
+    return {};
+  }
+
+  return value;
+}

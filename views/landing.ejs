@@ -1,527 +1,878 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <%- include('partials/head.ejs') %>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="/images/favicon.svg" type="image/x-icon" />
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/lineicons.css" />
     <title>FitAccess | Premium Fitness Member Area</title>
     <style>
       :root {
-        --fit-blue: #2563eb;
-        --fit-green: #16a34a;
-        --fit-ink: #111827;
-        --fit-muted: #637083;
-        --fit-line: #e5e7eb;
-        --fit-soft: #f4f7fb;
-        --fit-warm: #ffb020;
+        --ink: #101828;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --panel: #f8fafc;
+        --blue: #365cf5;
+        --green: #16a34a;
+        --cyan: #06b6d4;
+        --dark: #08111f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
       }
 
       body {
+        margin: 0;
         background: #ffffff;
-        color: var(--fit-ink);
+        color: var(--ink);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
-      .landing-shell {
+      a {
+        text-decoration: none;
+      }
+
+      .site {
         min-height: 100vh;
-        background: #ffffff;
+        overflow-x: hidden;
       }
 
-      .landing-nav {
+      .nav {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 20;
-        background: rgba(255, 255, 255, 0.92);
-        border-bottom: 1px solid rgba(229, 231, 235, 0.85);
+        inset: 0 0 auto;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.94);
+        border-bottom: 1px solid rgba(228, 231, 236, 0.92);
         backdrop-filter: blur(16px);
       }
 
-      .landing-nav-inner {
-        max-width: 1180px;
+      .containerx {
+        width: min(1160px, calc(100% - 40px));
         margin: 0 auto;
-        padding: 16px 22px;
+      }
+
+      .nav-inner {
+        min-height: 74px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        gap: 24px;
       }
 
-      .landing-logo img {
-        width: 154px;
+      .logo img {
+        width: 152px;
         height: auto;
+        display: block;
       }
 
-      .landing-links {
+      .links {
         display: flex;
         align-items: center;
-        gap: 22px;
+        gap: 10px;
       }
 
-      .landing-links a {
-        color: #374151;
+      .links a {
+        color: #344054;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
       }
 
-      .landing-hero {
-        min-height: 84vh;
-        display: flex;
-        align-items: center;
-        padding: 108px 22px 54px;
-        position: relative;
-        overflow: hidden;
-        background:
-          linear-gradient(90deg, rgba(9, 15, 28, 0.9) 0%, rgba(9, 15, 28, 0.76) 46%, rgba(9, 15, 28, 0.18) 100%),
-          url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2200&q=86') center / cover no-repeat;
-      }
-
-      .landing-hero-inner {
-        width: 100%;
-        max-width: 1180px;
-        margin: 0 auto;
-      }
-
-      .landing-eyebrow {
+      .link-box {
         display: inline-flex;
         align-items: center;
+      }
+
+      .link-box a:not(.btnx) {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 13px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+      }
+
+      .link-box a:not(.btnx):hover {
+        background: #f2f5ff;
+        border-color: #dce3ff;
+      }
+
+      .links a:hover {
+        color: var(--blue);
+      }
+
+      .btnx {
+        display: inline-flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: center;
         gap: 9px;
-        color: #dbeafe;
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0;
-        margin-bottom: 18px;
-      }
-
-      .landing-eyebrow span {
-        width: 9px;
-        height: 9px;
-        border-radius: 999px;
-        background: var(--fit-green);
-        box-shadow: 0 0 0 6px rgba(0, 184, 124, 0.18);
-      }
-
-      .landing-hero h1 {
-        max-width: 780px;
-        color: #ffffff;
-        font-size: 64px;
-        line-height: 1.02;
+        padding: 0 20px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 14px;
         font-weight: 800;
-        margin-bottom: 22px;
+        line-height: 1;
+        transition: 160ms ease;
       }
 
-      .landing-hero p {
-        max-width: 610px;
+      .btn-primaryx {
+        color: #ffffff !important;
+        background: var(--blue);
+        box-shadow: 0 14px 34px rgba(54, 92, 245, 0.28);
+      }
+
+      .btn-primaryx:hover {
+        background: #2448df;
+      }
+
+      .btn-lightx {
+        color: var(--ink) !important;
+        background: #ffffff;
+        border-color: var(--line);
+      }
+
+      .hero {
+        position: relative;
+        min-height: 92vh;
+        display: flex;
+        align-items: center;
+        padding: 112px 0 70px;
+        color: #ffffff;
+        background:
+          linear-gradient(90deg, rgba(8, 17, 31, 0.96) 0%, rgba(8, 17, 31, 0.82) 48%, rgba(8, 17, 31, 0.32) 100%),
+          url("https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=2200&q=88") center / cover no-repeat;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.68fr);
+        gap: 48px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        color: #bfdbfe;
+        font-size: 13px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 7px rgba(22, 163, 74, 0.24);
+      }
+
+      .hero h1 {
+        max-width: 760px;
+        margin: 0 0 22px;
+        color: #ffffff;
+        font-size: 62px;
+        line-height: 1.03;
+        font-weight: 900;
+      }
+
+      .hero p {
+        max-width: 660px;
+        margin: 0 0 30px;
         color: #e5e7eb;
         font-size: 18px;
-        line-height: 1.7;
-        margin-bottom: 30px;
+        line-height: 1.75;
       }
 
-      .landing-actions {
+      .actions {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
+      }
+
+      .mockup {
+        padding: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(18px);
+      }
+
+      .mockup-screen {
+        padding: 22px;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .mockup-top {
+        display: flex;
         align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
       }
 
-      .landing-actions .main-btn {
-        min-height: 48px;
-      }
-
-      .landing-hero-stats {
-        margin-top: 42px;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(130px, 180px));
-        gap: 18px;
-      }
-
-      .landing-stat {
-        border-left: 3px solid var(--fit-green);
-        padding-left: 14px;
-      }
-
-      .landing-stat strong {
+      .mockup-title strong {
         display: block;
-        color: #ffffff;
-        font-size: 26px;
-        line-height: 1.1;
+        color: var(--ink);
+        font-size: 18px;
       }
 
-      .landing-stat span {
-        color: #cbd5e1;
+      .mockup-title span {
+        color: var(--muted);
         font-size: 13px;
       }
 
-      .landing-section {
-        padding: 76px 22px;
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 8px 11px;
+        color: #065f46;
+        background: #dcfce7;
+        font-size: 12px;
+        font-weight: 800;
       }
 
-      .landing-section.alt {
-        background: var(--fit-soft);
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
       }
 
-      .landing-container {
-        max-width: 1180px;
-        margin: 0 auto;
+      .metric {
+        padding: 14px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
       }
 
-      .landing-section-head {
-        max-width: 720px;
-        margin-bottom: 34px;
+      .metric strong {
+        display: block;
+        color: var(--ink);
+        font-size: 22px;
+        line-height: 1;
       }
 
-      .landing-section-head h2 {
-        font-size: 38px;
-        line-height: 1.15;
-        margin-bottom: 12px;
+      .metric span {
+        color: var(--muted);
+        font-size: 12px;
       }
 
-      .landing-section-head p {
-        color: var(--fit-muted);
+      .schedule {
+        display: grid;
+        gap: 10px;
+      }
+
+      .schedule-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .schedule-row strong {
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .schedule-row span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .section {
+        padding: 84px 0;
+        background: #ffffff;
+      }
+
+      .section-soft {
+        background: var(--panel);
+      }
+
+      .section-dark {
+        color: #ffffff;
+        background: var(--dark);
+      }
+
+      .section-head {
+        max-width: 760px;
+        margin-bottom: 36px;
+      }
+
+      .section-head h2 {
+        margin: 0 0 12px;
+        color: var(--ink);
+        font-size: 40px;
+        line-height: 1.14;
+        font-weight: 900;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
         font-size: 16px;
-        line-height: 1.7;
-        margin-bottom: 0;
+        line-height: 1.75;
       }
 
-      .landing-feature-grid {
+      .section-dark .section-head h2,
+      .section-dark h2,
+      .section-dark h3,
+      .section-dark .check strong {
+        color: #ffffff;
+      }
+
+      .section-dark .section-head p,
+      .section-dark p,
+      .section-dark .check span {
+        color: #cbd5e1;
+      }
+
+      .cards {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 22px;
       }
 
-      .landing-feature {
-        background: #ffffff;
-        border: 1px solid var(--fit-line);
-        border-radius: 8px;
+      .cardx {
         overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
       }
 
-      .landing-feature img {
+      .cardx img {
         width: 100%;
-        height: 210px;
+        height: 214px;
+        display: block;
         object-fit: cover;
       }
 
-      .landing-feature-body {
-        padding: 22px;
+      .card-bodyx {
+        padding: 24px;
       }
 
-      .landing-feature-body .icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
+      .iconx {
+        width: 44px;
+        height: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
+        border-radius: 8px;
         color: #ffffff;
-        background: var(--fit-blue);
-      }
-
-      .landing-feature:nth-child(2) .icon {
-        background: var(--fit-green);
-      }
-
-      .landing-feature:nth-child(3) .icon {
-        background: var(--fit-warm);
-      }
-
-      .landing-feature h3 {
+        background: var(--blue);
         font-size: 20px;
-        margin-bottom: 10px;
       }
 
-      .landing-feature p {
-        color: var(--fit-muted);
+      .cardx:nth-child(2) .iconx {
+        background: var(--green);
+      }
+
+      .cardx:nth-child(3) .iconx {
+        background: var(--cyan);
+      }
+
+      .cardx h3 {
+        margin: 0 0 10px;
+        color: var(--ink);
+        font-size: 21px;
+        font-weight: 900;
+      }
+
+      .cardx p {
+        margin: 0;
+        color: var(--muted);
         font-size: 14px;
-        line-height: 1.7;
-        margin-bottom: 0;
+        line-height: 1.75;
       }
 
-      .landing-split {
+      .split {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 42px;
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+        gap: 46px;
         align-items: center;
       }
 
-      .landing-image-panel {
-        min-height: 520px;
+      .photo {
+        min-height: 540px;
         border-radius: 8px;
         background:
-          linear-gradient(180deg, rgba(17, 24, 39, 0.05), rgba(17, 24, 39, 0.45)),
-          url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1400&q=82') center / cover no-repeat;
+          linear-gradient(180deg, rgba(8, 17, 31, 0.06), rgba(8, 17, 31, 0.34)),
+          url("https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1400&q=88") center / cover no-repeat;
       }
 
-      .landing-checks {
+      .checks {
         display: grid;
-        gap: 14px;
-        margin-top: 24px;
+        gap: 16px;
+        margin-top: 26px;
       }
 
-      .landing-check {
-        display: flex;
+      .check {
+        display: grid;
+        grid-template-columns: 28px 1fr;
         gap: 12px;
-        align-items: flex-start;
       }
 
-      .landing-check i {
-        color: var(--fit-green);
-        font-size: 20px;
+      .check i {
+        color: var(--green);
+        font-size: 22px;
         margin-top: 2px;
       }
 
-      .landing-check strong {
+      .check strong {
         display: block;
         margin-bottom: 3px;
+        color: var(--ink);
       }
 
-      .landing-check span {
-        color: var(--fit-muted);
+      .check span {
+        color: var(--muted);
         font-size: 14px;
-        line-height: 1.6;
+        line-height: 1.65;
       }
 
-      .landing-band {
-        background:
-          linear-gradient(90deg, rgba(17, 24, 39, 0.96), rgba(22, 163, 74, 0.9)),
-          url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=1800&q=82') center / cover no-repeat;
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+
+      .step {
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .step span {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        border-radius: 999px;
         color: #ffffff;
+        background: var(--blue);
+        font-weight: 900;
       }
 
-      .landing-band-inner {
+      .step h3 {
+        margin: 0 0 8px;
+        color: var(--ink);
+        font-size: 18px;
+      }
+
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .section-dark .step {
+        border-color: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .section-dark .step span {
+        color: var(--dark);
+        background: #ffffff;
+      }
+
+      .cta {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 28px;
       }
 
-      .landing-band h2 {
+      .cta h2 {
+        margin: 0 0 10px;
         color: #ffffff;
-        font-size: 36px;
-        margin-bottom: 10px;
+        font-size: 38px;
+        line-height: 1.16;
+        font-weight: 900;
       }
 
-      .landing-band p {
-        max-width: 620px;
-        color: #f8fafc;
-        margin-bottom: 0;
+      .cta p {
+        max-width: 650px;
+        margin: 0;
       }
 
-      .landing-footer {
-        padding: 28px 22px;
-        border-top: 1px solid var(--fit-line);
+      .footer {
+        padding: 64px 0 28px;
+        border-top: 1px solid var(--line);
         background: #ffffff;
       }
 
-      .landing-footer-inner {
-        max-width: 1180px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-        color: var(--fit-muted);
+      .footer-inner {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(0, 1.25fr);
+        gap: 56px;
+        color: var(--muted);
         font-size: 14px;
       }
 
+      .footer-brand img {
+        width: 150px;
+        margin-bottom: 14px;
+      }
+
+      .footer-brand p {
+        max-width: 360px;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .footer-columns {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 34px;
+        margin-bottom: 30px;
+      }
+
+      .footer-column h3 {
+        margin: 0 0 14px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .footer-column a {
+        display: block;
+        margin-bottom: 10px;
+        color: #344054;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .footer-column a:hover {
+        color: var(--blue);
+      }
+
+      .payment-title {
+        margin: 0 0 12px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 54px);
+        justify-content: start;
+        gap: 7px;
+      }
+
+      .payment-grid img {
+        width: 100%;
+        height: 24px;
+        display: block;
+        object-fit: contain;
+        border-radius: 5px;
+      }
+
+      .footer-bottom {
+        width: min(1160px, calc(100% - 40px));
+        margin: 32px auto 0;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
       @media (max-width: 991px) {
-        .landing-links a:not(.main-btn) {
+        .links .link-box:not(.nav-cta) {
           display: none;
         }
 
-        .landing-hero h1 {
-          font-size: 46px;
-        }
-
-        .landing-feature-grid,
-        .landing-split {
+        .hero-grid,
+        .cards,
+        .split,
+        .steps {
           grid-template-columns: 1fr;
         }
 
-        .landing-image-panel {
-          min-height: 360px;
+        .hero h1 {
+          font-size: 46px;
         }
 
-        .landing-band-inner {
+        .mockup {
+          max-width: 520px;
+        }
+
+        .photo {
+          min-height: 380px;
+        }
+
+        .cta {
           align-items: flex-start;
           flex-direction: column;
         }
       }
 
       @media (max-width: 575px) {
-        .landing-logo img {
+        .containerx {
+          width: calc(100% - 30px);
+        }
+
+        .nav-inner {
+          min-height: 68px;
+        }
+
+        .logo img {
           width: 132px;
         }
 
-        .landing-nav-inner {
-          padding: 12px 14px;
+        .hero {
+          min-height: auto;
+          padding: 104px 0 56px;
         }
 
-        .landing-hero {
-          min-height: 82vh;
-          padding: 96px 16px 38px;
-        }
-
-        .landing-hero h1 {
+        .hero h1 {
           font-size: 36px;
         }
 
-        .landing-hero p {
+        .hero p {
           font-size: 16px;
         }
 
-        .landing-hero-stats {
-          grid-template-columns: 1fr;
-          gap: 12px;
-          margin-top: 28px;
+        .section {
+          padding: 60px 0;
         }
 
-        .landing-section {
-          padding: 54px 16px;
-        }
-
-        .landing-section-head h2,
-        .landing-band h2 {
+        .section-head h2,
+        .cta h2 {
           font-size: 30px;
         }
 
-        .landing-footer-inner {
+        .actions .btnx,
+        .cta .btnx {
+          width: 100%;
+        }
+
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .footer-inner {
+          grid-template-columns: 1fr;
+        }
+
+        .footer-columns,
+        .payment-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .payment-grid img {
+          height: 32px;
+        }
+
+        .footer-bottom {
+          width: calc(100% - 30px);
+        }
+
+        .footer-inner,
+        .footer-bottom {
           align-items: flex-start;
-          flex-direction: column;
         }
       }
     </style>
   </head>
   <body>
-    <% const data = landingData; const dashboardHref = data.currentUser ? '/dashboard' : '/sign-in'; const coachWidgetEnabled = false; %>
-    <div class="landing-shell">
-      <nav class="landing-nav">
-        <div class="landing-nav-inner">
-          <a href="/" class="landing-logo">
+    <% const data = landingData; const dashboardHref = data.currentUser ? '/dashboard' : '/sign-in'; %>
+
+    <div class="site">
+      <nav class="nav">
+        <div class="containerx nav-inner">
+          <a href="/" class="logo" aria-label="FitAccess Home">
             <img src="/images/logo/logo.svg" alt="FitAccess" />
           </a>
 
-          <div class="landing-links">
-            <a href="#workouts">Workouts</a>
-            <a href="#meals">Meals</a>
-            <a href="#coach">AI Coach</a>
-            <a href="#billing">Billing</a>
-            <a href="<%= dashboardHref %>" class="main-btn primary-btn btn-hover btn-sm">
-              <%= data.currentUser ? 'Open Dashboard' : 'Member Sign-In' %>
-            </a>
+          <div class="links nav-links">
+            <div class="link-box"><a href="#plans">Plans</a></div>
+            <div class="link-box"><a href="#nutrition">Nutrition</a></div>
+            <div class="link-box"><a href="#experience">Experience</a></div>
+            <div class="link-box"><a href="#access">Access</a></div>
+            <div class="link-box nav-cta">
+              <a href="<%= dashboardHref %>" class="btnx btn-primaryx">
+                <%= data.currentUser ? 'Open Dashboard' : 'Member Sign In' %>
+              </a>
+            </div>
           </div>
         </div>
       </nav>
 
-      <header class="landing-hero">
-        <div class="landing-hero-inner">
-          <div class="landing-eyebrow"><span></span> Premium fitness member area</div>
-          <h1>Your personalized fitness plan, ready the moment you join.</h1>
-          <p>
-            FitAccess combines structured workouts, simple meal plans, progress tracking, and an AI-style fitness coach so members always know what to do next.
-          </p>
+      <header class="hero">
+        <div class="containerx hero-grid">
+          <div>
+            <div class="eyebrow">FitAccess Premium Membership</div>
+            <h1>Fitness guidance that feels personal from the first login.</h1>
+            <p>
+              FitAccess gives members guided workouts, meal plans, progress tracking, secure billing,
+              and an AI Coach experience in one clean fitness dashboard.
+            </p>
 
-          <div class="landing-actions">
-            <a href="<%= dashboardHref %>" class="main-btn primary-btn btn-hover">
-              <%= data.currentUser ? 'Continue Training' : 'Access Member Area' %>
-            </a>
-            <a href="/activate" class="main-btn light-btn btn-hover">
-              Activate Code
-            </a>
+            <div class="actions">
+              <a href="<%= dashboardHref %>" class="btnx btn-primaryx">
+                <i class="lni lni-rocket"></i>
+                <%= data.currentUser ? 'Continue Your Plan' : 'Enter Member Area' %>
+              </a>
+              <a href="/sign-in" class="btnx btn-lightx">Sign In</a>
+            </div>
           </div>
 
-          <div class="landing-hero-stats">
-            <div class="landing-stat">
-              <strong>12</strong>
-              <span>weeks of workout structure</span>
-            </div>
-            <div class="landing-stat">
-              <strong>4</strong>
-              <span>weeks of meal guidance</span>
-            </div>
-            <div class="landing-stat">
-              <strong>24/7</strong>
-              <span>AI-style fitness guidance</span>
+          <div class="mockup" aria-label="FitAccess dashboard preview">
+            <div class="mockup-screen">
+              <div class="mockup-top">
+                <div class="mockup-title">
+                  <strong>Today in FitAccess</strong>
+                  <span>Personalized plan snapshot</span>
+                </div>
+                <span class="pill">Active</span>
+              </div>
+
+              <div class="metric-grid">
+                <div class="metric">
+                  <strong>12</strong>
+                  <span>week plan</span>
+                </div>
+                <div class="metric">
+                  <strong>4</strong>
+                  <span>meal weeks</span>
+                </div>
+                <div class="metric">
+                  <strong>7</strong>
+                  <span>day streak</span>
+                </div>
+              </div>
+
+              <div class="schedule">
+                <div class="schedule-row">
+                  <div>
+                    <strong>Full Body Strength</strong>
+                    <span>Workout · 38 minutes</span>
+                  </div>
+                  <i class="lni lni-dumbbell"></i>
+                </div>
+                <div class="schedule-row">
+                  <div>
+                    <strong>Protein Bowl Plan</strong>
+                    <span>Meals · 2,050 kcal target</span>
+                  </div>
+                  <i class="lni lni-dinner"></i>
+                </div>
+                <div class="schedule-row">
+                  <div>
+                    <strong>AI Coach Ready</strong>
+                    <span>Ask about workouts or meals</span>
+                  </div>
+                  <i class="lni lni-comments-alt"></i>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <section id="workouts" class="landing-section">
-        <div class="landing-container">
-          <div class="landing-section-head">
-            <h2>Everything a member needs to start without confusion.</h2>
+      <section id="plans" class="section">
+        <div class="containerx">
+          <div class="section-head">
+            <h2>Clear fitness plans for people who need direction, not confusion.</h2>
             <p>
-              Each account opens into a clear plan based on the member's goal, experience level, and training environment.
+              Members choose their goal, level, and training setup once. FitAccess gives them the next
+              workout, meals, streaks, and progress cues without making the experience feel complicated.
             </p>
           </div>
 
-          <div class="landing-feature-grid">
-            <article class="landing-feature">
-              <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=82" alt="Athlete training in a studio" />
-              <div class="landing-feature-body">
-                <div class="icon"><i class="lni lni-dumbbell"></i></div>
-                <h3>Goal-Based Workouts</h3>
-                <p>Home and gym programs for beginner, intermediate, and advanced members, with clear sessions and completion tracking.</p>
+          <div class="cards">
+            <article class="cardx">
+              <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=86" alt="Member following a workout plan" />
+              <div class="card-bodyx">
+                <span class="iconx"><i class="lni lni-dumbbell"></i></span>
+                <h3>Workout Programs</h3>
+                <p>Beginner, intermediate, and advanced plans for home or gym training, with practical exercises and completion tracking.</p>
               </div>
             </article>
 
-            <article id="meals" class="landing-feature">
-              <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=82" alt="Healthy meal bowl with vegetables" />
-              <div class="landing-feature-body">
-                <div class="icon"><i class="lni lni-dinner"></i></div>
-                <h3>Simple Meal Plans</h3>
-                <p>Weekly meals, macro guidance, recipes, and shopping lists matched to weight loss, muscle gain, or general fitness goals.</p>
+            <article id="nutrition" class="cardx">
+              <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=86" alt="Healthy meal plan ingredients" />
+              <div class="card-bodyx">
+                <span class="iconx"><i class="lni lni-dinner"></i></span>
+                <h3>Meal Guidance</h3>
+                <p>Weekly meals, recipes, calories, macros, and shopping support for weight loss, muscle gain, or general fitness.</p>
               </div>
             </article>
 
-            <article id="coach" class="landing-feature">
-              <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=82" alt="Person using phone during workout" />
-              <div class="landing-feature-body">
-                <div class="icon"><i class="lni lni-comments-alt"></i></div>
-                <h3>AI Fitness Coach</h3>
-                <p>A polished chat assistant gives quick answers about workouts, meals, macros, hydration, and staying consistent.</p>
+            <article class="cardx">
+              <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=86" alt="Member checking fitness guidance on phone" />
+              <div class="card-bodyx">
+                <span class="iconx"><i class="lni lni-comments-alt"></i></span>
+                <h3>AI Coach</h3>
+                <p>Fast answers for workouts, meals, macros, hydration, and consistency inside a polished chat experience.</p>
               </div>
             </article>
           </div>
         </div>
       </section>
 
-      <section class="landing-section alt">
-        <div id="billing" class="landing-container landing-split">
-          <div class="landing-image-panel" role="img" aria-label="Healthy meal preparation"></div>
+      <section id="experience" class="section section-dark">
+        <div class="containerx split">
+          <div class="photo" role="img" aria-label="Healthy meal preparation"></div>
 
           <div>
-            <div class="landing-section-head">
-              <h2>A premium post-purchase experience that feels worth it.</h2>
+            <div class="section-head">
+              <h2>Designed to feel useful from day one.</h2>
               <p>
-                FitAccess is built to make the upsell feel valuable immediately: fast access, a guided dashboard, useful fitness content, and account controls that feel secure.
+                The app helps members find what to do next quickly, stay consistent, and manage their
+                account without feeling lost inside a complicated tool.
               </p>
             </div>
 
-            <div class="landing-checks">
-              <div class="landing-check">
+            <div class="checks">
+              <div class="check">
                 <i class="lni lni-checkmark-circle"></i>
                 <div>
-                  <strong>Instant member access</strong>
-                  <span>Secure first-access links and activation codes get members into the app quickly after checkout.</span>
+                  <strong>Quick account access</strong>
+                  <span>Members receive a clean access email and can start without extra signup friction.</span>
                 </div>
               </div>
 
-              <div class="landing-check">
+              <div class="check">
                 <i class="lni lni-checkmark-circle"></i>
                 <div>
-                  <strong>Personalized content</strong>
-                  <span>Workout and meal recommendations adjust around goal, level, and preferred training setup.</span>
+                  <strong>Secure billing experience</strong>
+                  <span>Members can update their card from the account area while sensitive card details stay protected.</span>
                 </div>
               </div>
 
-              <div class="landing-check">
+              <div class="check">
                 <i class="lni lni-checkmark-circle"></i>
                 <div>
-                  <strong>Secure billing controls</strong>
-                  <span>Members can update their payment method while FitAccess stores only safe billing references.</span>
+                  <strong>Visible progress</strong>
+                  <span>Workout completions, streaks, weight logs, and activity history keep the product feeling active.</span>
                 </div>
               </div>
             </div>
@@ -529,35 +880,113 @@
         </div>
       </section>
 
-      <section class="landing-section landing-band">
-        <div class="landing-container landing-band-inner">
-          <div>
-            <h2>Already purchased FitAccess?</h2>
-            <p>Use your checkout email to activate access, sign in, or reset your password and continue your plan.</p>
+      <section class="section">
+        <div class="containerx">
+          <div class="section-head">
+            <h2>A simple fitness routine members can follow every day.</h2>
+            <p>FitAccess keeps the member experience direct: open the dashboard, follow the plan, ask the coach, and track progress.</p>
           </div>
 
-          <div class="landing-actions">
-            <a href="/sign-in" class="main-btn light-btn btn-hover">Sign In</a>
-            <a href="/activate" class="main-btn success-btn btn-hover">Activate Access</a>
-            <a href="/forgot-password" class="main-btn light-btn btn-hover">Reset Password</a>
+          <div class="steps">
+            <div class="step">
+              <span>1</span>
+              <h3>Open Your Plan</h3>
+              <p>The dashboard shows today's workout, meals, streak, and the next best action.</p>
+            </div>
+
+            <div class="step">
+              <span>2</span>
+              <h3>Train With Focus</h3>
+              <p>Home and gym workouts are organized by goal, level, week, and training day.</p>
+            </div>
+
+            <div class="step">
+              <span>3</span>
+              <h3>Eat With Clarity</h3>
+              <p>Meal guidance keeps calories, macros, and recipe ideas simple enough to follow.</p>
+            </div>
+
+            <div class="step">
+              <span>4</span>
+              <h3>Keep Momentum</h3>
+              <p>Progress logs, activity history, and AI Coach prompts help members stay consistent.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer class="landing-footer">
-        <div class="landing-footer-inner">
-          <span>FitAccess premium fitness membership.</span>
-          <div class="landing-links">
-            <a href="/sign-in">Sign In</a>
-            <a href="/activate">Activate</a>
-            <% if (data.currentUser?.role === 'admin') { %>
-              <a href="/admin">Admin</a>
-            <% } %>
+      <section id="access" class="section section-dark">
+        <div class="containerx cta">
+          <div>
+            <h2>Already have FitAccess?</h2>
+            <p>Sign in or reset your password to continue your personalized plan.</p>
           </div>
+
+          <div class="actions">
+            <a href="/sign-in" class="btnx btn-lightx">Sign In</a>
+            <a href="/forgot-password" class="btnx btn-lightx">Reset Password</a>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="containerx footer-inner">
+          <div class="footer-brand">
+            <img src="/images/logo/logo.svg" alt="FitAccess" />
+            <p>
+              Premium fitness membership with guided training, practical nutrition, progress tracking,
+              and helpful AI Coach support.
+            </p>
+          </div>
+
+          <div class="footer-right">
+            <div class="footer-columns">
+              <div class="footer-column">
+                <h3>Membership</h3>
+                <a href="#plans">Workout Plans</a>
+                <a href="#nutrition">Meal Guidance</a>
+                <a href="#experience">Member Experience</a>
+              </div>
+
+              <div class="footer-column">
+                <h3>Account</h3>
+                <a href="/sign-in">Sign In</a>
+                <a href="/forgot-password">Reset Password</a>
+              </div>
+
+              <div class="footer-column">
+                <h3>Quick Links</h3>
+                <a href="#access">Account Access</a>
+                <a href="/">Home</a>
+                <% if (data.currentUser?.role === 'admin') { %>
+                  <a href="/admin">Admin Panel</a>
+                <% } %>
+              </div>
+            </div>
+
+            <p class="payment-title">Accepted payment methods</p>
+            <div class="payment-grid" aria-label="Accepted payment brands">
+              <img src="/images/payment-brands/visa.svg" alt="Visa" />
+              <img src="/images/payment-brands/mastercard.svg" alt="Mastercard" />
+              <img src="/images/payment-brands/amex.svg" alt="American Express" />
+              <img src="/images/payment-brands/discover.svg" alt="Discover" />
+              <img src="/images/payment-brands/paypal.svg" alt="PayPal" />
+              <img src="/images/payment-brands/apple-pay.svg" alt="Apple Pay" />
+              <img src="/images/payment-brands/google-pay.svg" alt="Google Pay" />
+              <img src="/images/payment-brands/jcb.svg" alt="JCB" />
+              <img src="/images/payment-brands/diners.svg" alt="Diners Club" />
+              <img src="/images/payment-brands/unionpay.svg" alt="UnionPay" />
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>FitAccess helps members stay consistent with fitness, meals, and progress in one secure account.</span>
+          <span>© <%= new Date().getFullYear() %> FitAccess</span>
         </div>
       </footer>
     </div>
 
-    <%- include('partials/scripts.ejs') %>
+    <script src="/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

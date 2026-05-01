@@ -48,7 +48,7 @@
                   </div>
                   <div class="billing-card-meta">
                     <span><%= data.currentUser.name %></span>
-                    <span><%= data.paymentMethod?.nextChargeAt || 'Next charge pending' %></span>
+                    <span><%= data.paymentMethod?.nextChargedAt || 'Next charge pending' %></span>
                   </div>
                   <div class="billing-brand-row" aria-label="Accepted cards">
                     <span class="billing-brand visa">VISA</span>
@@ -72,28 +72,28 @@
                     <div class="col-md-12">
                       <div class="input-style-1">
                         <label>Card Number</label>
-                        <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required />
+                        <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" minlength="12" maxlength="23" required />
                       </div>
                     </div>
 
                     <div class="col-md-4 col-6">
                       <div class="input-style-1">
                         <label>Month</label>
-                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" maxlength="2" required />
+                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" minlength="1" maxlength="2" required />
                       </div>
                     </div>
 
                     <div class="col-md-4 col-6">
                       <div class="input-style-1">
                         <label>Year</label>
-                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" maxlength="4" required />
+                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" minlength="2" maxlength="4" required />
                       </div>
                     </div>
 
                     <div class="col-md-4">
                       <div class="input-style-1">
                         <label>CVV</label>
-                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required />
+                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" minlength="3" maxlength="4" required />
                       </div>
                     </div>
                   </div>
@@ -113,7 +113,7 @@
 
                 <% if (data.paymentMethod) { %>
                   <p class="text-sm mb-10"><strong>Card:</strong> **** **** **** <%= data.paymentMethod.cardLast4 %></p>
-                  <p class="text-sm mb-0"><strong>Next Charge:</strong> <%= data.paymentMethod.nextChargeAt || 'Pending' %></p>
+                  <p class="text-sm mb-0"><strong>Next Charge:</strong> <%= data.paymentMethod.nextChargedAt || 'Pending' %></p>
                 <% } else { %>
                   <p class="text-sm mb-10"><strong>Status:</strong> Card required</p>
                   <p class="text-sm mb-0">Dashboard, workouts, meals, AI Coach, and progress unlock after a card is verified.</p>

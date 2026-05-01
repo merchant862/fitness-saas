@@ -8,6 +8,7 @@ const cors = require('cors');
 const compression = require('compression');
 const { attachUser } = require('../middleware/auth');
 const { apiLimiter, securityHeaders } = require('../middleware/security');
+const { wantsJson } = require('../utils/httpResponseUtils');
 
 const router = require('../routes/routes.js');
 
@@ -84,7 +85,7 @@ app.use((req, res, next) =>
 app.use((err, req, res, next) =>
 {
     console.error(err);
-    if (req.path.startsWith('/api/'))
+    if (wantsJson(req))
     {
         return res.status(err.status || 500).json({
             error: process.env.NODE_ENV === 'development' ? err.message : (err.status ? err.message : 'Internal server error')

@@ -3,6 +3,7 @@
 const jwt = require('jsonwebtoken');
 const { PaymentMethod } = require('../database/models');
 const { COOKIE_NAME, findUserForSession } = require('../services/authService');
+const { getPostAuthRedirect, isProfileComplete } = require('../utils/profileCompletion');
 const { jwtOptions, jwtSecret } = require('../utils/jwtUtils');
 
 async function attachUser(req, res, next)
@@ -30,7 +31,6 @@ async function attachUser(req, res, next)
     }
 
     req.user = session.user;
-    req.sessionRecord = session.sessionRecord;
     res.locals.currentUser = session.user;
     return next();
   }
@@ -56,6 +56,23 @@ function requireAuth(req, res, next)
   return res.redirect('/sign-in');
 }
 
+function requireGuest(req, res, next)
+{
+  if (!req.user)
+  {
+    return next();
+  }
+
+  const redirectTo = getPostAuthRedirect(req.user);
+
+  if (req.path.startsWith('/api/'))
+  {
+    return res.status(409).json({ error: 'Already authenticated', redirectTo });
+  }
+
+  return res.redirect(redirectTo);
+}
+
 function requireOnboarding(req, res, next)
 {
   if (!req.user)
@@ -71,6 +88,29 @@ function requireOnboarding(req, res, next)
   return res.redirect('/onboarding');
 }
 
+function requireProfileComplete(req, res, next)
+{
+  if (!req.user)
+  {
+    return requireAuth(req, res, next);
+  }
+
+  if (isProfileComplete(req.user) || profileExceptions(req.path))
+  {
+    return next();
+  }
+
+  if (req.path.startsWith('/api/'))
+  {
+    return res.status(428).json({
+      error: 'Profile completion required',
+      redirectTo: '/profile'
+    });
+  }
+
+  return res.redirect('/profile');
+}
+
 async function requireBilling(req, res, next)
 {
   if (!req.user)
@@ -83,7 +123,6 @@ async function requireBilling(req, res, next)
     const paymentMethod = await PaymentMethod.findOne({
       where: {
         userId: req.user.id,
-        provider: 'responsecrm',
         status: 'active'
       }
     });
@@ -177,6 +216,16 @@ module.exports = {
   requireAdmin,
   requireAuth,
   requireBilling,
+  requireGuest,
   requireOnboarding,
-  requirePasswordSetup
+  requirePasswordSetup,
+  requireProfileComplete
 };
+
+function profileExceptions(path)
+{
+  return path === '/profile' ||
+    path === '/api/users/me' ||
+    path === '/api/users/onboarding' ||
+    path === '/api/auth/session';
+}

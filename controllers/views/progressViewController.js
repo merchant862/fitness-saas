@@ -1,14 +1,27 @@
 'use strict';
 
-const { WeightLog, WorkoutCompletion } = require('../../database/models');
+const { Event, MealCompletion, WeightLog, WorkoutCompletion } = require('../../database/models');
+const { Op } = require('sequelize');
 
 async function progressViewController(req, res, next)
 {
     try
     {
-        const [weightLogs, workoutsCompleted] = await Promise.all([
+        const [weightLogs, workoutsCompleted, mealCompletions, recentProgressEvents] = await Promise.all([
             WeightLog.findAll({ where: { userId: req.user.id }, order: [['loggedAt', 'ASC']], limit: 30 }),
-            WorkoutCompletion.count({ where: { userId: req.user.id } })
+            WorkoutCompletion.count({ where: { userId: req.user.id } }),
+            MealCompletion.count({ where: { userId: req.user.id } }),
+            Event.findAll({
+                where: {
+                    userId: req.user.id,
+                    eventType: {
+                        [Op.in]: ['weight_logged', 'workout_completed', 'meal_day_completed']
+                    }
+                },
+                attributes: ['createdAt'],
+                order: [['createdAt', 'DESC']],
+                limit: 50
+            })
         ]);
 
         const firstWeight = weightLogs[0]?.weight || req.user.profile?.currentWeight || 0;
@@ -24,12 +37,12 @@ async function progressViewController(req, res, next)
                 currentWeight: lastWeight,
                 startingWeight: firstWeight,
                 targetWeight,
-                streakDays: Math.min(workoutsCompleted, 14),
+                streakDays: calculateStreakDays(recentProgressEvents),
                 workoutsCompleted,
-                mealsFollowed: 0
+                mealsFollowed: mealCompletions
             },
             weeklyProgress: {
-                thisWeekChange: 'Log more weights to calculate',
+                thisWeekChange: calculateWeeklyChange(weightLogs),
                 totalChange,
                 completionRate: workoutsCompleted ? `${Math.min(workoutsCompleted * 5, 100)}%` : '0%',
                 consistencyScore: workoutsCompleted ? `${Math.min(workoutsCompleted, 10)}/10` : '0/10'
@@ -45,6 +58,65 @@ async function progressViewController(req, res, next)
     {
         next(error);
     }
+}
+
+function calculateStreakDays(events)
+{
+    if (!events.length)
+    {
+        return 0;
+    }
+
+    const seen = new Set();
+
+    events.forEach((event) =>
+    {
+        seen.add(event.createdAt.toISOString().slice(0, 10));
+    });
+
+    let streak = 0;
+    const cursor = new Date();
+
+    for (let i = 0; i < 30; i += 1)
+    {
+        const dayKey = cursor.toISOString().slice(0, 10);
+        if (seen.has(dayKey))
+        {
+            streak += 1;
+            cursor.setDate(cursor.getDate() - 1);
+            continue;
+        }
+
+        if (streak > 0)
+        {
+            break;
+        }
+
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return streak;
+}
+
+function calculateWeeklyChange(weightLogs)
+{
+    if (!weightLogs || weightLogs.length < 2)
+    {
+        return 'Log more weights to calculate';
+    }
+
+    const latest = Number(weightLogs[weightLogs.length - 1].weight);
+    const previous = Number(weightLogs[weightLogs.length - 2].weight);
+
+    if (!Number.isFinite(latest) || !Number.isFinite(previous))
+    {
+        return 'Log more weights to calculate';
+    }
+
+    const delta = latest - previous;
+    const direction = delta === 0 ? 'no change' : (delta < 0 ? 'down' : 'up');
+
+    return `${Math.abs(delta).toFixed(1)} kg ${direction} this week`;
 }
 
 function buildMilestones(workoutsCompleted, firstWeight, lastWeight)

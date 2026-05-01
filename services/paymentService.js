@@ -2,18 +2,13 @@
 
 const { PaymentMethod, sequelize } = require('../database/models');
 const { postResponseCrm } = require('../apis/responseCrmApi');
+const { normalizeCheckoutCustomer } = require('../utils/checkoutCustomerUtils');
 const { normalizeEmail } = require('../utils/securityUtils');
 
 async function chargeUpsellOrder(payload)
 {
   const payment = extractPayment(payload);
-
-  if (!payment.cardNumber)
-  {
-    const error = new Error('Card number is required for upsell payment');
-    error.status = 422;
-    throw error;
-  }
+  validatePayment(payment);
 
   const crmPayload = buildResponseCrmOrderPayload(payload, payment);
   const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
@@ -31,29 +26,26 @@ async function chargeUpsellOrder(payload)
     crmResult,
     cardLast4: cardLast4(payment.cardNumber),
     chargedAt: new Date(),
-    nextChargeAt: calculateNextChargeAt(payload.nextChargeAt || payload.next_charge_at)
+    nextChargedAt: calculateNextChargedAt(payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at)
   };
 }
 
 async function updateCustomerPaymentMethod(user, payload)
 {
   const payment = extractPayment(payload);
+  validatePayment(payment);
 
-  if (!payment.cardNumber)
-  {
-    const error = new Error('Card number is required');
-    error.status = 422;
-    throw error;
-  }
-
-  const crmPayload = buildResponseCrmPaymentUpdatePayload(user, payload, payment);
+  const usesVerificationOrder = !process.env.RESPONSE_CRM_UPDATE_PAYMENT_URL;
+  const crmPayload = usesVerificationOrder ?
+    buildResponseCrmCardVerificationPayload(user, payload, payment) :
+    buildResponseCrmPaymentUpdatePayload(user, payload, payment);
   const url = process.env.RESPONSE_CRM_UPDATE_PAYMENT_URL || process.env.RESPONSE_CRM_ADD_ORDER_URL;
   const response = await postResponseCrm(url, crmPayload);
   const crmResult = normalizeCrmResult(response.body);
 
   if (!crmResult.approved)
   {
-    const error = new Error('Payment method update was declined');
+    const error = new Error('Card verification was declined');
     error.status = 402;
     error.crmResult = crmResult.publicResult;
     throw error;
@@ -62,12 +54,10 @@ async function updateCustomerPaymentMethod(user, payload)
   return {
     crmResult,
     paymentMethod: await savePaymentMethod(user.id, {
+      customerId: crmCustomerId(user, crmResult, payload),
       cardLast4: cardLast4(payment.cardNumber),
-      externalCustomerId: crmResult.customerId || payload.customerId || payload.customer_id || null,
-      externalOrderId: crmResult.orderId || payload.orderId || payload.order_id || null,
-      externalTransactionId: crmResult.transactionId || payload.transactionId || payload.transaction_id || null,
       lastChargedAt: null,
-      nextChargeAt: calculateNextChargeAt(payload.nextChargeAt || payload.next_charge_at)
+      nextChargedAt: calculateNextChargedAt(payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at)
     })
   };
 }
@@ -81,7 +71,6 @@ async function savePaymentMethod(userId, data, options = {})
       {
         where: {
           userId,
-          provider: 'responsecrm',
           status: 'active'
         },
         transaction
@@ -90,15 +79,11 @@ async function savePaymentMethod(userId, data, options = {})
 
     return PaymentMethod.create({
       userId,
-      provider: 'responsecrm',
-      externalCustomerId: data.externalCustomerId || null,
-      externalOrderId: data.externalOrderId || null,
-      externalTransactionId: data.externalTransactionId || null,
+      customerId: data.customerId || null,
       cardLast4: data.cardLast4,
       lastChargedAt: data.lastChargedAt || null,
-      nextChargeAt: data.nextChargeAt || null,
-      status: data.status || 'active',
-      metadata: sanitizeMetadata(data.metadata || {})
+      nextChargedAt: data.nextChargedAt || null,
+      status: data.status || 'active'
     }, { transaction: options.transaction || transaction });
   });
 }
@@ -108,7 +93,6 @@ async function findActivePaymentMethod(userId)
   return PaymentMethod.findOne({
     where: {
       userId,
-      provider: 'responsecrm',
       status: 'active'
     },
     order: [['createdAt', 'DESC']]
@@ -117,6 +101,8 @@ async function findActivePaymentMethod(userId)
 
 function buildResponseCrmOrderPayload(payload, payment)
 {
+  const customer = normalizeCheckoutCustomer(payload);
+
   return stripEmpty({
     ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
     site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
@@ -124,9 +110,15 @@ function buildResponseCrmOrderPayload(payload, payment)
     product_id: payload.productId || payload.product_id || process.env.RESPONSE_CRM_PRODUCT_ID,
     offer_id: payload.offerId || payload.offer_id || process.env.RESPONSE_CRM_OFFER_ID,
     email: normalizeEmail(payload.email),
-    first_name: payload.firstName || payload.first_name || null,
-    last_name: payload.lastName || payload.last_name || null,
-    phone: payload.phone || null,
+    first_name: customer.firstName,
+    last_name: customer.lastName,
+    phone: customer.phone,
+    address1: customer.address1,
+    address2: customer.address2,
+    city: customer.city,
+    state: customer.state,
+    zip: customer.zip,
+    country: customer.country,
     amount: payload.amount || null,
     currency: payload.currency || 'USD',
     order_id: payload.orderId || payload.order_id || null,
@@ -134,8 +126,25 @@ function buildResponseCrmOrderPayload(payload, payment)
     idempotency_id: idempotencyId('upsell', payload.orderId || payload.order_id, payload.email),
     is_upsell: true,
     upsell: true,
-    billing: safeObject(payload.billing || payload.billingAddress || payload.billing_address),
-    shipping: safeObject(payload.shipping || payload.shippingAddress || payload.shipping_address),
+    billing: {
+      ...customer.billing,
+      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
+    },
+    shipping: {
+      ...customer.shipping,
+      ...safeObject(payload.shipping || payload.shippingAddress || payload.shipping_address)
+    },
+    customer: {
+      first_name: customer.firstName,
+      last_name: customer.lastName,
+      phone: customer.phone,
+      address1: customer.address1,
+      address2: customer.address2,
+      city: customer.city,
+      state: customer.state,
+      zip: customer.zip,
+      country: customer.country
+    },
     payment: responseCrmPayment(payment),
     metadata: sanitizeMetadata({
       source: 'fitaccess_upsell',
@@ -147,23 +156,67 @@ function buildResponseCrmOrderPayload(payload, payment)
 
 function buildResponseCrmPaymentUpdatePayload(user, payload, payment)
 {
+  const customer = normalizeCheckoutCustomer(payload);
+
   return stripEmpty({
     ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
     site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
     campaign_id: payload.campaignId || payload.campaign_id || process.env.RESPONSE_CRM_CAMPAIGN_ID,
     product_id: payload.productId || payload.product_id || process.env.RESPONSE_CRM_PRODUCT_ID,
     email: user.email,
+    first_name: customer.firstName || user.name || null,
+    last_name: customer.lastName || null,
+    phone: customer.phone,
     customer_id: payload.customerId || payload.customer_id || user.metadata?.responseCrmCustomerId || null,
     order_id: payload.orderId || payload.order_id || user.metadata?.responseCrmOrderId || null,
     idempotency_id: idempotencyId('payment-update', payload.orderId || payload.order_id || user.metadata?.responseCrmOrderId, user.email),
     update_payment_method: true,
     amount: payload.amount || 0,
     currency: payload.currency || 'USD',
+    billing: {
+      ...customer.billing,
+      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
+    },
     payment: responseCrmPayment(payment),
-    billing: safeObject(payload.billing || payload.billingAddress || payload.billing_address),
     metadata: sanitizeMetadata({
       source: 'fitaccess_payment_update',
       userId: user.id
+    })
+  });
+}
+
+function buildResponseCrmCardVerificationPayload(user, payload, payment)
+{
+  const customer = normalizeCheckoutCustomer(payload);
+
+  return stripEmpty({
+    ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
+    site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
+    campaign_id: payload.campaignId || payload.campaign_id || process.env.RESPONSE_CRM_CAMPAIGN_ID,
+    product_id: payload.verificationProductId || payload.verification_product_id || process.env.RESPONSE_CRM_VERIFICATION_PRODUCT_ID || process.env.RESPONSE_CRM_PRODUCT_ID,
+    offer_id: payload.verificationOfferId || payload.verification_offer_id || process.env.RESPONSE_CRM_VERIFICATION_OFFER_ID || process.env.RESPONSE_CRM_OFFER_ID,
+    email: user.email,
+    first_name: customer.firstName || user.name || null,
+    last_name: customer.lastName || null,
+    phone: customer.phone,
+    amount: 0,
+    currency: payload.currency || 'USD',
+    order_id: payload.orderId || payload.order_id || null,
+    customer_id: payload.customerId || payload.customer_id || user.metadata?.responseCrmCustomerId || null,
+    parent_order_id: payload.parentOrderId || payload.parent_order_id || user.metadata?.responseCrmOrderId || null,
+    idempotency_id: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber)),
+    verify_card: true,
+    card_verification: true,
+    payment_update: true,
+    billing: {
+      ...customer.billing,
+      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
+    },
+    payment: responseCrmPayment(payment),
+    metadata: sanitizeMetadata({
+      source: 'fitaccess_card_verification',
+      userId: user.id,
+      purpose: 'payment_method_update'
     })
   });
 }
@@ -192,6 +245,205 @@ function extractPayment(payload)
   };
 }
 
+function validatePayment(payment)
+{
+  if (!payment.cardHolderName)
+  {
+    throwValidationError('Name on card is required.');
+  }
+
+  const brand = detectCardBrand(payment.cardNumber);
+
+  if (!brand)
+  {
+    throwValidationError('Enter a supported card number.');
+  }
+
+  if (!brand.lengths.includes(payment.cardNumber.length))
+  {
+    throwValidationError(`${brand.label} card number must be ${brand.lengths.join(' or ')} digits.`);
+  }
+
+  if (!luhnValid(payment.cardNumber))
+  {
+    throwValidationError('Card number is not valid. Please check the digits.');
+  }
+
+  if (!payment.expiryMonth || !payment.expiryYear)
+  {
+    throwValidationError('Card expiry month and year are required.');
+  }
+
+  const month = Number(payment.expiryMonth);
+  const year = Number(payment.expiryYear);
+
+  if (!Number.isInteger(month) || month < 1 || month > 12)
+  {
+    throwValidationError('Expiry month must be between 01 and 12.');
+  }
+
+  if (!Number.isInteger(year) || String(year).length !== 4)
+  {
+    throwValidationError('Expiry year must be four digits.');
+  }
+
+  const now = new Date();
+  const expiryCutoff = new Date(year, month, 1);
+
+  if (expiryCutoff <= new Date(now.getFullYear(), now.getMonth(), 1))
+  {
+    throwValidationError('Card expiry must be a future month.');
+  }
+
+  if (!new RegExp(`^\\d{${brand.cvvLength}}$`).test(payment.cvv))
+  {
+    throwValidationError(`${brand.label} security code must be ${brand.cvvLength} digits.`);
+  }
+}
+
+function detectCardBrand(cardNumber)
+{
+  if (/^4/.test(cardNumber))
+  {
+    return brand('visa', 'Visa', [13, 16, 19], 3);
+  }
+
+  if (/^(5[1-5]|2[2-7])/.test(cardNumber) && mastercardInRange(cardNumber))
+  {
+    return brand('mastercard', 'Mastercard', [16], 3);
+  }
+
+  if (/^3[47]/.test(cardNumber))
+  {
+    return brand('amex', 'American Express', [15], 4);
+  }
+
+  if (jcbInRange(cardNumber))
+  {
+    return brand('jcb', 'JCB', [16, 17, 18, 19], 3);
+  }
+
+  if (dinersInRange(cardNumber))
+  {
+    return brand('diners', 'Diners Club', [14, 16, 19], 3);
+  }
+
+  if (eloInRange(cardNumber))
+  {
+    return brand('elo', 'Elo', [16], 3);
+  }
+
+  if (/^(606282|3841)/.test(cardNumber))
+  {
+    return brand('hipercard', 'Hipercard', [13, 16, 19], 3);
+  }
+
+  if (/^62/.test(cardNumber))
+  {
+    return brand('unionpay', 'UnionPay', [16, 17, 18, 19], 3);
+  }
+
+  if (discoverInRange(cardNumber))
+  {
+    return brand('discover', 'Discover', [16, 19], 3);
+  }
+
+  if (maestroInRange(cardNumber))
+  {
+    return brand('maestro', 'Maestro', [12, 13, 14, 15, 16, 17, 18, 19], 3);
+  }
+
+  return null;
+}
+
+function brand(name, label, lengths, cvvLength)
+{
+  return { name, label, lengths, cvvLength };
+}
+
+function mastercardInRange(cardNumber)
+{
+  const firstTwo = Number(cardNumber.slice(0, 2));
+  const firstSix = Number(cardNumber.slice(0, 6));
+
+  return (firstTwo >= 51 && firstTwo <= 55) || (firstSix >= 222100 && firstSix <= 272099);
+}
+
+function discoverInRange(cardNumber)
+{
+  const firstTwo = Number(cardNumber.slice(0, 2));
+  const firstThree = Number(cardNumber.slice(0, 3));
+  const firstFour = Number(cardNumber.slice(0, 4));
+  const firstSix = Number(cardNumber.slice(0, 6));
+
+  return firstFour === 6011 ||
+    firstTwo === 65 ||
+    (firstThree >= 644 && firstThree <= 649) ||
+    (firstSix >= 622126 && firstSix <= 622925);
+}
+
+function jcbInRange(cardNumber)
+{
+  const firstFour = Number(cardNumber.slice(0, 4));
+  return firstFour >= 3528 && firstFour <= 3589;
+}
+
+function dinersInRange(cardNumber)
+{
+  const firstTwo = Number(cardNumber.slice(0, 2));
+  const firstThree = Number(cardNumber.slice(0, 3));
+  const firstFour = Number(cardNumber.slice(0, 4));
+
+  return (firstThree >= 300 && firstThree <= 305) ||
+    firstTwo === 36 ||
+    firstTwo === 38 ||
+    firstTwo === 39 ||
+    firstFour === 3095;
+}
+
+function maestroInRange(cardNumber)
+{
+  return /^(50|5[6-9]|6[0-9])/.test(cardNumber);
+}
+
+function eloInRange(cardNumber)
+{
+  return /^(401178|401179|431274|438935|451416|457393|457631|457632|504175|5067|5090|627780|636297|636368|6500|6504|6505|6507|6509|6516|6550)/.test(cardNumber);
+}
+
+function luhnValid(cardNumber)
+{
+  let sum = 0;
+  let doubleDigit = false;
+
+  for (let index = cardNumber.length - 1; index >= 0; index -= 1)
+  {
+    let digit = Number(cardNumber[index]);
+
+    if (doubleDigit)
+    {
+      digit *= 2;
+
+      if (digit > 9)
+      {
+        digit -= 9;
+      }
+    }
+
+    sum += digit;
+    doubleDigit = !doubleDigit;
+  }
+
+  return sum > 0 && sum % 10 === 0;
+}
+
+function throwValidationError(message)
+{
+  const error = new Error(message);
+  error.status = 422;
+  throw error;
+}
+
 function normalizeCrmResult(body)
 {
   const statusText = String(
@@ -215,7 +467,7 @@ function normalizeCrmResult(body)
   };
 }
 
-function calculateNextChargeAt(value)
+function calculateNextChargedAt(value)
 {
   if (value)
   {
@@ -236,6 +488,17 @@ function calculateNextChargeAt(value)
 function cardLast4(value)
 {
   return digits(value).slice(-4);
+}
+
+function crmCustomerId(user, crmResult, payload)
+{
+  return String(
+    crmResult.customerId ||
+    payload.customerId ||
+    payload.customer_id ||
+    user.metadata?.responseCrmCustomerId ||
+    '16528318'
+  );
 }
 
 function sanitizeMetadata(value)

@@ -1,23 +1,37 @@
 'use strict';
 
-const { PaymentMethod, WorkoutCompletion } = require('../../database/models');
+const { Event, MealCompletion, PaymentMethod, WorkoutCompletion } = require('../../database/models');
+const { Op } = require('sequelize');
+const { getAvatarType, isProfileComplete } = require('../../utils/profileCompletion');
 
 async function profileViewController(req, res, next)
 {
     try
     {
-        const [workoutsCompleted, paymentMethod] = await Promise.all([
+        const [workoutsCompleted, mealCompletions, recentProgressEvents, paymentMethod] = await Promise.all([
             WorkoutCompletion.count({ where: { userId: req.user.id } }),
+            MealCompletion.count({ where: { userId: req.user.id } }),
+            Event.findAll({
+                where: {
+                    userId: req.user.id,
+                    eventType: {
+                        [Op.in]: ['weight_logged', 'workout_completed', 'meal_day_completed']
+                    }
+                },
+                attributes: ['createdAt'],
+                order: [['createdAt', 'DESC']],
+                limit: 50
+            }),
             PaymentMethod.findOne({
                 where: {
                     userId: req.user.id,
-                    provider: 'responsecrm',
                     status: 'active'
                 },
                 order: [['createdAt', 'DESC']]
             })
         ]);
         const currentUser = presentUser(req.user);
+        const height = heightParts(req.user.profile?.preferences);
 
         const profileData = {
             currentUser,
@@ -27,20 +41,44 @@ async function profileViewController(req, res, next)
                 currentWeight: req.user.profile?.currentWeight || '',
                 targetWeight: req.user.profile?.targetWeight || '',
                 workoutDays: req.user.profile?.workoutDays || '',
-                height: req.user.profile?.preferences?.height || '',
+                heightFeet: height.feet,
+                heightInches: height.inches,
+                heightLabel: height.feet !== '' ? `${height.feet} ft ${height.inches || 0} in` : '',
                 accessStatus: req.user.accessExpiresAt && req.user.accessExpiresAt > new Date() ? 'Active' : 'Expired',
                 membership: req.user.tags?.includes('upsell_customer') ? 'Upsell Access' : 'Member Access',
                 joinedAt: req.user.createdAt ? req.user.createdAt.toISOString().slice(0, 10) : ''
             },
+            completion: {
+                complete: isProfileComplete(req.user),
+                items: [
+                    { label: 'Age', done: Boolean(req.user.profile?.preferences?.age) },
+                    { label: 'Gender', done: Boolean(req.user.profile?.preferences?.gender) },
+                    { label: 'Height', done: height.feet !== '' && height.inches !== '' },
+                    { label: 'Goal', done: Boolean(req.user.profile?.goal) },
+                    { label: 'Training Level', done: Boolean(req.user.profile?.level) },
+                    { label: 'Workout Environment', done: Boolean(req.user.profile?.environment) }
+                ],
+                missingFields: {
+                    age: !req.user.profile?.preferences?.age,
+                    gender: !req.user.profile?.preferences?.gender,
+                    height: !(height.feet !== '' && height.inches !== ''),
+                    goal: !req.user.profile?.goal,
+                    level: !req.user.profile?.level,
+                    environment: !req.user.profile?.environment,
+                    currentWeight: !(req.user.profile?.currentWeight !== null && req.user.profile?.currentWeight !== undefined),
+                    targetWeight: !(req.user.profile?.targetWeight !== null && req.user.profile?.targetWeight !== undefined),
+                    workoutDays: !(req.user.profile?.workoutDays !== null && req.user.profile?.workoutDays !== undefined)
+                }
+            },
             stats: {
-                streakDays: Math.min(workoutsCompleted, 14),
+                streakDays: calculateStreakDays(recentProgressEvents),
                 workoutsCompleted,
-                mealsFollowed: 0
+                mealsFollowed: mealCompletions
             },
             billing: presentPaymentMethod(paymentMethod),
             note: 'Your profile settings help personalize your workouts, meals, and AI guidance.',
-            message: req.query.updated ? 'Profile updated successfully.' : null,
-            billingMessage: billingMessage(req.query.billing)
+            message: null,
+            billingMessage: null
         };
 
         return res.status(200).render('../views/profile.ejs', { profileData });
@@ -51,43 +89,54 @@ async function profileViewController(req, res, next)
     }
 }
 
+function calculateStreakDays(events)
+{
+    if (!events.length)
+    {
+        return 0;
+    }
+
+    const seen = new Set(events.map((event) => event.createdAt.toISOString().slice(0, 10)));
+    let streak = 0;
+    const cursor = new Date();
+
+    for (let i = 0; i < 30; i += 1)
+    {
+        const dayKey = cursor.toISOString().slice(0, 10);
+        if (seen.has(dayKey))
+        {
+            streak += 1;
+            cursor.setDate(cursor.getDate() - 1);
+            continue;
+        }
+
+        if (streak > 0)
+        {
+            break;
+        }
+
+        cursor.setDate(cursor.getDate() - 1);
+    }
+
+    return streak;
+}
+
 function presentPaymentMethod(paymentMethod)
 {
     if (!paymentMethod)
     {
         return {
             cardLast4: null,
-            nextChargeAt: null,
+            nextChargedAt: null,
             status: 'Not added'
         };
     }
 
     return {
         cardLast4: paymentMethod.cardLast4,
-        nextChargeAt: paymentMethod.nextChargeAt ? paymentMethod.nextChargeAt.toISOString().slice(0, 10) : null,
+        nextChargedAt: paymentMethod.nextChargedAt ? paymentMethod.nextChargedAt.toISOString().slice(0, 10) : null,
         status: label(paymentMethod.status)
     };
-}
-
-function billingMessage(value)
-{
-    if (value === 'updated')
-    {
-        return {
-            type: 'success',
-            text: 'Payment method updated successfully.'
-        };
-    }
-
-    if (value === 'failed')
-    {
-        return {
-            type: 'danger',
-            text: 'Payment method could not be updated. Please check the card details and try again.'
-        };
-    }
-
-    return null;
 }
 
 function presentUser(user)
@@ -97,8 +146,52 @@ function presentUser(user)
         email: user.email,
         goal: label(user.profile?.goal || 'general_fitness'),
         level: label(user.profile?.level || 'beginner'),
-        environment: label(user.profile?.environment || 'home')
+        environment: label(user.profile?.environment || 'home'),
+        gender: user.profile?.preferences?.gender || null,
+        avatarType: getAvatarType(user),
+        profileComplete: isProfileComplete(user)
     };
+}
+
+function heightParts(preferences)
+{
+    const heightFeet = toInteger(preferences?.heightFeet ?? preferences?.height_feet);
+    const heightInches = toInteger(preferences?.heightInches ?? preferences?.height_inches);
+
+    if (heightFeet !== null || heightInches !== null)
+    {
+        return {
+            feet: heightFeet !== null ? heightFeet : '',
+            inches: heightInches !== null ? heightInches : ''
+        };
+    }
+
+    const legacyHeight = String(preferences?.height || '').trim();
+    const match = legacyHeight.match(/^(\d{1,2})\s*(?:ft|feet|')\s*(\d{1,2})?\s*(?:in|inch|inches|")?$/i);
+
+    if (match)
+    {
+        return {
+            feet: toInteger(match[1]) ?? '',
+            inches: toInteger(match[2]) ?? ''
+        };
+    }
+
+    return {
+        feet: '',
+        inches: ''
+    };
+}
+
+function toInteger(value)
+{
+    if (value === undefined || value === null || value === '')
+    {
+        return null;
+    }
+
+    const number = Number(value);
+    return Number.isInteger(number) ? number : null;
 }
 
 function label(value)

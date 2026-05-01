@@ -14,8 +14,8 @@ async function changePasswordViewController(req, res, next)
             note: req.user?.passwordHash
                 ? 'Use a strong password that you have not used before.'
                 : 'No password is set yet. Leave current password empty and create a new one.',
-            returnTo: req.query.setup ? '/billing' : '/change-password',
-            message: req.query.updated ? 'Password updated successfully.' : null
+            returnTo: req.query.setup ? '/dashboard' : '/change-password',
+            message: null
         };
 
         return res.status(200).render('../views/change-password.ejs', { changePasswordData });

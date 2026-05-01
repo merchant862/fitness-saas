@@ -12,7 +12,7 @@ async function billingViewController(req, res, next)
       billingData: {
         currentUser: presentUser(req.user),
         paymentMethod: presentPaymentMethod(paymentMethod),
-        message: billingMessage(req.query)
+        message: null
       }
     });
   }
@@ -40,37 +40,8 @@ function presentPaymentMethod(paymentMethod)
 
   return {
     cardLast4: paymentMethod.cardLast4,
-    nextChargeAt: paymentMethod.nextChargeAt ? paymentMethod.nextChargeAt.toISOString().slice(0, 10) : null
+    nextChargedAt: paymentMethod.nextChargedAt ? paymentMethod.nextChargedAt.toISOString().slice(0, 10) : null
   };
-}
-
-function billingMessage(query)
-{
-  if (query.passwordUpdated)
-  {
-    return {
-      type: 'success',
-      text: 'Password saved. Add a verified card to unlock your dashboard.'
-    };
-  }
-
-  if (query.billing === 'updated')
-  {
-    return {
-      type: 'success',
-      text: 'Card added successfully. Your FitAccess dashboard is unlocked.'
-    };
-  }
-
-  if (query.billing === 'failed')
-  {
-    return {
-      type: 'danger',
-      text: 'Card could not be verified. Please check the details and try again.'
-    };
-  }
-
-  return null;
 }
 
 function label(value)

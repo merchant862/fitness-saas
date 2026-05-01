@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="48" viewBox="0 0 120 48" role="img" aria-label="Maestro">
+  <rect width="120" height="48" rx="8" fill="#fff"/>
+  <rect x="0.5" y="0.5" width="119" height="47" rx="7.5" fill="none" stroke="#E4E7EC"/>
+  <circle cx="50" cy="23" r="13" fill="#009DDD"/>
+  <circle cx="70" cy="23" r="13" fill="#ED1C24" fill-opacity=".9"/>
+  <text x="60" y="42" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="700" fill="#333">Maestro</text>
+</svg>

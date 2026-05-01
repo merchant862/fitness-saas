@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Admin Activity Log</title>
+  </head>
+  <body>
+    <% const data = adminData; %>
+
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-activity-log' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Activity Log',
+        pageSubtitle: 'Review account, access, billing, and feature events.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Activity Log</h2>
+                  <p class="text-sm text-medium"><%= data.events.length %> recent events shown.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Activity Log</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-style mb-30">
+            <div class="table-wrapper table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th><h6>Event</h6></th>
+                    <th><h6>User</h6></th>
+                    <th><h6>IP Address</h6></th>
+                    <th><h6>Browser / Device</h6></th>
+                    <th><h6>Time</h6></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (!data.events.length) { %>
+                    <tr>
+                      <td colspan="5"><p class="text-sm mb-0">No activity found yet.</p></td>
+                    </tr>
+                  <% } %>
+
+                  <% data.events.forEach(function(event) { %>
+                    <tr>
+                      <td><p class="text-sm mb-0"><%= event.eventType %></p></td>
+                      <td>
+                        <p class="text-sm mb-0">
+                          <%= event.user?.email || (event.userId ? `User #${event.userId}` : '-') %>
+                        </p>
+                      </td>
+                      <td><p class="text-sm mb-0"><%= event.ipAddress || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= event.userAgentLabel || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= event.timeLabel || '-' %></p></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>

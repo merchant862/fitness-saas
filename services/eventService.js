@@ -11,7 +11,8 @@ async function trackEvent(req, eventType, payload = {}, userId = null)
       userId: userId || req.user?.id || null,
       eventType,
       payload,
-      ipAddress: req ? clientIp(req) : null
+      ipAddress: req ? clientIp(req) : null,
+      userAgent: req ? String(req.headers['user-agent'] || '').slice(0, 512) : null
     });
   }
   catch (error)

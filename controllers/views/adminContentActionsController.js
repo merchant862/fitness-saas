@@ -6,6 +6,7 @@ const {
   updateAdminMealPlan,
   updateAdminWorkoutPlan
 } = require('../../services/adminService');
+const { errorResponse, successResponse, wantsJson } = require('../../utils/httpResponseUtils');
 
 async function editWorkout(req, res, next)
 {
@@ -42,10 +43,13 @@ async function updateWorkout(req, res, next)
 
     if (!plan)
     {
-      return res.status(404).send('Workout plan not found');
+      return errorResponse(req, res, { message: 'Workout plan not found', status: 404 });
     }
 
-    return res.redirect(`/admin/content/workout-plans/${plan.id}?updated=1`);
+    return successResponse(req, res, {
+      message: 'Workout plan updated successfully.',
+      redirectTo: `/admin/content/workout-plans/${plan.id}`
+    });
   }
   catch (error)
   {
@@ -88,10 +92,13 @@ async function updateMeal(req, res, next)
 
     if (!plan)
     {
-      return res.status(404).send('Meal plan not found');
+      return errorResponse(req, res, { message: 'Meal plan not found', status: 404 });
     }
 
-    return res.redirect(`/admin/content/meal-plans/${plan.id}?updated=1`);
+    return successResponse(req, res, {
+      message: 'Meal plan updated successfully.',
+      redirectTo: `/admin/content/meal-plans/${plan.id}`
+    });
   }
   catch (error)
   {
@@ -103,6 +110,11 @@ async function renderWorkoutError(req, res, next, error)
 {
   try
   {
+    if (wantsJson(req))
+    {
+      return errorResponse(req, res, { message: error.message });
+    }
+
     const plan = await getAdminWorkoutPlan(req.params.id);
 
     if (!plan)
@@ -129,6 +141,11 @@ async function renderMealError(req, res, next, error)
 {
   try
   {
+    if (wantsJson(req))
+    {
+      return errorResponse(req, res, { message: error.message });
+    }
+
     const plan = await getAdminMealPlan(req.params.id);
 
     if (!plan)

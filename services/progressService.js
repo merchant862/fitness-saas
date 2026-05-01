@@ -1,6 +1,6 @@
 'use strict';
 
-const { WeightLog, WorkoutCompletion } = require('../database/models');
+const { MealCompletion, WeightLog, WorkoutCompletion } = require('../database/models');
 
 async function getUserProgress(userId)
 {
@@ -9,7 +9,9 @@ async function getUserProgress(userId)
     WorkoutCompletion.count({ where: { userId } })
   ]);
 
-  return { weightLogs, workoutsCompleted };
+  const mealCompletions = await MealCompletion.count({ where: { userId } });
+
+  return { weightLogs, workoutsCompleted, mealCompletions };
 }
 
 async function logUserWeight(userId, { weight, loggedAt })
@@ -25,6 +27,15 @@ async function logUserWeight(userId, { weight, loggedAt })
 
 async function completeUserWorkout(userId, { workoutKey, metadata = {} })
 {
+  const existing = await WorkoutCompletion.findOne({
+    where: { userId, workoutKey }
+  });
+
+  if (existing)
+  {
+    return existing;
+  }
+
   return WorkoutCompletion.create({
     userId,
     workoutKey,
@@ -33,8 +44,28 @@ async function completeUserWorkout(userId, { workoutKey, metadata = {} })
   });
 }
 
+async function completeUserMealDay(userId, { mealKey, metadata = {} })
+{
+  const existing = await MealCompletion.findOne({
+    where: { userId, mealKey }
+  });
+
+  if (existing)
+  {
+    return existing;
+  }
+
+  return MealCompletion.create({
+    userId,
+    mealKey,
+    completedAt: new Date(),
+    metadata
+  });
+}
+
 module.exports = {
   completeUserWorkout,
+  completeUserMealDay,
   getUserProgress,
   logUserWeight
 };

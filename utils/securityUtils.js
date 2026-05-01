@@ -55,12 +55,15 @@ function compactUser(user)
     return null;
   }
 
+  const gender = user.profile?.preferences?.gender || null;
+
   return {
     id: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
     status: user.status,
+    gender,
     tags: user.tags || [],
     accessExpiresAt: user.accessExpiresAt,
     onboardingCompletedAt: user.onboardingCompletedAt,

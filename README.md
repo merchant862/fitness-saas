@@ -13,7 +13,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 | Server | Node.js, Express |
 | Views | EJS templates |
 | Database | MySQL, Sequelize |
-| Auth | Password login, secure first-access links, JWT sessions, optional activation codes |
+| Auth | Password login, secure first-access links, stateless JWT sessions, optional activation codes |
 | Email | Resend |
 | Payments | ResponseCRM Add Order / payment update API |
 | Coach Chat | Pattern-based fitness coach widget |
@@ -32,10 +32,11 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 - Optional single-use activation codes.
 - Onboarding by goal, level, environment, weight, and workout days.
 - User dashboard, workouts, meals, coach widget, progress, and profile.
+- User and admin activity logs with IP address and user-agent tracking.
 - DB-backed workout and meal content from seeders.
 - Pattern-based coach chat using member workout and meal context.
 - Coach safety scope, prompt-injection filtering, per-account rate limit, daily quota, and one in-flight request per account.
-- Admin dashboard, users, CSV export, access codes, content overview, workout plan editing, and meal plan editing.
+- Admin dashboard, users, CSV export, activity log, access codes, content overview, workout plan editing, and meal plan editing.
 
 ## User Flow
 
@@ -43,7 +44,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 2. Customer accepts the FitAccess upsell during checkout.
 3. Funnel calls `POST /api/integrations/upsell-purchases`.
 4. FitAccess sends the upsell order and card details to ResponseCRM.
-5. After ResponseCRM approval, FitAccess stores only card last 4, charge date, next charge date, and external CRM ids.
+5. After ResponseCRM approval, FitAccess stores only card last 4, charge date, and next charge date.
 6. FitAccess creates or updates the customer account.
 7. FitAccess emails a secure first-access link.
 8. Customer opens `/session/verify?token=...`.
@@ -112,6 +113,8 @@ RESPONSE_CRM_SITE_ID=
 RESPONSE_CRM_CAMPAIGN_ID=
 RESPONSE_CRM_PRODUCT_ID=
 RESPONSE_CRM_OFFER_ID=
+RESPONSE_CRM_VERIFICATION_PRODUCT_ID=
+RESPONSE_CRM_VERIFICATION_OFFER_ID=
 RESPONSE_CRM_RECURRING_DAYS=30
 
 RESEND_API_KEY=
@@ -175,6 +178,7 @@ http://localhost:3000/sign-in
 | `GET /progress` | Progress tracking |
 | `GET /profile` | Profile settings |
 | `POST /profile` | Save profile settings |
+| `GET /activity-log` | Member activity log |
 | `POST /billing/payment-method` | Update member card through ResponseCRM |
 
 ## API Routes
@@ -205,6 +209,7 @@ http://localhost:3000/sign-in
 | `GET /admin` | Admin dashboard |
 | `GET /admin/users` | User list with filters |
 | `GET /admin/users/export.csv` | CSV user export |
+| `GET /admin/activity-log` | Admin activity log |
 | `GET /admin/access-codes` | Access code management |
 | `POST /admin/access-codes` | Generate access code |
 | `POST /admin/access-codes/:id/revoke` | Revoke access code |
@@ -256,16 +261,18 @@ RESPONSE_CRM_UPDATE_PAYMENT_URL=https://...
 RESPONSE_CRM_SITE_ID=...
 RESPONSE_CRM_CAMPAIGN_ID=...
 RESPONSE_CRM_PRODUCT_ID=...
+RESPONSE_CRM_VERIFICATION_PRODUCT_ID=...
 ```
 
 Security rule: card number and CVV are forwarded to ResponseCRM only. FitAccess stores only:
 
 - `card_last4`
 - `last_charged_at`
-- `next_charge_at`
-- external ResponseCRM customer/order/transaction ids
+- `next_charged_at`
 
 Do not log webhook request bodies in production.
+
+Card changes use `RESPONSE_CRM_UPDATE_PAYMENT_URL` when provided. If that endpoint is not configured, FitAccess sends a `$0` card-verification Add Order request using `RESPONSE_CRM_VERIFICATION_PRODUCT_ID` when present, otherwise `RESPONSE_CRM_PRODUCT_ID`. The local payment method is replaced only after ResponseCRM returns an approved response.
 
 ## Fitness Content
 

@@ -113,6 +113,21 @@
             </div>
           <% } %>
 
+          <% if (!data.completion.complete) { %>
+            <div class="profile-completion-note mb-25">
+              <p class="text-sm mb-10">
+                Finish these fields to unlock the rest of the app.
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <% data.completion.items.forEach(function(item) { %>
+                  <span class="status-btn <%= item.done ? 'success-btn' : 'warning-btn' %>">
+                    <%= item.label %>
+                  </span>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
           <div class="row">
             <div class="col-lg-8">
               <div class="card-style mb-30">
@@ -137,52 +152,69 @@
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Age</label>
-                        <input type="number" name="age" min="1" max="120" value="<%= data.profile.age %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.age ? 'is-missing' : '' %>">
+                        <label>Age <span class="field-required-badge">Required</span></label>
+                        <input type="number" name="age" min="1" max="120" value="<%= data.profile.age %>" required />
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Gender</label>
-                        <input type="text" name="gender" value="<%= data.profile.gender %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.gender ? 'is-missing' : '' %>">
+                        <label>Gender <span class="field-required-badge">Required</span></label>
+                        <div class="select-style-1 mb-0">
+                          <div class="select-position">
+                            <select name="gender" required>
+                              <option value="">Select gender</option>
+                              <option value="male" <%= data.profile.gender === 'male' ? 'selected' : '' %>>Male</option>
+                              <option value="female" <%= data.profile.gender === 'female' ? 'selected' : '' %>>Female</option>
+                              <option value="other" <%= data.profile.gender === 'other' ? 'selected' : '' %>>Other</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Height</label>
-                        <input type="text" name="height" value="<%= data.profile.height %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.height ? 'is-missing' : '' %>">
+                        <label>Height <span class="field-required-badge">Required</span></label>
+                        <div class="row g-2">
+                          <div class="col-6">
+                            <input type="number" name="heightFeet" min="1" max="9" placeholder="ft" value="<%= data.profile.heightFeet %>" required />
+                          </div>
+                          <div class="col-6">
+                            <input type="number" name="heightInches" min="0" max="11" placeholder="in" value="<%= data.profile.heightInches %>" required />
+                          </div>
+                        </div>
+                        <p class="text-sm mb-0 mt-1">Enter height in feet and inches.</p>
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Current Weight (kg)</label>
-                        <input type="number" name="currentWeight" min="1" step="0.1" value="<%= data.profile.currentWeight %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.currentWeight ? 'is-missing' : '' %>">
+                        <label>Current Weight (kg) <span class="field-required-badge">Required</span></label>
+                        <input type="number" name="currentWeight" min="1" step="0.1" value="<%= data.profile.currentWeight %>" required />
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Target Weight (kg)</label>
-                        <input type="number" name="targetWeight" min="1" step="0.1" value="<%= data.profile.targetWeight %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.targetWeight ? 'is-missing' : '' %>">
+                        <label>Target Weight (kg) <span class="field-required-badge">Required</span></label>
+                        <input type="number" name="targetWeight" min="1" step="0.1" value="<%= data.profile.targetWeight %>" required />
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="input-style-1">
-                        <label>Workout Days / Week</label>
-                        <input type="number" name="workoutDays" min="1" max="7" value="<%= data.profile.workoutDays %>" />
+                      <div class="input-style-1 profile-field-wrap <%= data.completion.missingFields.workoutDays ? 'is-missing' : '' %>">
+                        <label>Workout Days / Week <span class="field-required-badge">Required</span></label>
+                        <input type="number" name="workoutDays" min="1" max="7" value="<%= data.profile.workoutDays %>" required />
                       </div>
                     </div>
 
                     <div class="col-md-4">
-                      <div class="select-style-1">
-                        <label>Goal</label>
+                      <div class="select-style-1 profile-field-wrap <%= data.completion.missingFields.goal ? 'is-missing' : '' %>">
+                        <label>Goal <span class="field-required-badge">Required</span></label>
                         <div class="select-position">
-                          <select name="goal">
+                          <select name="goal" required>
                             <option value="weight_loss" <%= data.currentUser.goal === 'Weight Loss' ? 'selected' : '' %>>Weight Loss</option>
                             <option value="muscle_gain" <%= data.currentUser.goal === 'Muscle Gain' ? 'selected' : '' %>>Muscle Gain</option>
                             <option value="general_fitness" <%= data.currentUser.goal === 'General Fitness' ? 'selected' : '' %>>General Fitness</option>
@@ -192,10 +224,10 @@
                     </div>
 
                     <div class="col-md-4">
-                      <div class="select-style-1">
-                        <label>Level</label>
+                      <div class="select-style-1 profile-field-wrap <%= data.completion.missingFields.level ? 'is-missing' : '' %>">
+                        <label>Level <span class="field-required-badge">Required</span></label>
                         <div class="select-position">
-                          <select name="level">
+                          <select name="level" required>
                             <option value="beginner" <%= data.currentUser.level === 'Beginner' ? 'selected' : '' %>>Beginner</option>
                             <option value="intermediate" <%= data.currentUser.level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
                             <option value="advanced" <%= data.currentUser.level === 'Advanced' ? 'selected' : '' %>>Advanced</option>
@@ -205,10 +237,10 @@
                     </div>
 
                     <div class="col-md-4">
-                      <div class="select-style-1">
-                        <label>Environment</label>
+                      <div class="select-style-1 profile-field-wrap <%= data.completion.missingFields.environment ? 'is-missing' : '' %>">
+                        <label>Environment <span class="field-required-badge">Required</span></label>
                         <div class="select-position">
-                          <select name="environment">
+                          <select name="environment" required>
                             <option value="home" <%= data.currentUser.environment === 'Home' ? 'selected' : '' %>>Home</option>
                             <option value="gym" <%= data.currentUser.environment === 'Gym' ? 'selected' : '' %>>Gym</option>
                           </select>
@@ -234,8 +266,11 @@
 
                 <p class="text-sm mb-10"><strong>Name:</strong> <%= data.currentUser.name %></p>
                 <p class="text-sm mb-10"><strong>Email:</strong> <%= data.currentUser.email %></p>
+                <p class="text-sm mb-10"><strong>Age:</strong> <%= data.profile.age || '-' %></p>
+                <p class="text-sm mb-10"><strong>Gender:</strong> <%= data.profile.gender || '-' %></p>
                 <p class="text-sm mb-10"><strong>Membership:</strong> <%= data.profile.membership %></p>
                 <p class="text-sm mb-10"><strong>Joined:</strong> <%= data.profile.joinedAt %></p>
+                <p class="text-sm mb-10"><strong>Height:</strong> <%= data.profile.heightLabel || '-' %></p>
                 <p class="text-sm mb-10"><strong>Goal:</strong> <%= data.currentUser.goal %></p>
                 <p class="text-sm mb-10"><strong>Level:</strong> <%= data.currentUser.level %></p>
                 <p class="text-sm mb-0"><strong>Environment:</strong> <%= data.currentUser.environment %></p>
@@ -254,7 +289,7 @@
 
                 <p class="text-sm mb-20">
                   <strong>Next Charge:</strong>
-                  <%= data.billing.nextChargeAt || 'Pending' %>
+                  <%= data.billing.nextChargedAt || 'Pending' %>
                 </p>
 
                 <div class="billing-brand-row mb-20" aria-label="Accepted cards">
@@ -274,28 +309,28 @@
 
                   <div class="input-style-1">
                     <label>Card Number</label>
-                    <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" required />
+                    <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" minlength="12" maxlength="23" required />
                   </div>
 
                   <div class="row">
                     <div class="col-4">
                       <div class="input-style-1">
                         <label>Month</label>
-                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" maxlength="2" required />
+                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" minlength="1" maxlength="2" required />
                       </div>
                     </div>
 
                     <div class="col-4">
                       <div class="input-style-1">
                         <label>Year</label>
-                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" maxlength="4" required />
+                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" minlength="2" maxlength="4" required />
                       </div>
                     </div>
 
                     <div class="col-4">
                       <div class="input-style-1">
                         <label>CVV</label>
-                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" required />
+                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" minlength="3" maxlength="4" required />
                       </div>
                     </div>
                   </div>

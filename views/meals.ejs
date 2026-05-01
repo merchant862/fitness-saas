@@ -145,6 +145,26 @@
           </div>
           <!-- ========== macro summary end ========== -->
 
+          <% if (data.todayMealKey) { %>
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="card-style mb-30 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                  <div>
+                    <h6 class="text-medium mb-10">Daily Meal Check-In</h6>
+                    <p class="text-sm mb-0">Mark today complete with one tap after you follow the plan.</p>
+                  </div>
+
+                  <form action="/api/meals/complete" method="POST" class="mb-0">
+                    <input type="hidden" name="mealKey" value="<%= data.todayMealKey %>" />
+                    <button type="submit" class="main-btn success-btn btn-hover">
+                      Mark Today Complete
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
           <!-- ========== today meals start ========== -->
           <div class="row">
             <div class="col-lg-6">

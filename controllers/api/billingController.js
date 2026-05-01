@@ -2,6 +2,7 @@
 
 const { trackEvent } = require('../../services/eventService');
 const { findActivePaymentMethod, updateCustomerPaymentMethod } = require('../../services/paymentService');
+const { errorResponse, successResponse, wantsJson } = require('../../utils/httpResponseUtils');
 
 async function showPaymentMethod(req, res, next)
 {
@@ -27,26 +28,28 @@ async function updatePaymentMethod(req, res, next)
 
     await trackEvent(req, 'payment_method_updated', {
       cardLast4: result.paymentMethod.cardLast4,
-      nextChargeAt: result.paymentMethod.nextChargeAt,
-      responseCrmOrderId: result.paymentMethod.externalOrderId,
-      responseCrmTransactionId: result.paymentMethod.externalTransactionId
+      nextChargedAt: result.paymentMethod.nextChargedAt
     }, req.user.id);
 
-    if (!req.path.startsWith('/api/'))
-    {
-      return res.redirect(safeReturnTo(req.body.returnTo, '/profile?billing=updated'));
-    }
-
-    return res.status(200).json({
+    return successResponse(req, res, {
       message: 'Payment method updated.',
-      paymentMethod: presentPaymentMethod(result.paymentMethod)
+      redirectTo: safeReturnTo(req.body.returnTo, '/profile'),
+      data: { paymentMethod: presentPaymentMethod(result.paymentMethod) }
     });
   }
   catch (error)
   {
+    if (wantsJson(req) && error.status && error.status < 500)
+    {
+      return errorResponse(req, res, {
+        message: error.message || 'Payment method could not be updated.',
+        status: error.status
+      });
+    }
+
     if (!req.path.startsWith('/api/') && error.status && error.status < 500)
     {
-      return res.redirect(safeReturnTo(req.body.returnTo, '/profile?billing=failed', 'failed'));
+      return res.redirect(safeReturnTo(req.body.returnTo, '/profile', 'failed'));
     }
 
     next(error);
@@ -63,7 +66,7 @@ function presentPaymentMethod(paymentMethod)
   return {
     cardLast4: paymentMethod.cardLast4,
     lastChargedAt: paymentMethod.lastChargedAt,
-    nextChargeAt: paymentMethod.nextChargeAt,
+    nextChargedAt: paymentMethod.nextChargedAt,
     status: paymentMethod.status
   };
 }
@@ -77,12 +80,7 @@ function safeReturnTo(value, fallback, failureState = null)
     return fallback;
   }
 
-  if (failureState === 'failed')
-  {
-    return path.includes('?') ? `${path}&billing=failed` : `${path}?billing=failed`;
-  }
-
-  return path.includes('?') ? `${path}&billing=updated` : `${path}?billing=updated`;
+  return path;
 }
 
 module.exports = {

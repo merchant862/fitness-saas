@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="48" viewBox="0 0 120 48" role="img" aria-label="Hipercard">
+  <rect width="120" height="48" rx="8" fill="#fff"/>
+  <rect x="0.5" y="0.5" width="119" height="47" rx="7.5" fill="none" stroke="#E4E7EC"/>
+  <rect x="20" y="14" width="80" height="20" rx="4" fill="#B91C1C"/>
+  <text x="60" y="29" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="900" fill="#fff">Hipercard</text>
+</svg>

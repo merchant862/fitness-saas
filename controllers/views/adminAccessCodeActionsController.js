@@ -5,6 +5,7 @@ const { createAccessCode } = require('../../services/authService');
 const { extendAccessCode, revokeAccessCode } = require('../../services/accessCodeService');
 const { isEmail } = require('../../utils/securityUtils');
 const { accessCodeEmail } = require('../../utils/emailTemplateUtils');
+const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 
 async function create(req, res, next)
 {
@@ -14,7 +15,7 @@ async function create(req, res, next)
 
     if (!isEmail(email))
     {
-      return res.status(422).send('Valid email is required');
+      return errorResponse(req, res, { message: 'Valid email is required' });
     }
 
     const result = await createAccessCode({
@@ -32,7 +33,10 @@ async function create(req, res, next)
       }));
     }
 
-    return res.redirect('/admin/access-codes?created=1');
+    return successResponse(req, res, {
+      message: 'Access code created successfully.',
+      redirectTo: '/admin/access-codes'
+    });
   }
   catch (error)
   {
@@ -48,9 +52,12 @@ async function revoke(req, res, next)
 
     if (!code)
     {
-      return res.status(404).send('Access code not found');
+      return errorResponse(req, res, { message: 'Access code not found', status: 404 });
     }
-    return res.redirect('/admin/access-codes');
+    return successResponse(req, res, {
+      message: 'Access code revoked.',
+      redirectTo: '/admin/access-codes'
+    });
   }
   catch (error)
   {
@@ -66,9 +73,12 @@ async function extend(req, res, next)
 
     if (!code)
     {
-      return res.status(404).send('Access code not found');
+      return errorResponse(req, res, { message: 'Access code not found', status: 404 });
     }
-    return res.redirect('/admin/access-codes');
+    return successResponse(req, res, {
+      message: 'Access code extended.',
+      redirectTo: '/admin/access-codes'
+    });
   }
   catch (error)
   {

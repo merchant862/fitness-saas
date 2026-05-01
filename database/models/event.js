@@ -20,6 +20,10 @@ module.exports = (sequelize, DataTypes) =>
     ipAddress: {
       type: DataTypes.STRING(64),
       field: 'ip_address'
+    },
+    userAgent: {
+      type: DataTypes.STRING(512),
+      field: 'user_agent'
     }
   }, {
     tableName: 'events',
