@@ -14,7 +14,7 @@ function normalizeGender(value)
 
 function getProfilePreferences(user)
 {
-  return user?.profile?.preferences || {};
+  return safeJsonObject(user?.profile?.preferences);
 }
 
 function parseHeight(preferences)
@@ -79,6 +79,12 @@ function isProfileComplete(user)
 
 function getPostAuthRedirect(user)
 {
+  if (user?.role === 'admin')
+  {
+    const { adminRoute } = require('./adminPaths');
+    return adminRoute();
+  }
+
   if (!user?.onboardingCompletedAt)
   {
     return '/onboarding';
@@ -127,7 +133,45 @@ function toInteger(value)
 module.exports = {
   getAvatarSymbol,
   getAvatarType,
+  getProfilePreferences,
   getPostAuthRedirect,
   isProfileComplete,
-  normalizeGender
+  normalizeGender,
+  safeJsonObject
 };
+
+function safeJsonObject(value)
+{
+  if (!value)
+  {
+    return {};
+  }
+
+  if (typeof value === 'string')
+  {
+    try
+    {
+      const parsed = JSON.parse(value);
+      return isPlainObject(parsed) ? parsed : {};
+    }
+    catch (error)
+    {
+      return {};
+    }
+  }
+
+  if (isPlainObject(value))
+  {
+    return { ...value };
+  }
+
+  return {};
+}
+
+function isPlainObject(value)
+{
+  return Boolean(value) &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype;
+}

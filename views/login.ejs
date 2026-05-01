@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <%- include('partials/head.ejs') %>
-    <title>FitAccess | Sign In</title>
+    <title><%= pageTitle || 'FitAccess | Sign In' %></title>
   </head>
   <body>
 
@@ -40,9 +40,9 @@
             <div class="col-lg-6">
               <div class="signin-wrapper">
                 <div class="form-wrapper">
-                  <h6 class="mb-15">Member Sign-In</h6>
+                  <h6 class="mb-15"><%= loginHeading || 'Member Sign-In' %></h6>
                   <p class="text-sm mb-25">
-                    Use the email from checkout and your FitAccess password.
+                    <%= loginIntro || 'Use the email from checkout and your FitAccess password.' %>
                   </p>
                   <% if (message) { %>
                     <div class="alert-box success-alert mb-20">
@@ -54,7 +54,7 @@
                       <p class="text-sm mb-0"><%= error %></p>
                     </div>
                   <% } %>
-                  <form action="/sign-in" method="POST">
+                  <form action="<%= formAction || '/sign-in' %>" method="POST">
                     <div class="row">
                       <div class="col-12">
                         <div class="input-style-1">
@@ -82,18 +82,20 @@
                         </div>
                       </div>
                       <!-- end col -->
-                      <div class="col-xxl-6 col-lg-12 col-md-6">
-                        <div class="text-start text-md-end text-lg-start text-xxl-end mb-30">
-                          <a href="/forgot-password" class="hover-underline">
-                            Forgot password?
-                          </a>
+                      <% if (forgotPasswordUrl) { %>
+                        <div class="col-xxl-6 col-lg-12 col-md-6">
+                          <div class="text-start text-md-end text-lg-start text-xxl-end mb-30">
+                            <a href="<%= forgotPasswordUrl %>" class="hover-underline">
+                              Forgot password?
+                            </a>
+                          </div>
                         </div>
-                      </div>
+                      <% } %>
                       <!-- end col -->
                       <div class="col-12">
                         <div class="button-group d-flex justify-content-center flex-wrap">
                           <button class="main-btn primary-btn btn-hover w-100 text-center">
-                            Sign In
+                            <%= submitLabel || 'Sign In' %>
                           </button>
                         </div>
                       </div>
@@ -110,30 +112,6 @@
       </section>
       <!-- ========== signin-section end ========== -->
 
-      <!-- ========== footer start =========== -->
-      <!-- <footer class="footer">
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-md-6 order-last order-md-first">
-              <div class="copyright text-center text-md-start">
-                <p class="text-sm">
-                  Designed and Developed by
-                  <a href="https://plainadmin.com" rel="nofollow" target="_blank">
-                    PlainAdmin
-                  </a>
-                </p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="terms d-flex justify-content-center justify-content-md-end">
-                <a href="#0" class="text-sm">Term & Conditions</a>
-                <a href="#0" class="text-sm ml-15">Privacy & Policy</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer> -->
-      <!-- ========== footer end =========== -->
     <!-- ======== main-wrapper end =========== -->
 
     <!-- ========= All Javascript files linkup ======== -->

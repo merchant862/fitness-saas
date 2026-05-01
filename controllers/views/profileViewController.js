@@ -2,7 +2,7 @@
 
 const { Event, MealCompletion, PaymentMethod, WorkoutCompletion } = require('../../database/models');
 const { Op } = require('sequelize');
-const { getAvatarType, isProfileComplete } = require('../../utils/profileCompletion');
+const { getAvatarType, getProfilePreferences, isProfileComplete } = require('../../utils/profileCompletion');
 
 async function profileViewController(req, res, next)
 {
@@ -31,13 +31,14 @@ async function profileViewController(req, res, next)
             })
         ]);
         const currentUser = presentUser(req.user);
-        const height = heightParts(req.user.profile?.preferences);
+        const preferences = getProfilePreferences(req.user);
+        const height = heightParts(preferences);
 
         const profileData = {
             currentUser,
             profile: {
-                age: req.user.profile?.preferences?.age || '',
-                gender: req.user.profile?.preferences?.gender || '',
+                age: preferences.age || '',
+                gender: preferences.gender || '',
                 currentWeight: req.user.profile?.currentWeight || '',
                 targetWeight: req.user.profile?.targetWeight || '',
                 workoutDays: req.user.profile?.workoutDays || '',
@@ -51,16 +52,16 @@ async function profileViewController(req, res, next)
             completion: {
                 complete: isProfileComplete(req.user),
                 items: [
-                    { label: 'Age', done: Boolean(req.user.profile?.preferences?.age) },
-                    { label: 'Gender', done: Boolean(req.user.profile?.preferences?.gender) },
+                    { label: 'Age', done: Boolean(preferences.age) },
+                    { label: 'Gender', done: Boolean(preferences.gender) },
                     { label: 'Height', done: height.feet !== '' && height.inches !== '' },
                     { label: 'Goal', done: Boolean(req.user.profile?.goal) },
                     { label: 'Training Level', done: Boolean(req.user.profile?.level) },
                     { label: 'Workout Environment', done: Boolean(req.user.profile?.environment) }
                 ],
                 missingFields: {
-                    age: !req.user.profile?.preferences?.age,
-                    gender: !req.user.profile?.preferences?.gender,
+                    age: !preferences.age,
+                    gender: !preferences.gender,
                     height: !(height.feet !== '' && height.inches !== ''),
                     goal: !req.user.profile?.goal,
                     level: !req.user.profile?.level,
@@ -141,13 +142,15 @@ function presentPaymentMethod(paymentMethod)
 
 function presentUser(user)
 {
+    const preferences = getProfilePreferences(user);
+
     return {
         name: user.name || user.email?.split('@')[0] || 'Member',
         email: user.email,
         goal: label(user.profile?.goal || 'general_fitness'),
         level: label(user.profile?.level || 'beginner'),
         environment: label(user.profile?.environment || 'home'),
-        gender: user.profile?.preferences?.gender || null,
+        gender: preferences.gender || null,
         avatarType: getAvatarType(user),
         profileComplete: isProfileComplete(user)
     };

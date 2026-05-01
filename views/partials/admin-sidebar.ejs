@@ -1,7 +1,8 @@
+<% const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; %>
 <!-- ======== sidebar-nav start =========== -->
 <aside class="sidebar-nav-wrapper">
   <div class="navbar-logo">
-    <a href="/admin">
+    <a href="<%= adminPath %>">
       <img src="/images/logo/logo.svg" alt="logo" />
     </a>
   </div>
@@ -9,56 +10,38 @@
   <nav class="sidebar-nav">
     <ul>
       <li class="nav-item">
-        <a href="/admin" class="<%= activePage === 'admin-dashboard' ? 'active' : '' %>">
+        <a href="<%= adminPath %>" class="<%= activePage === 'admin-dashboard' ? 'active' : '' %>">
           <span class="icon"><i class="lni lni-dashboard"></i></span>
-          <span class="text">Admin</span>
+          <span class="text">Overview</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="/admin/users" class="<%= activePage === 'admin-users' ? 'active' : '' %>">
+        <a href="<%= adminPath %>/users" class="<%= activePage === 'admin-users' ? 'active' : '' %>">
           <span class="icon"><i class="lni lni-users"></i></span>
           <span class="text">Users</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="/admin/access-codes" class="<%= activePage === 'admin-access-codes' ? 'active' : '' %>">
+        <a href="<%= adminPath %>/access-codes" class="<%= activePage === 'admin-access-codes' ? 'active' : '' %>">
           <span class="icon"><i class="lni lni-key"></i></span>
-          <span class="text">Access Codes</span>
+          <span class="text">Grant Access</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="/admin/content" class="<%= activePage === 'admin-content' ? 'active' : '' %>">
+        <a href="<%= adminPath %>/content" class="<%= activePage === 'admin-content' ? 'active' : '' %>">
           <span class="icon"><i class="lni lni-library"></i></span>
           <span class="text">Content</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a href="/admin/activity-log" class="<%= activePage === 'admin-activity-log' ? 'active' : '' %>">
+        <a href="<%= adminPath %>/activity-log" class="<%= activePage === 'admin-activity-log' ? 'active' : '' %>">
           <span class="icon"><i class="lni lni-timer"></i></span>
           <span class="text">Activity Log</span>
         </a>
-      </li>
-
-      <span class="divider"><hr /></span>
-
-      <li class="nav-item">
-        <a href="/dashboard">
-          <span class="icon"><i class="lni lni-arrow-left"></i></span>
-          <span class="text">User App</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <form action="/logout" method="POST" class="m-0">
-          <button type="submit" class="w-100 border-0 bg-transparent text-start">
-            <span class="icon"><i class="lni lni-exit"></i></span>
-            <span class="text">Logout</span>
-          </button>
-        </form>
       </li>
     </ul>
   </nav>

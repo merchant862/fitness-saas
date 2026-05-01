@@ -13,6 +13,8 @@ const { compactUser, isEmail } = require('../../utils/securityUtils');
 const { getPostAuthRedirect } = require('../../utils/profileCompletion');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
 const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
+const { adminRoute } = require('../../utils/adminPaths');
+const { renderAdminLogin } = require('../views/adminLoginViewController');
 
 async function passwordLogin(req, res, next)
 {
@@ -46,6 +48,45 @@ async function passwordLogin(req, res, next)
     next(error);
   }
 }
+
+async function adminPasswordLogin(req, res, next)
+{
+  try
+  {
+    const { email, password } = req.body;
+
+    if (!isEmail(email) || !password)
+    {
+      return respondAdminLoginFailure(req, res, 'Valid email and password are required.');
+    }
+
+    const user = await loginWithPassword(req, res, { email, password });
+
+    if (user.role !== 'admin')
+    {
+      await revokeCurrentSession(req, res);
+      return respondAdminLoginFailure(req, res, 'Admin access required.');
+    }
+
+    await trackEvent(req, 'admin_password_login', {}, user.id);
+
+    return successResponse(req, res, {
+      message: 'Signed in successfully.',
+      redirectTo: adminRoute(),
+      data: { user: compactUser(user) }
+    });
+  }
+  catch (error)
+  {
+    if (error.status && error.status < 500)
+    {
+      return respondAdminLoginFailure(req, res, error.message);
+    }
+
+    next(error);
+  }
+}
+
 
 async function redeem(req, res, next)
 {
@@ -133,11 +174,12 @@ async function logout(req, res, next)
 {
   try
   {
+    const redirectTo = req.user?.role === 'admin' ? adminRoute('/sign-in') : '/sign-in';
     await revokeCurrentSession(req, res);
 
     return successResponse(req, res, {
       message: 'Signed out successfully.',
-      redirectTo: '/sign-in'
+      redirectTo
     });
   }
   catch (error)
@@ -152,6 +194,7 @@ async function session(req, res)
 }
 
 module.exports = {
+  adminPasswordLogin,
   logout,
   magicLinkRequest,
   magicLinkVerify,
@@ -168,4 +211,14 @@ function respondLoginFailure(req, res, message)
   }
 
   return errorResponse(req, res, { message, status: 401, redirectTo: '/sign-in' });
+}
+
+function respondAdminLoginFailure(req, res, message)
+{
+  if (req.path.startsWith('/api/'))
+  {
+    return errorResponse(req, res, { message, status: 401 });
+  }
+
+  return renderAdminLogin(res, { error: message, status: 401 });
 }

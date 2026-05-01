@@ -5,7 +5,7 @@
     <title>FitAccess | Edit Meal Plan</title>
   </head>
   <body>
-    <% const data = adminData; const plan = data.plan; const parseJson = function(value, fallback) { if (typeof value !== 'string') return value || fallback; try { return JSON.parse(value); } catch (error) { return fallback; } }; %>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; const plan = data.plan; const parseJson = function(value, fallback) { if (typeof value !== 'string') return value || fallback; try { return JSON.parse(value); } catch (error) { return fallback; } }; %>
     <%- include('../partials/spinner.ejs') %>
     <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-content' }) %>
 
@@ -30,8 +30,8 @@
                 <div class="breadcrumb-wrapper">
                   <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
-                      <li class="breadcrumb-item"><a href="/admin/content">Content</a></li>
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>">Admin</a></li>
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>/content">Content</a></li>
                       <li class="breadcrumb-item active" aria-current="page">Meal</li>
                     </ol>
                   </nav>
@@ -59,7 +59,7 @@
                   <h6 class="text-medium">Plan Settings</h6>
                 </div>
 
-                <form action="/admin/content/meal-plans/<%= plan.id %>" method="POST">
+                <form action="<%= adminPath %>/content/meal-plans/<%= plan.id %>" method="POST">
                   <div class="input-style-1">
                     <label>Title</label>
                     <input type="text" name="title" value="<%= plan.title %>" maxlength="160" required />
@@ -103,7 +103,7 @@
 
                   <div class="d-flex flex-wrap gap-2">
                     <button type="submit" class="main-btn primary-btn btn-hover">Save Changes</button>
-                    <a href="/admin/content" class="main-btn light-btn btn-hover">Back</a>
+                    <a href="<%= adminPath %>/content" class="main-btn light-btn btn-hover">Back</a>
                   </div>
                 </form>
               </div>

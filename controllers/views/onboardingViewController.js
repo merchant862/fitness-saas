@@ -1,11 +1,14 @@
+const { getProfilePreferences } = require('../../utils/profileCompletion');
+
 async function onboardingViewController(req, res, next)
 {
     try
     {
+        const preferences = getProfilePreferences(req.user);
         const onboardingData = {
             currentUser: {
                 name: req.user?.name || req.user?.email || 'Member',
-                gender: req.user?.profile?.preferences?.gender || null
+                gender: preferences.gender || null
             },
 
             goals: [
@@ -35,7 +38,7 @@ async function onboardingViewController(req, res, next)
                 goal: req.user?.profile?.goal || 'weight_loss',
                 level: 'beginner',
                 environment: 'home',
-                gender: req.user?.profile?.preferences?.gender || '',
+                gender: preferences.gender || '',
                 currentWeight: '78',
                 targetWeight: '72',
                 workoutDays: '4'

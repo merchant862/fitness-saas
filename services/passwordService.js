@@ -14,7 +14,7 @@ async function requestPasswordReset(req, email)
     }
   });
 
-  if (!user)
+  if (!user || user.role === 'admin')
   {
     return null;
   }
@@ -54,6 +54,13 @@ async function resetPasswordWithToken({ email, token, password })
   {
     const error = new Error('Invalid or expired reset token');
     error.status = 401;
+    throw error;
+  }
+
+  if (resetToken.user.role === 'admin')
+  {
+    const error = new Error('Password reset is not available for this account');
+    error.status = 403;
     throw error;
   }
 

@@ -12,7 +12,8 @@ async function adminAccessCodesViewController(req, res, next)
       adminData: {
         currentUser: req.user,
         accessCodes,
-        message: req.query.created ? 'Access code generated successfully.' : null
+        message: req.query.granted ? 'Customer access created successfully.' : (req.query.created ? 'Access code generated successfully.' : null),
+        error: null
       }
     });
   }

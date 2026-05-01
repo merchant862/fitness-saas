@@ -9,6 +9,7 @@ async function chargeUpsellOrder(payload)
 {
   const payment = extractPayment(payload);
   validatePayment(payment);
+  const chargedAt = new Date();
 
   const crmPayload = buildResponseCrmOrderPayload(payload, payment);
   const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
@@ -25,8 +26,11 @@ async function chargeUpsellOrder(payload)
   return {
     crmResult,
     cardLast4: cardLast4(payment.cardNumber),
-    chargedAt: new Date(),
-    nextChargedAt: calculateNextChargedAt(payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at)
+    chargedAt,
+    nextChargedAt: calculateNextChargedAt(
+      payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at,
+      chargedAt
+    )
   };
 }
 
@@ -34,6 +38,7 @@ async function updateCustomerPaymentMethod(user, payload)
 {
   const payment = extractPayment(payload);
   validatePayment(payment);
+  const activePaymentMethod = await findActivePaymentMethod(user.id);
 
   const usesVerificationOrder = !process.env.RESPONSE_CRM_UPDATE_PAYMENT_URL;
   const crmPayload = usesVerificationOrder ?
@@ -57,7 +62,9 @@ async function updateCustomerPaymentMethod(user, payload)
       customerId: crmCustomerId(user, crmResult, payload),
       cardLast4: cardLast4(payment.cardNumber),
       lastChargedAt: null,
-      nextChargedAt: calculateNextChargedAt(payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at)
+      nextChargedAt: calculateNextChargedAt(
+        payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at || activePaymentMethod?.nextChargedAt
+      )
     })
   };
 }
@@ -467,7 +474,7 @@ function normalizeCrmResult(body)
   };
 }
 
-function calculateNextChargedAt(value)
+function calculateNextChargedAt(value, baseDate = new Date())
 {
   if (value)
   {
@@ -479,9 +486,22 @@ function calculateNextChargedAt(value)
     }
   }
 
-  const days = Number(process.env.RESPONSE_CRM_RECURRING_DAYS || 30);
-  const date = new Date();
-  date.setDate(date.getDate() + days);
+  const months = Number(process.env.RESPONSE_CRM_RECURRING_MONTHS || 1);
+  return addCalendarMonths(baseDate, Number.isFinite(months) && months > 0 ? months : 1);
+}
+
+function addCalendarMonths(value, months)
+{
+  const source = new Date(value);
+  const date = new Date(source);
+  const originalDay = date.getDate();
+
+  date.setDate(1);
+  date.setMonth(date.getMonth() + months);
+
+  const lastDayOfTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  date.setDate(Math.min(originalDay, lastDayOfTargetMonth));
+
   return date;
 }
 

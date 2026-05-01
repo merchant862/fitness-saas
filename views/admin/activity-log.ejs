@@ -5,7 +5,7 @@
     <title>FitAccess | Admin Activity Log</title>
   </head>
   <body>
-    <% const data = adminData; %>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; %>
 
     <%- include('../partials/spinner.ejs') %>
     <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-activity-log' }) %>
@@ -13,7 +13,7 @@
     <main class="main-wrapper">
       <%- include('../partials/header.ejs', {
         pageTitle: 'Activity Log',
-        pageSubtitle: 'Review account, access, billing, and feature events.',
+        pageSubtitle: 'Review activity for the logged-in admin account.',
         currentUser: data.currentUser
       }) %>
 
@@ -23,7 +23,7 @@
             <div class="row align-items-center">
               <div class="col-md-8">
                 <div class="title">
-                  <h2>Activity Log</h2>
+                  <h2>My Activity Log</h2>
                   <p class="text-sm text-medium"><%= data.events.length %> recent events shown.</p>
                 </div>
               </div>
@@ -31,7 +31,7 @@
                 <div class="breadcrumb-wrapper">
                   <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>">Admin</a></li>
                       <li class="breadcrumb-item active" aria-current="page">Activity Log</li>
                     </ol>
                   </nav>
@@ -46,7 +46,7 @@
                 <thead>
                   <tr>
                     <th><h6>Event</h6></th>
-                    <th><h6>User</h6></th>
+                    <th><h6>Account</h6></th>
                     <th><h6>IP Address</h6></th>
                     <th><h6>Browser / Device</h6></th>
                     <th><h6>Time</h6></th>

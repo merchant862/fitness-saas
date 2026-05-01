@@ -1,12 +1,12 @@
 'use strict';
 
-const { listAdminActivity } = require('../../services/activityService');
+const { listAdminAccountActivity } = require('../../services/activityService');
 
 async function adminActivityLogViewController(req, res, next)
 {
   try
   {
-    const events = await listAdminActivity();
+    const events = req.user ? await listAdminAccountActivity(req.user.id) : [];
 
     return res.status(200).render('../views/admin/activity-log.ejs', {
       adminData: {

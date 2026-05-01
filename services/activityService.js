@@ -30,6 +30,25 @@ async function listAdminActivity(limit = 250)
   return events.map(formatEventForDisplay);
 }
 
+async function listAdminAccountActivity(userId, limit = 250)
+{
+  const events = await Event.findAll({
+    where: { userId },
+    attributes: ['id', 'userId', 'eventType', 'ipAddress', 'userAgent', 'createdAt'],
+    include: [{
+      model: User,
+      as: 'user',
+      attributes: ['id', 'email', 'role'],
+      where: { role: 'admin' },
+      required: true
+    }],
+    order: [['createdAt', 'DESC']],
+    limit: Math.min(Number(limit || 250), 500)
+  });
+
+  return events.map(formatEventForDisplay);
+}
+
 function formatEventForDisplay(event)
 {
   const plain = event.get ? event.get({ plain: true }) : event;
@@ -136,6 +155,7 @@ function detectOs(userAgent)
 }
 
 module.exports = {
+  listAdminAccountActivity,
   listAdminActivity,
   listUserActivity
 };

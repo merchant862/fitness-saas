@@ -3,6 +3,9 @@
 const { sendResendEmail } = require('../../apis/resendApi');
 const { createAccessCode } = require('../../services/authService');
 const { extendAccessCode, revokeAccessCode } = require('../../services/accessCodeService');
+const { listAdminAccessCodes } = require('../../services/adminService');
+const { processUpsellPurchase } = require('../api/purchaseController');
+const { adminRoute } = require('../../utils/adminPaths');
 const { isEmail } = require('../../utils/securityUtils');
 const { accessCodeEmail } = require('../../utils/emailTemplateUtils');
 const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
@@ -35,11 +38,25 @@ async function create(req, res, next)
 
     return successResponse(req, res, {
       message: 'Access code created successfully.',
-      redirectTo: '/admin/access-codes'
+      redirectTo: adminRoute('/access-codes')
     });
   }
   catch (error)
   {
+    if (error.status && error.status < 500)
+    {
+      const accessCodes = await listAdminAccessCodes();
+
+      return res.status(error.status).render('../views/admin/access-codes.ejs', {
+        adminData: {
+          currentUser: req.user,
+          accessCodes,
+          message: null,
+          error: error.message
+        }
+      });
+    }
+
     next(error);
   }
 }
@@ -56,7 +73,24 @@ async function revoke(req, res, next)
     }
     return successResponse(req, res, {
       message: 'Access code revoked.',
-      redirectTo: '/admin/access-codes'
+      redirectTo: adminRoute('/access-codes')
+    });
+  }
+  catch (error)
+  {
+    next(error);
+  }
+}
+
+async function grantAccess(req, res, next)
+{
+  try
+  {
+    await processUpsellPurchase(req);
+
+    return successResponse(req, res, {
+      message: 'Customer access created and membership email queued.',
+      redirectTo: adminRoute('/access-codes?granted=1')
     });
   }
   catch (error)
@@ -77,7 +111,7 @@ async function extend(req, res, next)
     }
     return successResponse(req, res, {
       message: 'Access code extended.',
-      redirectTo: '/admin/access-codes'
+      redirectTo: adminRoute('/access-codes')
     });
   }
   catch (error)
@@ -89,5 +123,6 @@ async function extend(req, res, next)
 module.exports = {
   create,
   extend,
+  grantAccess,
   revoke
 };

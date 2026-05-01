@@ -1,6 +1,12 @@
 .signin-section {
   min-height: 100vh;
   background: #f6f8fb;
+  overflow-x: hidden;
+}
+
+.signin-section .container-fluid {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .auth-row {
@@ -41,6 +47,18 @@
   box-shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
 }
 
+.signin-wrapper .form-wrapper,
+.signin-wrapper .form-wrapper * {
+  max-width: 100%;
+}
+
+.signin-wrapper .form-wrapper p,
+.signin-wrapper .form-wrapper h6,
+.signin-wrapper .form-wrapper label,
+.signin-wrapper .form-wrapper a {
+  overflow-wrap: break-word;
+}
+
 .signin-wrapper .form-wrapper h6 {
   font-size: 26px;
   font-weight: 800;
@@ -68,15 +86,41 @@ body.dark-theme .signin-wrapper .form-wrapper h6 {
 }
 
 @media (max-width: 991px) {
+  .signin-section .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .auth-row {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .auth-row > [class*="col-"] {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .auth-row > .col-lg-6:first-child {
+    display: none;
+  }
+
   .auth-cover-wrapper {
     display: none;
   }
 
   .signin-wrapper {
     min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 32px 16px;
   }
 
   .signin-wrapper .form-wrapper {
-    padding: 28px 22px;
+    flex: 0 1 calc(100vw - 32px);
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    padding: 28px 18px;
   }
 }

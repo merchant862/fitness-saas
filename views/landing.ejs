@@ -26,6 +26,7 @@
 
       html {
         scroll-behavior: smooth;
+        overflow-x: hidden;
       }
 
       body {
@@ -33,6 +34,7 @@
         background: #ffffff;
         color: var(--ink);
         font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overflow-x: hidden;
       }
 
       a {
@@ -155,6 +157,7 @@
         grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.68fr);
         gap: 48px;
         align-items: center;
+        min-width: 0;
       }
 
       .eyebrow {
@@ -184,6 +187,7 @@
         font-size: 62px;
         line-height: 1.03;
         font-weight: 900;
+        overflow-wrap: break-word;
       }
 
       .hero p {
@@ -192,6 +196,7 @@
         color: #e5e7eb;
         font-size: 18px;
         line-height: 1.75;
+        overflow-wrap: break-word;
       }
 
       .actions {
@@ -201,6 +206,8 @@
       }
 
       .mockup {
+        width: 100%;
+        min-width: 0;
         padding: 22px;
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 8px;
@@ -210,6 +217,7 @@
       }
 
       .mockup-screen {
+        min-width: 0;
         padding: 22px;
         border-radius: 8px;
         background: #ffffff;
@@ -634,16 +642,31 @@
       }
 
       @media (max-width: 575px) {
+        .nav,
+        .hero,
+        .section,
+        .footer {
+          width: 100%;
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+
         .containerx {
           width: calc(100% - 30px);
+          max-width: calc(100vw - 30px);
         }
 
         .nav-inner {
           min-height: 68px;
+          gap: 10px;
         }
 
         .logo img {
-          width: 132px;
+          width: 118px;
+        }
+
+        .nav-cta {
+          display: none;
         }
 
         .hero {
@@ -651,12 +674,61 @@
           padding: 104px 0 56px;
         }
 
+        .hero-grid {
+          display: block;
+          width: calc(100% - 30px);
+          max-width: calc(100vw - 30px);
+        }
+
+        .hero-grid > * {
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+        }
+
         .hero h1 {
-          font-size: 36px;
+          font-size: 32px;
+          line-height: 1.12;
+          width: 100%;
+          max-width: 330px;
+          word-break: normal;
+          overflow-wrap: anywhere;
         }
 
         .hero p {
           font-size: 16px;
+          width: 100%;
+          max-width: 330px;
+        }
+
+        .mockup {
+          max-width: 100%;
+          padding: 14px;
+        }
+
+        .mockup-screen {
+          padding: 16px;
+        }
+
+        .mockup-top,
+        .schedule-row,
+        .check {
+          min-width: 0;
+        }
+
+        .mockup-title,
+        .schedule-row div,
+        .check div {
+          min-width: 0;
+        }
+
+        .mockup-title strong,
+        .mockup-title span,
+        .schedule-row strong,
+        .schedule-row span,
+        .check strong,
+        .check span {
+          overflow-wrap: anywhere;
         }
 
         .section {
@@ -718,7 +790,7 @@
             <div class="link-box"><a href="#access">Access</a></div>
             <div class="link-box nav-cta">
               <a href="<%= dashboardHref %>" class="btnx btn-primaryx">
-                <%= data.currentUser ? 'Open Dashboard' : 'Member Sign In' %>
+                <%= data.currentUser ? 'Dashboard' : 'Sign In' %>
               </a>
             </div>
           </div>
@@ -729,7 +801,7 @@
         <div class="containerx hero-grid">
           <div>
             <div class="eyebrow">FitAccess Premium Membership</div>
-            <h1>Fitness guidance that feels personal from the first login.</h1>
+            <h1>Personal fitness guidance from day one.</h1>
             <p>
               FitAccess gives members guided workouts, meal plans, progress tracking, secure billing,
               and an AI Coach experience in one clean fitness dashboard.
@@ -959,7 +1031,7 @@
                 <a href="#access">Account Access</a>
                 <a href="/">Home</a>
                 <% if (data.currentUser?.role === 'admin') { %>
-                  <a href="/admin">Admin Panel</a>
+                  <a href="<%= adminBasePath || '/panel' %>">Admin Panel</a>
                 <% } %>
               </div>
             </div>

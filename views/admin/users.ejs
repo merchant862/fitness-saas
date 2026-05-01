@@ -5,14 +5,14 @@
     <title>FitAccess | Admin Users</title>
   </head>
   <body>
-    <% const data = adminData; %>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; const adminApiPathValue = typeof adminApiPath === 'string' ? adminApiPath : '/api/panel'; %>
     <%- include('../partials/spinner.ejs') %>
     <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-users' }) %>
 
     <main class="main-wrapper">
       <%- include('../partials/header.ejs', {
         pageTitle: 'Users',
-        pageSubtitle: 'Review access, onboarding, and tags.',
+        pageSubtitle: 'Manage customer access and account status.',
         currentUser: data.currentUser
       }) %>
 
@@ -23,14 +23,14 @@
               <div class="col-md-8">
                 <div class="title">
                   <h2>Users</h2>
-                  <p class="text-sm text-medium"><%= data.users.length %> users shown.</p>
+                  <p class="text-sm text-medium" id="admin-users-count"><%= data.users.length %> users shown.</p>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="breadcrumb-wrapper">
                   <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>">Admin</a></li>
                       <li class="breadcrumb-item active" aria-current="page">Users</li>
                     </ol>
                   </nav>
@@ -40,12 +40,12 @@
           </div>
 
           <div class="card-style mb-25">
-            <form action="/admin/users" method="GET">
+            <form action="<%= adminPath %>/users" method="GET" id="admin-users-filter" data-admin-users-api="<%= adminApiPathValue %>/users" data-admin-users-limit="<%= data.filters.limit || 25 %>">
               <div class="row align-items-end">
                 <div class="col-lg-4 col-md-6">
                   <div class="input-style-1 mb-0">
                     <label>Search Email</label>
-                    <input type="text" name="search" value="<%= data.filters.search %>" placeholder="customer@example.com" />
+                    <input type="search" name="search" value="<%= data.filters.search %>" placeholder="customer@example.com" autocomplete="off" />
                   </div>
                 </div>
 
@@ -80,8 +80,8 @@
                 <div class="col-lg-3 col-md-6">
                   <div class="d-flex flex-wrap gap-2">
                     <button type="submit" class="main-btn primary-btn btn-hover btn-sm">Filter</button>
-                    <a href="/admin/users" class="main-btn light-btn btn-hover btn-sm">Clear</a>
-                    <a href="/admin/users/export.csv?search=<%= encodeURIComponent(data.filters.search) %>&status=<%= encodeURIComponent(data.filters.status) %>&goal=<%= encodeURIComponent(data.filters.goal) %>" class="main-btn success-btn btn-hover btn-sm">Export CSV</a>
+                    <a href="<%= adminPath %>/users" class="main-btn light-btn btn-hover btn-sm">Clear</a>
+                    <a href="<%= adminPath %>/users/export.csv?search=<%= encodeURIComponent(data.filters.search) %>&status=<%= encodeURIComponent(data.filters.status) %>&goal=<%= encodeURIComponent(data.filters.goal) %>" class="main-btn success-btn btn-hover btn-sm" id="admin-users-export">Export CSV</a>
                   </div>
                 </div>
               </div>
@@ -97,22 +97,37 @@
                     <th><h6>Status</h6></th>
                     <th><h6>Goal</h6></th>
                     <th><h6>Access Expires</h6></th>
-                    <th><h6>Tags</h6></th>
                     <th><h6>Joined</h6></th>
+                    <th><h6>Actions</h6></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="admin-users-table-body" data-admin-path="<%= adminPath %>">
                   <% if (!data.users.length) { %>
                     <tr><td colspan="6"><p class="text-sm mb-0">No users found.</p></td></tr>
                   <% } %>
                   <% data.users.forEach(function(user) { %>
                     <tr>
                       <td><p class="text-sm mb-0"><%= user.email %></p></td>
-                      <td><span class="status-btn <%= user.status === 'active' ? 'success-btn' : 'warning-btn' %>"><%= user.status %></span></td>
+                      <td>
+                        <span class="status-btn <%= user.status === 'active' ? 'success-btn' : (user.status === 'suspended' ? 'close-btn' : 'warning-btn') %>"><%= user.status %></span>
+                      </td>
                       <td><p class="text-sm mb-0"><%= user.profile?.goal || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= user.accessExpiresAt ? user.accessExpiresAt.toLocaleDateString() : '-' %></p></td>
-                      <td><p class="text-sm mb-0"><%= (user.tags || []).join(', ') || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= user.createdAt.toLocaleDateString() %></p></td>
+                      <td>
+                        <form action="<%= adminPath %>/users/<%= user.id %>/status" method="POST" class="d-flex gap-2 align-items-center" data-ajax="false">
+                          <div class="select-style-1 mb-0" style="min-width: 135px;">
+                            <div class="select-position">
+                              <select name="status" aria-label="Account status">
+                                <option value="active" <%= user.status === 'active' ? 'selected' : '' %>>Active</option>
+                                <option value="pending" <%= user.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                <option value="suspended" <%= user.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+                              </select>
+                            </div>
+                          </div>
+                          <button type="submit" class="main-btn light-btn btn-hover btn-sm">Update</button>
+                        </form>
+                      </td>
                     </tr>
                   <% }) %>
                 </tbody>
@@ -124,5 +139,6 @@
     </main>
 
     <%- include('../partials/scripts.ejs') %>
+    <script src="/js/admin-users.js"></script>
   </body>
 </html>

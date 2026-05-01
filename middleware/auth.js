@@ -5,6 +5,7 @@ const { PaymentMethod } = require('../database/models');
 const { COOKIE_NAME, findUserForSession } = require('../services/authService');
 const { getPostAuthRedirect, isProfileComplete } = require('../utils/profileCompletion');
 const { jwtOptions, jwtSecret } = require('../utils/jwtUtils');
+const { adminRoute } = require('../utils/adminPaths');
 
 async function attachUser(req, res, next)
 {
@@ -80,6 +81,11 @@ function requireOnboarding(req, res, next)
     return requireAuth(req, res, next);
   }
 
+  if (req.user.role === 'admin')
+  {
+    return next();
+  }
+
   if (req.user.onboardingCompletedAt || req.path === '/onboarding')
   {
     return next();
@@ -93,6 +99,11 @@ function requireProfileComplete(req, res, next)
   if (!req.user)
   {
     return requireAuth(req, res, next);
+  }
+
+  if (req.user.role === 'admin')
+  {
+    return next();
   }
 
   if (isProfileComplete(req.user) || profileExceptions(req.path))
@@ -116,6 +127,11 @@ async function requireBilling(req, res, next)
   if (!req.user)
   {
     return requireAuth(req, res, next);
+  }
+
+  if (req.user.role === 'admin')
+  {
+    return next();
   }
 
   try
@@ -156,6 +172,11 @@ function requirePasswordSetup(req, res, next)
     return requireAuth(req, res, next);
   }
 
+  if (req.user.role === 'admin')
+  {
+    return next();
+  }
+
   if (req.user.passwordHash)
   {
     return next();
@@ -188,7 +209,7 @@ function requireAdmin(req, res, next)
 
   if (!req.path.startsWith('/api/') && !req.user)
   {
-    return res.redirect('/sign-in');
+    return res.redirect(adminRoute('/sign-in'));
   }
 
   if (!req.path.startsWith('/api/'))

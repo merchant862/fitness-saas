@@ -12,8 +12,6 @@ const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
 
 async function grantUpsellAccess(req, res, next)
 {
-  let claim = null;
-
   try
   {
     if (process.env.UPSELL_WEBHOOK_TOKEN && req.headers['x-webhook-token'] !== process.env.UPSELL_WEBHOOK_TOKEN)
@@ -21,13 +19,52 @@ async function grantUpsellAccess(req, res, next)
       return res.status(401).json({ error: 'Invalid webhook token' });
     }
 
+    const result = await processUpsellPurchase(req);
+
+    return res.status(202).json({
+      message: 'FitAccess membership email queued.',
+      email: result.email,
+      accessExpiresAt: result.accessExpiresAt,
+      payment: result.payment,
+      emailQueued: result.emailQueued
+    });
+  }
+  catch (error)
+  {
+    if (error.duplicate)
+    {
+      return res.status(409).json({
+        error: error.message,
+        email: error.email,
+        accessExpiresAt: error.accessExpiresAt,
+        duplicate: true
+      });
+    }
+
+    if (error.status && error.status < 500)
+    {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    next(error);
+  }
+}
+
+async function processUpsellPurchase(req)
+{
+  let claim = null;
+
+  try
+  {
     const email = req.body.email;
     const normalizedEmail = normalizeEmail(email);
     const customer = normalizeCheckoutCustomer(req.body);
 
     if (!isEmail(email))
     {
-      return res.status(422).json({ error: 'Valid customer email is required' });
+      const error = new Error('Valid customer email is required');
+      error.status = 422;
+      throw error;
     }
 
     claim = await reserveUpsellWebhookClaim({
@@ -37,17 +74,17 @@ async function grantUpsellAccess(req, res, next)
 
     if (claim.duplicate)
     {
-      return res.status(409).json({
-        error: 'Webhook already processed for this email.',
-        email: normalizedEmail,
-        accessExpiresAt: claim.user?.accessExpiresAt || null,
-        duplicate: true
-      });
+      const error = new Error('Webhook already processed for this email.');
+      error.status = 409;
+      error.duplicate = true;
+      error.email = normalizedEmail;
+      error.accessExpiresAt = claim.user?.accessExpiresAt || null;
+      throw error;
     }
 
     const paymentResult = await chargeUpsellOrder(req.body);
 
-    const result = await createPurchaseAccessLink(req, {
+    const accessResult = await createPurchaseAccessLink(req, {
       email: normalizedEmail,
       days: Number(req.body.accessDays || process.env.DEFAULT_ACCESS_DAYS || 30),
       source: 'upsell',
@@ -66,9 +103,9 @@ async function grantUpsellAccess(req, res, next)
       }
     });
 
-    await updateUserProfile(result.user, buildCustomerProfileUpdate(customer));
+    await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
 
-    await savePaymentMethod(result.user.id, {
+    await savePaymentMethod(accessResult.user.id, {
       customerId: paymentResult.crmResult.customerId || '16528318',
       cardLast4: paymentResult.cardLast4,
       lastChargedAt: paymentResult.chargedAt,
@@ -79,8 +116,8 @@ async function grantUpsellAccess(req, res, next)
     try
     {
       await sendResendEmail(magicLinkEmail({
-        email: result.email,
-        token: result.token
+        email: accessResult.email,
+        token: accessResult.token
       }));
       emailQueued = true;
     }
@@ -92,7 +129,7 @@ async function grantUpsellAccess(req, res, next)
     await trackEvent(req, 'upsell_purchase_access_granted', {
       productId: req.body.productId || null,
       orderId: req.body.orderId || null,
-      accessExpiresAt: result.accessExpiresAt,
+      accessExpiresAt: accessResult.accessExpiresAt,
       payment: sanitizeMetadata({
         responseCrmOrderId: paymentResult.crmResult.orderId,
         responseCrmTransactionId: paymentResult.crmResult.transactionId,
@@ -100,19 +137,18 @@ async function grantUpsellAccess(req, res, next)
         chargedAt: paymentResult.chargedAt,
         nextChargedAt: paymentResult.nextChargedAt
       })
-    }, result.user.id);
+    }, accessResult.user.id);
 
-    return res.status(202).json({
-      message: 'FitAccess membership email queued.',
-      email: result.email,
-      accessExpiresAt: result.accessExpiresAt,
+    return {
+      email: accessResult.email,
+      accessExpiresAt: accessResult.accessExpiresAt,
       payment: {
         cardLast4: paymentResult.cardLast4,
         chargedAt: paymentResult.chargedAt,
         nextChargedAt: paymentResult.nextChargedAt
       },
       emailQueued
-    });
+    };
   }
   catch (error)
   {
@@ -135,7 +171,7 @@ async function grantUpsellAccess(req, res, next)
       }
     }
 
-    next(error);
+    throw error;
   }
 }
 
@@ -311,5 +347,6 @@ function sanitizeMetadataShape(value)
 }
 
 module.exports = {
-  grantUpsellAccess
+  grantUpsellAccess,
+  processUpsellPurchase
 };

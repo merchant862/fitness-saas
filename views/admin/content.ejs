@@ -5,7 +5,7 @@
     <title>FitAccess | Admin Content</title>
   </head>
   <body>
-    <% const data = adminData; %>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; %>
     <%- include('../partials/spinner.ejs') %>
     <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-content' }) %>
 
@@ -30,7 +30,7 @@
                 <div class="breadcrumb-wrapper">
                   <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                      <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>">Admin</a></li>
                       <li class="breadcrumb-item active" aria-current="page">Content</li>
                     </ol>
                   </nav>
@@ -115,7 +115,7 @@
                           <td><p class="text-sm mb-0"><%= plan.durationWeeks %></p></td>
                           <td><p class="text-sm mb-0"><%= plan.sessions?.length || 0 %></p></td>
                           <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
-                          <td><a href="/admin/content/workout-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
+                          <td><a href="<%= adminPath %>/content/workout-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
                         </tr>
                       <% }) %>
                     </tbody>
@@ -153,7 +153,7 @@
                           <td><p class="text-sm mb-0"><%= plan.dailyCalories %></p></td>
                           <td><p class="text-sm mb-0"><%= plan.days?.length || 0 %></p></td>
                           <td><span class="status-btn <%= plan.isActive ? 'success-btn' : 'close-btn' %>"><%= plan.isActive ? 'active' : 'inactive' %></span></td>
-                          <td><a href="/admin/content/meal-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
+                          <td><a href="<%= adminPath %>/content/meal-plans/<%= plan.id %>" class="main-btn light-btn btn-hover btn-sm">Edit</a></td>
                         </tr>
                       <% }) %>
                     </tbody>

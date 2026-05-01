@@ -14,7 +14,7 @@ async function adminUsersExportController(req, res, next)
     });
 
     const rows = [
-      ['email', 'name', 'role', 'status', 'goal', 'level', 'environment', 'access_expires_at', 'onboarded_at', 'tags', 'created_at'],
+      ['email', 'name', 'role', 'status', 'goal', 'level', 'environment', 'access_expires_at', 'onboarded_at', 'created_at'],
       ...users.map((user) =>
       {
         return [
@@ -27,7 +27,6 @@ async function adminUsersExportController(req, res, next)
           user.profile?.environment || '',
           user.accessExpiresAt ? user.accessExpiresAt.toISOString() : '',
           user.onboardingCompletedAt ? user.onboardingCompletedAt.toISOString() : '',
-          (user.tags || []).join('|'),
           user.createdAt ? user.createdAt.toISOString() : ''
         ];
       })

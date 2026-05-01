@@ -14,6 +14,7 @@ const {
   WorkoutSession
 } = require('../database/models');
 const { addDays } = require('../utils/securityUtils');
+const { hashPassword, validatePassword } = require('../utils/passwordUtils');
 
 async function getAdminDashboardStats()
 {
@@ -31,9 +32,9 @@ async function getAdminDashboardStats()
     mealPlans,
     recentEvents
   ] = await Promise.all([
-    User.count(),
-    User.count({ where: { status: 'active' } }),
-    User.count({ where: { onboardingCompletedAt: { [Op.ne]: null } } }),
+    User.count({ where: { role: 'user' } }),
+    User.count({ where: { role: 'user', status: 'active' } }),
+    User.count({ where: { role: 'user', onboardingCompletedAt: { [Op.ne]: null } } }),
     AccessCode.count({ where: { status: 'unused' } }),
     AccessCode.count({ where: { status: 'redeemed' } }),
     AccessCode.count({ where: { status: 'revoked' } }),
@@ -41,7 +42,16 @@ async function getAdminDashboardStats()
     AiMessage.count(),
     WorkoutPlan.count({ where: { isActive: true } }),
     MealPlan.count({ where: { isActive: true } }),
-    Event.findAll({ order: [['createdAt', 'DESC']], limit: 8 })
+    Event.findAll({
+      include: [{
+        model: User,
+        as: 'user',
+        where: { role: 'user' },
+        required: true
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: 8
+    })
   ]);
 
   return {
@@ -66,12 +76,16 @@ async function getAdminDashboardStats()
 
 async function listAdminUsers(filters = {})
 {
-  const where = {};
+  const where = {
+    role: 'user'
+  };
   const profileWhere = {};
+  const limit = Math.min(Math.max(Number(filters.limit || 25), 1), 100);
+  const offset = Math.max(Number(filters.offset || 0), 0);
 
   if (filters.search)
   {
-    where.email = { [Op.like]: `%${filters.search}%` };
+    where.email = { [Op.like]: `${String(filters.search).toLowerCase()}%` };
   }
 
   if (['active', 'pending', 'suspended'].includes(filters.status))
@@ -84,7 +98,7 @@ async function listAdminUsers(filters = {})
     profileWhere.goal = filters.goal;
   }
 
-  const users = await User.findAll({
+  const query = {
     where,
     include: [{
       model: UserProfile,
@@ -93,10 +107,61 @@ async function listAdminUsers(filters = {})
       required: Boolean(filters.goal)
     }],
     order: [['createdAt', 'DESC']],
-    limit: Math.min(Number(filters.limit || 200), 1000)
-  });
+    limit,
+    offset
+  };
+
+  const users = await User.findAll(query);
 
   return users.map(normalizeUserJson);
+}
+
+async function searchAdminUsers(filters = {})
+{
+  const where = {
+    role: 'user'
+  };
+  const profileWhere = {};
+  const limit = Math.min(Math.max(Number(filters.limit || 25), 1), 100);
+  const offset = Math.max(Number(filters.offset || 0), 0);
+
+  if (filters.search)
+  {
+    where.email = { [Op.like]: `${String(filters.search).toLowerCase()}%` };
+  }
+
+  if (['active', 'pending', 'suspended'].includes(filters.status))
+  {
+    where.status = filters.status;
+  }
+
+  if (['weight_loss', 'muscle_gain', 'general_fitness'].includes(filters.goal))
+  {
+    profileWhere.goal = filters.goal;
+  }
+
+  const include = [{
+    model: UserProfile,
+    as: 'profile',
+    where: profileWhere,
+    required: Boolean(filters.goal)
+  }];
+
+  const { rows, count } = await User.findAndCountAll({
+    where,
+    include,
+    distinct: true,
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset
+  });
+
+  return {
+    users: rows.map(normalizeUserJson),
+    total: count,
+    limit,
+    offset
+  };
 }
 
 async function listAdminAccessCodes()
@@ -106,6 +171,26 @@ async function listAdminAccessCodes()
     order: [['createdAt', 'DESC']],
     limit: 200
   });
+}
+
+async function updateAdminUserStatus(id, status)
+{
+  if (!['active', 'pending', 'suspended'].includes(status))
+  {
+    const error = new Error('Choose a valid user status.');
+    error.status = 422;
+    throw error;
+  }
+
+  const user = await User.findByPk(id);
+
+  if (!user)
+  {
+    return null;
+  }
+
+  await user.update({ status });
+  return normalizeUserJson(user);
 }
 
 async function getAdminContentOverview()
@@ -199,8 +284,18 @@ async function updateAdminMealPlan(id, payload)
   return getAdminMealPlan(id);
 }
 
-async function promoteAdminUser(email)
+async function promoteAdminUser(email, password = null)
 {
+  if (password)
+  {
+    const passwordError = validatePassword(password);
+
+    if (passwordError)
+    {
+      throw new Error(passwordError);
+    }
+  }
+
   const [user, created] = await User.findOrCreate({
     where: { email },
     defaults: {
@@ -208,6 +303,7 @@ async function promoteAdminUser(email)
       role: 'admin',
       status: 'active',
       accessExpiresAt: addDays(3650),
+      passwordHash: password ? hashPassword(password) : null,
       tags: ['admin']
     }
   });
@@ -215,12 +311,19 @@ async function promoteAdminUser(email)
   const tags = new Set(user.tags || []);
   tags.add('admin');
 
-  await user.update({
+  const updates = {
     role: 'admin',
     status: 'active',
     accessExpiresAt: user.accessExpiresAt && user.accessExpiresAt > new Date() ? user.accessExpiresAt : addDays(3650),
     tags: Array.from(tags)
-  });
+  };
+
+  if (password)
+  {
+    updates.passwordHash = hashPassword(password);
+  }
+
+  await user.update(updates);
 
   await UserProfile.findOrCreate({
     where: { userId: user.id },
@@ -238,6 +341,8 @@ module.exports = {
   listAdminAccessCodes,
   listAdminUsers,
   promoteAdminUser,
+  searchAdminUsers,
+  updateAdminUserStatus,
   updateAdminMealPlan,
   updateAdminWorkoutPlan
 };

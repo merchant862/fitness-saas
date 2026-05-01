@@ -12,7 +12,7 @@ const {
   WorkoutPlan,
   WorkoutSession
 } = require('../database/models');
-const { getAvatarType, isProfileComplete } = require('../utils/profileCompletion');
+const { getAvatarType, getProfilePreferences, isProfileComplete } = require('../utils/profileCompletion');
 
 const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -332,6 +332,7 @@ function calculateWeeklyChange(latestWeights, currentWeight)
 function presentUser(user)
 {
   const profile = profileValues(user);
+  const preferences = getProfilePreferences(user);
 
   return {
     name: user.name || user.email?.split('@')[0] || 'Member',
@@ -339,7 +340,7 @@ function presentUser(user)
     goal: label(profile.goal),
     level: label(profile.level),
     environment: label(profile.environment),
-    gender: profile.gender || profile.preferences?.gender || null,
+    gender: preferences.gender || null,
     avatarType: getAvatarType(user),
     profileComplete: isProfileComplete(user)
   };

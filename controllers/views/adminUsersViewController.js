@@ -29,7 +29,7 @@ function normalizeFilters(query)
     search: String(query.search || '').trim().slice(0, 120),
     status: allowed(query.status, ['active', 'pending', 'suspended']),
     goal: allowed(query.goal, ['weight_loss', 'muscle_gain', 'general_fitness']),
-    limit: Number(query.limit || 200)
+    limit: Number(query.limit || 25)
   };
 }
 

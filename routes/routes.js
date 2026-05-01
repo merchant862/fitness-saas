@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authLimiter, coachChatLimiter, webhookLimiter } = require('../middleware/security');
 const { requireAdmin, requireAuth, requireBilling, requireGuest, requireOnboarding, requirePasswordSetup, requireProfileComplete } = require('../middleware/auth');
+const { adminApiRoute, adminRoute } = require('../utils/adminPaths');
 
 const loginViewController = require('../controllers/views/loginViewController');
 const landingViewController = require('../controllers/views/landingViewController');
@@ -19,7 +20,9 @@ const billingViewController = require('../controllers/views/billingViewControlle
 const activityLogViewController = require('../controllers/views/activityLogViewController');
 
 const adminDashboardViewController = require('../controllers/views/adminDashboardViewController');
+const adminLoginViewController = require('../controllers/views/adminLoginViewController');
 const adminUsersViewController = require('../controllers/views/adminUsersViewController');
+const adminUserActionsController = require('../controllers/views/adminUserActionsController');
 const adminActivityLogViewController = require('../controllers/views/adminActivityLogViewController');
 const adminUsersExportController = require('../controllers/views/adminUsersExportController');
 const adminContentViewController = require('../controllers/views/adminContentViewController');
@@ -100,24 +103,28 @@ router.get('/api/billing/payment-method', requireOnboarding, requireProfileCompl
 router.post('/api/billing/payment-method', requireOnboarding, requireProfileComplete, authLimiter, billingController.updatePaymentMethod);
 
 // Admin routes
-router.get('/admin', requireAdmin, adminDashboardViewController);
-router.get('/admin/users', requireAdmin, adminUsersViewController);
-router.get('/admin/users/export.csv', requireAdmin, adminUsersExportController);
-router.get('/admin/activity-log', requireAdmin, adminActivityLogViewController);
-router.get('/admin/content', requireAdmin, adminContentViewController);
-router.get('/admin/content/workout-plans/:id', requireAdmin, adminContentActionsController.editWorkout);
-router.post('/admin/content/workout-plans/:id', requireAdmin, adminContentActionsController.updateWorkout);
-router.get('/admin/content/meal-plans/:id', requireAdmin, adminContentActionsController.editMeal);
-router.post('/admin/content/meal-plans/:id', requireAdmin, adminContentActionsController.updateMeal);
-router.get('/admin/access-codes', requireAdmin, adminAccessCodesViewController);
-router.post('/admin/access-codes', requireAdmin, adminAccessCodeActionsController.create);
-router.post('/admin/access-codes/:id/revoke', requireAdmin, adminAccessCodeActionsController.revoke);
-router.post('/admin/access-codes/:id/extend', requireAdmin, adminAccessCodeActionsController.extend);
+router.get(adminRoute('/sign-in'), adminLoginViewController);
+router.post(adminRoute('/sign-in'), authLimiter, authController.adminPasswordLogin);
+router.get(adminRoute(), requireAdmin, adminDashboardViewController);
+router.get(adminRoute('/users'), requireAdmin, adminUsersViewController);
+router.post(adminRoute('/users/:id/status'), requireAdmin, adminUserActionsController.updateStatus);
+router.get(adminRoute('/users/export.csv'), requireAdmin, adminUsersExportController);
+router.get(adminRoute('/activity-log'), requireAdmin, adminActivityLogViewController);
+router.get(adminRoute('/content'), requireAdmin, adminContentViewController);
+router.get(adminRoute('/content/workout-plans/:id'), requireAdmin, adminContentActionsController.editWorkout);
+router.post(adminRoute('/content/workout-plans/:id'), requireAdmin, adminContentActionsController.updateWorkout);
+router.get(adminRoute('/content/meal-plans/:id'), requireAdmin, adminContentActionsController.editMeal);
+router.post(adminRoute('/content/meal-plans/:id'), requireAdmin, adminContentActionsController.updateMeal);
+router.get(adminRoute('/access-codes'), requireAdmin, adminAccessCodesViewController);
+router.post(adminRoute('/access-codes'), requireAdmin, adminAccessCodeActionsController.create);
+router.post(adminRoute('/access-codes/grant-access'), requireAdmin, adminAccessCodeActionsController.grantAccess);
+router.post(adminRoute('/access-codes/:id/revoke'), requireAdmin, adminAccessCodeActionsController.revoke);
+router.post(adminRoute('/access-codes/:id/extend'), requireAdmin, adminAccessCodeActionsController.extend);
 
-router.get('/api/admin/users', requireAdmin, userController.adminUsers);
-router.get('/api/admin/access-codes', requireAdmin, accessCodeController.index);
-router.post('/api/admin/access-codes', requireAdmin, accessCodeController.create);
-router.patch('/api/admin/access-codes/:id/revoke', requireAdmin, accessCodeController.revoke);
-router.patch('/api/admin/access-codes/:id/extend', requireAdmin, accessCodeController.extend);
+router.get(adminApiRoute('/users'), requireAdmin, userController.adminUsers);
+router.get(adminApiRoute('/access-codes'), requireAdmin, accessCodeController.index);
+router.post(adminApiRoute('/access-codes'), requireAdmin, accessCodeController.create);
+router.patch(adminApiRoute('/access-codes/:id/revoke'), requireAdmin, accessCodeController.revoke);
+router.patch(adminApiRoute('/access-codes/:id/extend'), requireAdmin, accessCodeController.extend);
 
 module.exports = router;

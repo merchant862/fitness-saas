@@ -294,3 +294,24 @@ body.dark-theme .theme-toggle-option.active {
 body.dark-theme .status-btn {
   color: #f4f7fb;
 }
+
+@media (max-width: 575px) {
+  .theme-toggle-switch {
+    min-width: 104px;
+    height: 34px !important;
+    padding: 3px !important;
+    gap: 2px;
+  }
+
+  .theme-toggle-option {
+    min-width: 43px;
+    height: 26px !important;
+    padding: 0 7px;
+    font-size: 11px;
+    line-height: 26px;
+  }
+
+  body.dark-theme .header .header-right > .me-3 .theme-toggle-switch {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+  }
+}

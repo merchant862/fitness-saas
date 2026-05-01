@@ -2,11 +2,12 @@ async function changePasswordViewController(req, res, next)
 {
     try
     {
+        const isAdmin = req.user?.role === 'admin';
         const changePasswordData = {
             currentUser: {
                 name: req.user?.name || req.user?.email || 'Member',
                 email: req.user?.email,
-                goal: req.user?.role === 'admin' ? 'Admin Panel' : (req.user?.profile?.goal || 'Fitness Plan'),
+                goal: isAdmin ? 'Admin Panel' : (req.user?.profile?.goal || 'Fitness Plan'),
                 role: req.user?.role
             },
 
@@ -14,7 +15,7 @@ async function changePasswordViewController(req, res, next)
             note: req.user?.passwordHash
                 ? 'Use a strong password that you have not used before.'
                 : 'No password is set yet. Leave current password empty and create a new one.',
-            returnTo: req.query.setup ? '/dashboard' : '/change-password',
+            returnTo: isAdmin ? (res.locals.adminBasePath || '/panel') : (req.query.setup ? '/dashboard' : '/change-password'),
             message: null
         };
 

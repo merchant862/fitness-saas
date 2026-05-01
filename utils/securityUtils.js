@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { getProfilePreferences } = require('./profileCompletion');
 
 const ACCESS_CODE_PREFIX = 'FIT';
 
@@ -55,7 +56,7 @@ function compactUser(user)
     return null;
   }
 
-  const gender = user.profile?.preferences?.gender || null;
+  const gender = getProfilePreferences(user).gender || null;
 
   return {
     id: user.id,

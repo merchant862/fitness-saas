@@ -3,6 +3,8 @@
   const avatarType = avatarGender === 'male' || avatarGender === 'female' || avatarGender === 'other' ? avatarGender : 'guest';
   const avatarLabel = avatarType === 'male' ? 'Male profile' : avatarType === 'female' ? 'Female profile' : avatarType === 'other' ? 'Other profile' : 'Guest profile';
   const avatarGlyph = avatarType === 'male' ? '♂' : avatarType === 'female' ? '♀' : avatarType === 'other' ? '⚧' : null;
+  const isAdminPanel = currentUser?.role === 'admin';
+  const displayName = currentUser?.name || currentUser?.email || 'User';
 %>
 <header class="header">
   <div class="container-fluid">
@@ -60,8 +62,8 @@
                     <% } %>
                   </div>
                   <div>
-                    <h6 class="fw-500"><%= currentUser?.name || 'Guest User' %></h6>
-                    <p><%= currentUser?.role === 'admin' ? 'Admin Panel' : (currentUser?.goal || 'Fitness Plan') %></p>
+                    <h6 class="fw-500"><%= displayName %></h6>
+                    <p><%= isAdminPanel ? 'Admin Panel' : (currentUser?.goal || 'Fitness Plan') %></p>
                   </div>
                 </div>
               </div>
@@ -78,44 +80,41 @@
                     <% } %>
                   </div>
                   <div class="content">
-                    <h4 class="text-sm"><%= currentUser?.name || 'Guest User' %></h4>
-                    <a
-                      class="text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white text-xs"
-                      href="/profile"
-                    >
-                      View profile
-                    </a>
+                    <h4 class="text-sm"><%= displayName %></h4>
+                    <p class="text-xs mb-0"><%= isAdminPanel ? 'Administrator' : 'Member' %></p>
                   </div>
                 </div>
               </li>
 
               <li class="divider"></li>
 
-              <li>
-                <a href="/profile">
-                  <i class="lni lni-user"></i> Profile
-                </a>
-              </li>
+              <% if (!isAdminPanel) { %>
+                <li>
+                  <a href="/profile">
+                    <i class="lni lni-user"></i> Profile
+                  </a>
+                </li>
 
-              <li>
-                <a href="/progress">
-                  <i class="lni lni-bar-chart"></i> Progress
-                </a>
-              </li>
+                <li>
+                  <a href="/progress">
+                    <i class="lni lni-bar-chart"></i> Progress
+                  </a>
+                </li>
 
-              <li>
-                <a href="/activity-log">
-                  <i class="lni lni-timer"></i> Activity Log
-                </a>
-              </li>
+                <li>
+                  <a href="/activity-log">
+                    <i class="lni lni-timer"></i> Activity Log
+                  </a>
+                </li>
 
-              <li>
-                <a href="/workouts">
-                  <i class="lni lni-grid-alt"></i> Workouts
-                </a>
-              </li>
+                <li>
+                  <a href="/workouts">
+                    <i class="lni lni-grid-alt"></i> Workouts
+                  </a>
+                </li>
 
-              <li class="divider"></li>
+                <li class="divider"></li>
+              <% } %>
 
               <li>
                 <a href="/change-password">

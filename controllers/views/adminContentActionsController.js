@@ -6,6 +6,7 @@ const {
   updateAdminMealPlan,
   updateAdminWorkoutPlan
 } = require('../../services/adminService');
+const { adminRoute } = require('../../utils/adminPaths');
 const { errorResponse, successResponse, wantsJson } = require('../../utils/httpResponseUtils');
 
 async function editWorkout(req, res, next)
@@ -48,7 +49,7 @@ async function updateWorkout(req, res, next)
 
     return successResponse(req, res, {
       message: 'Workout plan updated successfully.',
-      redirectTo: `/admin/content/workout-plans/${plan.id}`
+      redirectTo: adminRoute(`/content/workout-plans/${plan.id}`)
     });
   }
   catch (error)
@@ -97,7 +98,7 @@ async function updateMeal(req, res, next)
 
     return successResponse(req, res, {
       message: 'Meal plan updated successfully.',
-      redirectTo: `/admin/content/meal-plans/${plan.id}`
+      redirectTo: adminRoute(`/content/meal-plans/${plan.id}`)
     });
   }
   catch (error)

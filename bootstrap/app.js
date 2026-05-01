@@ -8,12 +8,14 @@ const cors = require('cors');
 const compression = require('compression');
 const { attachUser } = require('../middleware/auth');
 const { apiLimiter, securityHeaders } = require('../middleware/security');
+const { ADMIN_API_BASE_PATH, ADMIN_BASE_PATH } = require('../utils/adminPaths');
 const { wantsJson } = require('../utils/httpResponseUtils');
 
 const router = require('../routes/routes.js');
 
 const app = express();
 app.disable('x-powered-by');
+app.set('etag', false);
 
 // View engine
 app.set('views', path.join(__dirname, '..', 'views'));
@@ -24,37 +26,59 @@ app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(cookieParser());
+app.locals.adminBasePath = ADMIN_BASE_PATH;
+app.locals.adminApiPath = ADMIN_API_BASE_PATH;
 
 // Security
 //app.use(helmet());
 app.use(securityHeaders);
 
 // Custom headers
-const xPoweredByHeaders = function (req, res, next) 
+const fingerprintHeaders = function (req, res, next)
 {
-    let agents = ["PHP 8.1.0","Express","Next.js","ASP.NET","Ruby on Rails","Perl 5.0","Java EE"];
-    let agent = agents[ Math.floor(Math.random() * agents.length) ];
-    res.setHeader('X-Powered-By',agent);
-    next()
-}
+    const serverValues = ['edge', 'gateway', 'origin', 'cdn', 'proxy'];
+    const serverValue = serverValues[Math.floor(Math.random() * serverValues.length)];
 
-const serverHeaders = function (req, res, next) 
+    res.removeHeader('X-Powered-By');
+    res.setHeader('Server', serverValue);
+    next();
+};
+
+app.use(fingerprintHeaders);
+
+app.use((req, res, next) =>
 {
-    let agents = ["Microsoft IIS","nginx","Apache (Arch)","Apache Tomcat","Cloudflare","Fastly","CloudFront"];
-    let agent = agents[ Math.floor(Math.random() * agents.length) ];
-    res.setHeader('Server',agent);
-    next()
-}
+    res.redirect = function (statusOrUrl, maybeUrl)
+    {
+        const statusCode = typeof statusOrUrl === 'number' ? statusOrUrl : 302;
+        const location = typeof statusOrUrl === 'number' ? maybeUrl : statusOrUrl;
 
-app.use(serverHeaders);
-app.use(xPoweredByHeaders);
+        res.statusCode = statusCode;
+        res.setHeader('Location', String(location || '/'));
+        res.setHeader('Content-Length', '0');
+        return res.end();
+    };
+
+    next();
+});
+
+app.use((req, res, next) =>
+{
+    res.locals.adminBasePath = ADMIN_BASE_PATH;
+    res.locals.adminApiPath = ADMIN_API_BASE_PATH;
+    next();
+});
 
 // Compression (Brotli fallback)
 app.use(compression({ level: 9 }));
 
 // Static files with caching
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
-app.use('/', express.static(path.join(__dirname, '..', 'public')/* , { maxAge: oneWeek } */));
+app.use('/', express.static(path.join(__dirname, '..', 'public'), {
+    etag: false,
+    lastModified: false
+    /* maxAge: oneWeek */
+}));
 // CORS
 const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean);
 app.use(cors({
@@ -78,21 +102,32 @@ app.use('/', router);
 // 404 handler
 app.use((req, res, next) =>
 {
-    res.status(404).send('Resource not found!');
+    if (wantsJson(req))
+    {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(404).type('text/plain').send('Not found');
 });
 
 // 500 handler
 app.use((err, req, res, next) =>
 {
     console.error(err);
+    const statusCode = err.status || err.statusCode || (err.type === 'entity.parse.failed' ? 400 : 500);
+    const publicMessage = err.type === 'entity.parse.failed' || err.type === 'entity.too.large'
+        ? 'Invalid request body'
+        : (statusCode < 500 ? err.message : 'Internal server error');
+
     if (wantsJson(req))
     {
-        return res.status(err.status || 500).json({
-            error: process.env.NODE_ENV === 'development' ? err.message : (err.status ? err.message : 'Internal server error')
+        return res.status(statusCode).json({
+            error: process.env.NODE_ENV === 'development' && !err.type ? err.message : publicMessage
         });
     }
-    let response = process.env.NODE_ENV === 'development' ? err.message : 'Internal server error!'
-    res.status(err.status || 500).send(response);
+
+    const response = process.env.NODE_ENV === 'development' && !err.type ? err.message : publicMessage;
+    return res.status(statusCode).type('text/plain').send(response);
 });
 
 module.exports = app;

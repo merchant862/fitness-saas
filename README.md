@@ -206,19 +206,19 @@ http://localhost:3000/sign-in
 
 | Route | Purpose |
 | --- | --- |
-| `GET /admin` | Admin dashboard |
-| `GET /admin/users` | User list with filters |
-| `GET /admin/users/export.csv` | CSV user export |
-| `GET /admin/activity-log` | Admin activity log |
-| `GET /admin/access-codes` | Access code management |
-| `POST /admin/access-codes` | Generate access code |
-| `POST /admin/access-codes/:id/revoke` | Revoke access code |
-| `POST /admin/access-codes/:id/extend` | Extend access code |
-| `GET /admin/content` | Workout and meal content overview |
-| `GET /admin/content/workout-plans/:id` | Edit workout plan |
-| `POST /admin/content/workout-plans/:id` | Save workout plan |
-| `GET /admin/content/meal-plans/:id` | Edit meal plan |
-| `POST /admin/content/meal-plans/:id` | Save meal plan |
+| `GET /panel` | Admin dashboard |
+| `GET /panel/users` | User list with filters |
+| `GET /panel/users/export.csv` | CSV user export |
+| `GET /panel/activity-log` | Admin activity log |
+| `GET /panel/access-codes` | Access code management |
+| `POST /panel/access-codes` | Generate access code |
+| `POST /panel/access-codes/:id/revoke` | Revoke access code |
+| `POST /panel/access-codes/:id/extend` | Extend access code |
+| `GET /panel/content` | Workout and meal content overview |
+| `GET /panel/content/workout-plans/:id` | Edit workout plan |
+| `POST /panel/content/workout-plans/:id` | Save workout plan |
+| `GET /panel/content/meal-plans/:id` | Edit meal plan |
+| `POST /panel/content/meal-plans/:id` | Save meal plan |
 
 ## Upsell Webhook
 
@@ -295,7 +295,7 @@ Meal matching uses:
 
 - `goal`
 
-Admins can review and edit plan-level fields from `/admin/content`.
+Admins can review and edit plan-level fields from `/panel/content`.
 
 ## Coach Widget
 

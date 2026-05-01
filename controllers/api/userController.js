@@ -1,7 +1,8 @@
 'use strict';
 
 const { trackEvent } = require('../../services/eventService');
-const { completeUserOnboarding, listUsers, updateUserProfile } = require('../../services/userService');
+const { completeUserOnboarding, updateUserProfile } = require('../../services/userService');
+const { searchAdminUsers } = require('../../services/adminService');
 const { compactUser } = require('../../utils/securityUtils');
 const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 
@@ -194,13 +195,30 @@ async function adminUsers(req, res, next)
 {
   try
   {
-    const users = await listUsers(req.query.limit);
-    return res.status(200).json({ users });
+    const result = await searchAdminUsers(normalizeAdminUserFilters(req.query));
+    return res.status(200).json(result);
   }
   catch (error)
   {
     next(error);
   }
+}
+
+function normalizeAdminUserFilters(query)
+{
+  return {
+    search: String(query.search || '').trim().slice(0, 120),
+    status: allowed(query.status, ['active', 'pending', 'suspended']),
+    goal: allowed(query.goal, ['weight_loss', 'muscle_gain', 'general_fitness']),
+    limit: Number(query.limit || 25),
+    offset: Number(query.offset || 0)
+  };
+}
+
+function allowed(value, options)
+{
+  const text = String(value || '').trim();
+  return options.includes(text) ? text : '';
 }
 
 function normalizeOnboarding(body)
