@@ -7,9 +7,10 @@ const { hashPassword, validatePassword, verifyPassword } = require('../utils/pas
 
 async function requestPasswordReset(req, email)
 {
+  const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({
     where: {
-      email: normalizeEmail(email),
+      email: normalizedEmail,
       status: 'active'
     }
   });
@@ -19,11 +20,39 @@ async function requestPasswordReset(req, email)
     return null;
   }
 
+  const now = new Date();
+  const cooldownMinutes = Number(process.env.PASSWORD_RESET_COOLDOWN_MINUTES || 5);
+  const activeResetToken = await PasswordResetToken.findOne({
+    where: {
+      userId: user.id,
+      usedAt: null,
+      expiresAt: { [Op.gt]: now },
+      createdAt: {
+        [Op.gte]: new Date(now.getTime() - cooldownMinutes * 60 * 1000)
+      }
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+  if (activeResetToken)
+  {
+    return null;
+  }
+
   const token = generateToken(32);
+  await PasswordResetToken.update({
+    usedAt: now
+  }, {
+    where: {
+      userId: user.id,
+      usedAt: null
+    }
+  });
+
   await PasswordResetToken.create({
     userId: user.id,
     tokenHash: sha256(token),
-    expiresAt: new Date(Date.now() + Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30) * 60 * 1000),
+    expiresAt: new Date(now.getTime() + Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30) * 60 * 1000),
     requestIp: clientIp(req)
   });
 

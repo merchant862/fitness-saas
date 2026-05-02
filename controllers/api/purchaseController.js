@@ -1,6 +1,6 @@
 'use strict';
 
-const { sendResendEmail } = require('../../apis/resendApi');
+const { enqueueEmail } = require('../../services/emailQueueService');
 const { createPurchaseAccessLink } = require('../../services/authService');
 const { trackEvent } = require('../../services/eventService');
 const { updateUserProfile } = require('../../services/userService');
@@ -115,7 +115,7 @@ async function processUpsellPurchase(req)
     let emailQueued = false;
     try
     {
-      await sendResendEmail(magicLinkEmail({
+      await enqueueEmail(magicLinkEmail({
         email: accessResult.email,
         token: accessResult.token
       }));

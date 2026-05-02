@@ -34,8 +34,15 @@ module.exports = {
       updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
-    await queryInterface.addIndex('meal_completions', ['user_id', 'meal_key'], { unique: true });
-    await queryInterface.addIndex('meal_completions', ['user_id', 'completed_at']);
+    if (!(await hasIndex(queryInterface, 'meal_completions', 'meal_completions_user_id_meal_key')))
+    {
+      await queryInterface.addIndex('meal_completions', ['user_id', 'meal_key'], { unique: true });
+    }
+
+    if (!(await hasIndex(queryInterface, 'meal_completions', 'meal_completions_user_id_completed_at')))
+    {
+      await queryInterface.addIndex('meal_completions', ['user_id', 'completed_at']);
+    }
   },
 
   async down(queryInterface)
@@ -43,3 +50,10 @@ module.exports = {
     await queryInterface.dropTable('meal_completions');
   }
 };
+
+async function hasIndex(queryInterface, tableName, indexName)
+{
+  const indexes = await queryInterface.showIndex(tableName);
+
+  return indexes.some(index => index.name === indexName);
+}

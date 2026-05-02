@@ -1,7 +1,7 @@
 'use strict';
 
 const { trackEvent } = require('../../services/eventService');
-const { sendResendEmail } = require('../../apis/resendApi');
+const { enqueueEmail } = require('../../services/emailQueueService');
 const { changePassword, requestPasswordReset, resetPasswordWithToken } = require('../../services/passwordService');
 const { isEmail } = require('../../utils/securityUtils');
 const { passwordResetEmail } = require('../../utils/emailTemplateUtils');
@@ -22,13 +22,12 @@ async function forgot(req, res, next)
 
     if (result)
     {
-      await sendResendEmail(passwordResetEmail({ email: result.email, token: result.token }));
+      await enqueueEmail(passwordResetEmail({ email: result.email, token: result.token }));
       await trackEvent(req, 'password_reset_requested', {}, result.user.id);
     }
 
     return successResponse(req, res, {
-      message: 'If that email exists, a reset link has been sent.',
-      redirectTo: '/reset-password'
+      message: 'If an account exists for that email address, you will receive a password reset link shortly.'
     });
   }
   catch (error)

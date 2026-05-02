@@ -2,9 +2,7 @@
 <!-- ======== sidebar-nav start =========== -->
 <aside class="sidebar-nav-wrapper">
   <div class="navbar-logo">
-    <a href="<%= adminPath %>">
-      <img src="/images/logo/logo.svg" alt="logo" />
-    </a>
+    <%- include('brand-logo.ejs', { href: adminPath }) %>
   </div>
 
   <nav class="sidebar-nav">

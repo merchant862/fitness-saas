@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="shortcut icon" href="/images/favicon.svg" type="image/x-icon" />
+    <link rel="icon" href="/images/favicon.svg?v=fitaccess-2" type="image/svg+xml" />
+    <link rel="shortcut icon" href="/images/favicon.svg?v=fitaccess-2" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/lineicons.css" />
     <title>FitAccess | Premium Fitness Member Area</title>
@@ -68,10 +69,15 @@
         gap: 24px;
       }
 
-      .logo img {
+      .logo .brand-logo-img {
         width: 152px;
         height: auto;
+      }
+
+      .landing-logo img {
         display: block;
+        width: 152px;
+        height: auto;
       }
 
       .links {
@@ -299,6 +305,139 @@
       }
 
       .schedule-row span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .preview-card {
+        display: grid;
+        gap: 16px;
+      }
+
+      .preview-hero {
+        position: relative;
+        overflow: hidden;
+        min-height: 190px;
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(8, 17, 31, 0.08), rgba(8, 17, 31, 0.72)),
+          url("https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=86") center / cover no-repeat;
+      }
+
+      .preview-hero-content {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+      }
+
+      .preview-hero-content span {
+        display: inline-flex;
+        margin-bottom: 8px;
+        color: #bbf7d0;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .preview-hero-content strong {
+        display: block;
+        color: #ffffff;
+        font-size: 24px;
+        line-height: 1.12;
+        font-weight: 900;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 14px;
+      }
+
+      .preview-panel {
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .progress-ring {
+        width: 112px;
+        height: 112px;
+        display: grid;
+        place-items: center;
+        margin: 0 auto 14px;
+        border-radius: 999px;
+        background: conic-gradient(var(--green) 0 74%, #e5e7eb 74% 100%);
+      }
+
+      .progress-ring-inner {
+        width: 78px;
+        height: 78px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--ink);
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .preview-panel h4 {
+        margin: 0 0 4px;
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .preview-panel p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .preview-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .preview-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .preview-icon {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        flex: 0 0 34px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #ffffff;
+        background: var(--blue);
+      }
+
+      .preview-item:nth-child(2) .preview-icon {
+        background: var(--green);
+      }
+
+      .preview-item:nth-child(3) .preview-icon {
+        background: var(--cyan);
+      }
+
+      .preview-item strong {
+        display: block;
+        color: var(--ink);
+        font-size: 13px;
+        line-height: 1.25;
+      }
+
+      .preview-item span {
         color: var(--muted);
         font-size: 12px;
       }
@@ -537,9 +676,14 @@
         font-size: 14px;
       }
 
-      .footer-brand img {
-        width: 150px;
+      .footer-brand .footer-logo {
         margin-bottom: 14px;
+      }
+
+      .footer-brand .footer-logo img {
+        display: block;
+        width: 150px;
+        height: auto;
       }
 
       .footer-brand p {
@@ -661,7 +805,11 @@
           gap: 10px;
         }
 
-        .logo img {
+        .logo .brand-logo-img {
+          width: 118px;
+        }
+
+        .landing-logo img {
           width: 118px;
         }
 
@@ -749,6 +897,10 @@
           grid-template-columns: 1fr;
         }
 
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+
         .footer-inner {
           grid-template-columns: 1fr;
         }
@@ -779,7 +931,7 @@
     <div class="site">
       <nav class="nav">
         <div class="containerx nav-inner">
-          <a href="/" class="logo" aria-label="FitAccess Home">
+          <a href="/" class="landing-logo" aria-label="FitAccess Home">
             <img src="/images/logo/logo.svg" alt="FitAccess" />
           </a>
 
@@ -820,48 +972,52 @@
             <div class="mockup-screen">
               <div class="mockup-top">
                 <div class="mockup-title">
-                  <strong>Today in FitAccess</strong>
-                  <span>Personalized plan snapshot</span>
+                  <strong>Member Dashboard</strong>
+                  <span>Workout, meals, and coaching in sync</span>
                 </div>
-                <span class="pill">Active</span>
+                <span class="pill">Live Plan</span>
               </div>
 
-              <div class="metric-grid">
-                <div class="metric">
-                  <strong>12</strong>
-                  <span>week plan</span>
+              <div class="preview-card">
+                <div class="preview-hero">
+                  <div class="preview-hero-content">
+                    <span>Today&apos;s Focus</span>
+                    <strong>Strength session with high-protein meals.</strong>
+                  </div>
                 </div>
-                <div class="metric">
-                  <strong>4</strong>
-                  <span>meal weeks</span>
-                </div>
-                <div class="metric">
-                  <strong>7</strong>
-                  <span>day streak</span>
-                </div>
-              </div>
 
-              <div class="schedule">
-                <div class="schedule-row">
-                  <div>
-                    <strong>Full Body Strength</strong>
-                    <span>Workout · 38 minutes</span>
+                <div class="preview-grid">
+                  <div class="preview-panel">
+                    <div class="progress-ring">
+                      <div class="progress-ring-inner">74%</div>
+                    </div>
+                    <h4>Weekly Progress</h4>
+                    <p>Workout streak, meal consistency, and weight tracking stay visible at a glance.</p>
                   </div>
-                  <i class="lni lni-dumbbell"></i>
-                </div>
-                <div class="schedule-row">
-                  <div>
-                    <strong>Protein Bowl Plan</strong>
-                    <span>Meals · 2,050 kcal target</span>
+
+                  <div class="preview-panel preview-list">
+                    <div class="preview-item">
+                      <span class="preview-icon"><i class="lni lni-dumbbell"></i></span>
+                      <div>
+                        <strong>Full Body Strength</strong>
+                        <span>38 minute guided workout</span>
+                      </div>
+                    </div>
+                    <div class="preview-item">
+                      <span class="preview-icon"><i class="lni lni-dinner"></i></span>
+                      <div>
+                        <strong>Protein Bowl Plan</strong>
+                        <span>Balanced meals for the day</span>
+                      </div>
+                    </div>
+                    <div class="preview-item">
+                      <span class="preview-icon"><i class="lni lni-comments-alt"></i></span>
+                      <div>
+                        <strong>AI Coach Ready</strong>
+                        <span>Answers for workouts and meals</span>
+                      </div>
+                    </div>
                   </div>
-                  <i class="lni lni-dinner"></i>
-                </div>
-                <div class="schedule-row">
-                  <div>
-                    <strong>AI Coach Ready</strong>
-                    <span>Ask about workouts or meals</span>
-                  </div>
-                  <i class="lni lni-comments-alt"></i>
                 </div>
               </div>
             </div>
@@ -881,7 +1037,7 @@
 
           <div class="cards">
             <article class="cardx">
-              <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=86" alt="Member following a workout plan" />
+              <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=86" alt="Member following a strength workout plan" />
               <div class="card-bodyx">
                 <span class="iconx"><i class="lni lni-dumbbell"></i></span>
                 <h3>Workout Programs</h3>
@@ -890,7 +1046,7 @@
             </article>
 
             <article id="nutrition" class="cardx">
-              <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=900&q=86" alt="Healthy meal plan ingredients" />
+              <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=86" alt="Healthy meal prep ingredients for a weekly plan" />
               <div class="card-bodyx">
                 <span class="iconx"><i class="lni lni-dinner"></i></span>
                 <h3>Meal Guidance</h3>
@@ -899,7 +1055,7 @@
             </article>
 
             <article class="cardx">
-              <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=86" alt="Member checking fitness guidance on phone" />
+              <img src="https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=900&q=86" alt="Member checking guided fitness support on a phone" />
               <div class="card-bodyx">
                 <span class="iconx"><i class="lni lni-comments-alt"></i></span>
                 <h3>AI Coach</h3>
@@ -1004,7 +1160,9 @@
       <footer class="footer">
         <div class="containerx footer-inner">
           <div class="footer-brand">
-            <img src="/images/logo/logo.svg" alt="FitAccess" />
+            <a href="/" class="footer-logo" aria-label="FitAccess Home">
+              <img src="/images/logo/logo-white.svg" alt="FitAccess" />
+            </a>
             <p>
               Premium fitness membership with guided training, practical nutrition, progress tracking,
               and helpful AI Coach support.

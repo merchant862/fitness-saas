@@ -1,9 +1,7 @@
 <!-- ======== sidebar-nav start =========== -->
 <aside class="sidebar-nav-wrapper <%= typeof billingLocked !== 'undefined' && billingLocked ? 'billing-locked' : '' %>">
   <div class="navbar-logo">
-    <a href="/dashboard">
-      <img src="/images/logo/logo.svg" alt="logo" />
-    </a>
+    <%- include('brand-logo.ejs', { href: '/dashboard' }) %>
   </div>
 
   <nav class="sidebar-nav">

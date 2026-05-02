@@ -21,7 +21,7 @@
               <div class="row">
                 <div class="col-lg-6">
                   <div class="card-style mb-30">
-                    <img src="/images/logo/logo.svg" alt="FitAccess" /><br><br>
+                    <%- include('partials/brand-logo-dark.ejs', { href: '/' }) %><br><br>
                     <div class="title mb-25">
                       <h2>Access is sent by email</h2>
                       <p class="text-sm mt-10 mb-0">
@@ -47,20 +47,12 @@
                 </div>
 
                 <div class="col-lg-6">
-                  <div class="card-style mb-30">
-                    <div class="title mb-20">
-                      <h6 class="text-medium"><%= data.statusCard.title %></h6>
+                  <div class="access-visual-card mb-30">
+                    <div class="access-visual-card__content">
+                      <span>FitAccess member access</span>
+                      <h3><%= data.statusCard.title %></h3>
+                      <p><%= data.statusCard.description %></p>
                     </div>
-
-                    <p class="text-sm mb-20">
-                      <%= data.statusCard.description %>
-                    </p>
-
-                    <ul style="padding-left: 18px; margin-bottom: 0;">
-                      <% data.statusCard.items.forEach(function(item) { %>
-                        <li class="text-sm mb-12"><%= item %></li>
-                      <% }) %>
-                    </ul>
                   </div>
 
                   <div class="card-style mb-30">

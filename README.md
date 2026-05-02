@@ -94,6 +94,7 @@ AUTH_COOKIE_NAME=fitaccess_token
 
 MAGIC_LINK_TTL_MINUTES=15
 PASSWORD_RESET_TTL_MINUTES=30
+PASSWORD_RESET_COOLDOWN_MINUTES=5
 DEFAULT_ACCESS_DAYS=30
 AUTH_RATE_LIMIT=20
 API_RATE_LIMIT=120
@@ -119,6 +120,10 @@ RESPONSE_CRM_RECURRING_DAYS=30
 
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=FitAccess <noreply@example.com>
+EMAIL_QUEUE_BATCH_SIZE=10
+EMAIL_QUEUE_POLL_MS=5000
+EMAIL_QUEUE_MAX_ATTEMPTS=5
+EMAIL_QUEUE_LOCK_TIMEOUT_MS=300000
 
 COACH_CHAT_RATE_LIMIT=12
 COACH_CHAT_DAILY_LIMIT=80
@@ -142,6 +147,12 @@ Start development server:
 npm run dev
 ```
 
+Start the email worker in a separate process:
+
+```bash
+npm run email:worker
+```
+
 Open:
 
 ```text
@@ -158,6 +169,7 @@ http://localhost:3000/sign-in
 | `npm run db:migrate:undo` | Undo latest migration |
 | `npm run db:seed` | Seed workout and meal content |
 | `npm run db:seed:undo` | Undo all seeders |
+| `npm run email:worker` | Process durable email queue jobs |
 | `npm run admin:promote` | Promote `ADMIN_EMAIL` to admin |
 
 ## Public Routes

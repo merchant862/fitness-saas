@@ -1,6 +1,6 @@
 'use strict';
 
-const { sendResendEmail } = require('../../apis/resendApi');
+const { enqueueEmail } = require('../../services/emailQueueService');
 const { createAccessCode } = require('../../services/authService');
 const { extendAccessCode, listAccessCodes, revokeAccessCode } = require('../../services/accessCodeService');
 const { isEmail } = require('../../utils/securityUtils');
@@ -38,7 +38,7 @@ async function create(req, res, next)
 
     if (sendEmail)
     {
-      await sendResendEmail(accessCodeEmail({
+      await enqueueEmail(accessCodeEmail({
         email: result.accessCode.email,
         code: result.plainCode,
         expiresAt: result.accessCode.expiresAt

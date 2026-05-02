@@ -1,0 +1,9 @@
+<%
+  const brandLogoHref = typeof href === 'string' ? href : '/';
+  const brandLogoClass = typeof className === 'string' ? className : '';
+  const brandLogoAlt = typeof alt === 'string' ? alt : 'FitAccess';
+%>
+<a href="<%= brandLogoHref %>" class="brand-logo <%= brandLogoClass %>" aria-label="<%= brandLogoAlt %>">
+  <img class="brand-logo-img brand-logo-img--light" src="/images/logo/logo.svg" alt="<%= brandLogoAlt %>" />
+  <img class="brand-logo-img brand-logo-img--dark" src="/images/logo/logo-white.svg" alt="<%= brandLogoAlt %>" />
+</a>

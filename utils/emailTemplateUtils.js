@@ -1,6 +1,12 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { appUrl } = require('./urlUtils');
+
+const LOGO_CONTENT_ID = 'fitaccess-logo-icon';
+const LOGO_FILENAME = 'fitaccess-logo-icon.png';
+const LOGO_PATH = path.join(__dirname, '..', 'public', 'images', 'logo', 'email-logo-icon.png');
 
 const BRAND = {
   ink: '#101828',
@@ -76,13 +82,13 @@ function brandedEmail({ to, subject, eyebrow, title, intro, buttonText, buttonUr
     to,
     subject,
     text,
-    html: htmlShell({ eyebrow, title, intro, buttonText, buttonUrl, code, footerText })
+    html: htmlShell({ eyebrow, title, intro, buttonText, buttonUrl, code, footerText }),
+    attachments: logoAttachments()
   };
 }
 
 function htmlShell({ eyebrow, title, intro, buttonText, buttonUrl, code, footerText })
 {
-  const logoUrl = appUrl('/images/logo/logo-white.svg');
   const safeButtonUrl = escapeAttribute(buttonUrl);
 
   return `<!doctype html>
@@ -106,7 +112,7 @@ function htmlShell({ eyebrow, title, intro, buttonText, buttonUrl, code, footerT
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                         <tr>
                           <td align="left">
-                            <img src="${logoUrl}" width="168" alt="FitAccess" style="display:block;width:168px;max-width:168px;height:auto;border:0;">
+                            ${emailLogo()}
                           </td>
                           <td align="right" style="font-size:12px;line-height:1.2;color:#bbf7d0;font-weight:800;text-transform:uppercase;">
                             Premium Membership
@@ -165,6 +171,36 @@ function htmlShell({ eyebrow, title, intro, buttonText, buttonUrl, code, footerT
     </table>
   </body>
 </html>`;
+}
+
+function emailLogo()
+{
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+    <tr>
+      <td width="34" height="34" align="center" valign="middle" style="width:34px;height:34px;">
+        <img src="cid:${LOGO_CONTENT_ID}" width="34" height="34" alt="" style="display:block;width:34px;height:34px;border:0;outline:none;text-decoration:none;">
+      </td>
+      <td style="padding-left:10px;color:#ffffff;font-size:23px;line-height:34px;font-weight:900;letter-spacing:0;font-family:Arial,Helvetica,sans-serif;">
+        FitAccess
+      </td>
+    </tr>
+  </table>`;
+}
+
+function logoAttachments()
+{
+  return [
+    {
+      content: fs.readFileSync(LOGO_PATH).toString('base64'),
+      filename: LOGO_FILENAME,
+      contentType: 'image/png',
+      content_type: 'image/png',
+      contentDisposition: 'inline',
+      content_disposition: 'inline',
+      contentId: LOGO_CONTENT_ID,
+      content_id: LOGO_CONTENT_ID
+    }
+  ];
 }
 
 function featureStrip()

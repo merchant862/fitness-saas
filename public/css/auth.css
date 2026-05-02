@@ -20,12 +20,12 @@
     #111827 !important;
 }
 
-.auth-cover .title img {
+.auth-cover .title .brand-logo {
+  justify-content: center;
+}
+
+.auth-cover .title .brand-logo-img {
   width: 210px;
-  max-width: 80%;
-  padding: 14px 18px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
 }
 
 .signin-wrapper {

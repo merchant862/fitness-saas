@@ -1,7 +1,7 @@
 'use strict';
 
 const { trackEvent } = require('../../services/eventService');
-const { sendResendEmail } = require('../../apis/resendApi');
+const { enqueueEmail } = require('../../services/emailQueueService');
 const {
   loginWithPassword,
   redeemAccessCode,
@@ -129,7 +129,7 @@ async function magicLinkRequest(req, res, next)
 
     if (result)
     {
-      await sendResendEmail(magicLinkEmail({ email: result.email, token: result.token }));
+      await enqueueEmail(magicLinkEmail({ email: result.email, token: result.token }));
       await trackEvent(req, 'magic_link_requested', {}, result.user.id);
     }
 

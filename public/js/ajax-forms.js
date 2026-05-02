@@ -61,6 +61,17 @@
 
       setMessage(messageBox, payload.message || 'Saved successfully.', 'success');
 
+      if (form.dataset.successRedirect)
+      {
+        const delay = Number(form.dataset.successRedirectDelay || 3000);
+
+        setTimeout(function ()
+        {
+          window.location.assign(new URL(form.dataset.successRedirect, window.location.origin).toString());
+        }, Number.isFinite(delay) ? delay : 3000);
+        return;
+      }
+
       if (payload.redirectTo)
       {
         const nextUrl = new URL(payload.redirectTo, window.location.origin);
