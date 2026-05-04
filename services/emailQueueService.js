@@ -34,7 +34,7 @@ async function processEmailQueueBatch(limit = 10)
         subject: job.subject,
         html: job.html,
         text: job.text,
-        attachments: job.attachments || []
+        attachments: normalizeAttachments(job.attachments)
       });
 
       await job.update({
@@ -130,6 +130,45 @@ async function markFailedAttempt(job, error)
     lockedAt: null,
     lastError: String(error.message || error).slice(0, 2000)
   });
+}
+
+function normalizeAttachments(value)
+{
+  if (Array.isArray(value))
+  {
+    return value.map(normalizeAttachment).filter(Boolean);
+  }
+
+  if (typeof value === 'string' && value.trim())
+  {
+    try
+    {
+      const parsed = JSON.parse(value);
+      return normalizeAttachments(parsed);
+    }
+    catch
+    {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function normalizeAttachment(attachment)
+{
+  if (!attachment || typeof attachment !== 'object')
+  {
+    return null;
+  }
+
+  return {
+    content: attachment.content,
+    filename: attachment.filename,
+    contentType: attachment.contentType || attachment.content_type,
+    contentDisposition: attachment.contentDisposition || attachment.content_disposition,
+    contentId: attachment.contentId || attachment.content_id
+  };
 }
 
 module.exports = {

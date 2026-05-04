@@ -55,9 +55,42 @@ function formatEventForDisplay(event)
 
   return {
     ...plain,
+    eventLabel: humanEventName(plain.eventType),
     userAgentLabel: parseUserAgentLabel(plain.userAgent),
     timeLabel: formatEventTime(plain.createdAt)
   };
+}
+
+function humanEventName(eventType)
+{
+  const labels = {
+    access_code_redeemed: 'Access link used',
+    admin_password_login: 'Admin signed in',
+    coach_chat_used: 'AI Coach message sent',
+    magic_link_login: 'Secure link sign-in',
+    magic_link_requested: 'Secure sign-in link requested',
+    meal_day_completed: 'Meal plan marked complete',
+    onboarding_completed: 'Profile setup completed',
+    password_changed: 'Password changed',
+    password_login: 'Password sign-in',
+    password_reset_completed: 'Password reset completed',
+    password_reset_requested: 'Password reset requested',
+    payment_method_updated: 'Payment method updated',
+    upsell_purchase_access_granted: 'Membership access granted',
+    weight_logged: 'Weight updated',
+    workout_completed: 'Workout marked complete'
+  };
+
+  if (labels[eventType])
+  {
+    return labels[eventType];
+  }
+
+  return String(eventType || 'Account activity')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, character => character.toUpperCase()) || 'Account activity';
 }
 
 function parseUserAgentLabel(userAgent)

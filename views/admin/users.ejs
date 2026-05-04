@@ -5,7 +5,7 @@
     <title>FitAccess | Admin Users</title>
   </head>
   <body>
-    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; const adminApiPathValue = typeof adminApiPath === 'string' ? adminApiPath : '/api/panel'; %>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; const adminApiPathValue = typeof adminApiPath === 'string' ? adminApiPath : '/api/panel'; const pagination = data.pagination || { total: data.users.length, limit: data.filters.limit || 25, offset: data.filters.offset || 0 }; %>
     <%- include('../partials/spinner.ejs') %>
     <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-users' }) %>
 
@@ -23,7 +23,7 @@
               <div class="col-md-8">
                 <div class="title">
                   <h2>Users</h2>
-                  <p class="text-sm text-medium" id="admin-users-count"><%= data.users.length %> users shown.</p>
+                  <p class="text-sm text-medium" id="admin-users-count"><%= pagination.total > data.users.length ? `${pagination.offset + 1}-${pagination.offset + data.users.length} of ${pagination.total} users shown.` : `${data.users.length} users shown.` %></p>
                 </div>
               </div>
               <div class="col-md-4">
@@ -40,7 +40,7 @@
           </div>
 
           <div class="card-style mb-25">
-            <form action="<%= adminPath %>/users" method="GET" id="admin-users-filter" data-admin-users-api="<%= adminApiPathValue %>/users" data-admin-users-limit="<%= data.filters.limit || 25 %>">
+            <form action="<%= adminPath %>/users" method="GET" id="admin-users-filter" data-admin-users-api="<%= adminApiPathValue %>/users" data-admin-users-limit="<%= pagination.limit %>" data-admin-users-offset="<%= pagination.offset %>">
               <div class="row align-items-end">
                 <div class="col-lg-4 col-md-6">
                   <div class="input-style-1 mb-0">
@@ -132,6 +132,15 @@
                   <% }) %>
                 </tbody>
               </table>
+            </div>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-25">
+              <p class="text-sm text-medium mb-0" id="admin-users-page-label">
+                Page <%= Math.floor(pagination.offset / pagination.limit) + 1 %>
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="main-btn light-btn btn-hover btn-sm" id="admin-users-prev" <%= pagination.offset <= 0 ? 'disabled' : '' %>>Previous</button>
+                <button type="button" class="main-btn primary-btn btn-hover btn-sm" id="admin-users-next" <%= pagination.offset + data.users.length >= pagination.total ? 'disabled' : '' %>>Next</button>
+              </div>
             </div>
           </div>
         </div>

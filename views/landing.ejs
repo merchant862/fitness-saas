@@ -642,6 +642,98 @@
         background: #ffffff;
       }
 
+      .link-hub {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .link-card {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 238px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        background: #ffffff;
+        transition: 170ms ease;
+      }
+
+      .link-card:nth-child(even) {
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.14);
+        background: var(--dark);
+      }
+
+      .link-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(54, 92, 245, 0.34);
+        box-shadow: 0 24px 58px rgba(16, 24, 40, 0.12);
+      }
+
+      .link-card-icon {
+        width: 46px;
+        height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        border-radius: 8px;
+        color: #ffffff;
+        background: var(--blue);
+        font-size: 21px;
+      }
+
+      .link-card:nth-child(2) .link-card-icon {
+        color: var(--dark);
+        background: #ffffff;
+      }
+
+      .link-card:nth-child(3) .link-card-icon {
+        background: var(--green);
+      }
+
+      .link-card:nth-child(4) .link-card-icon {
+        color: var(--dark);
+        background: #ffffff;
+      }
+
+      .link-card strong {
+        display: block;
+        margin-bottom: 8px;
+        color: inherit;
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 900;
+      }
+
+      .link-card p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .link-card:nth-child(even) p {
+        color: #cbd5e1;
+      }
+
+      .link-card span:last-child {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: auto;
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .link-card:nth-child(even) span:last-child {
+        color: #ffffff;
+      }
+
       .cta {
         display: flex;
         align-items: center;
@@ -663,17 +755,25 @@
       }
 
       .footer {
-        padding: 64px 0 28px;
+        padding: 72px 0 0;
         border-top: 1px solid var(--line);
-        background: #ffffff;
+        background: #f8fafc;
       }
 
       .footer-inner {
         display: grid;
-        grid-template-columns: minmax(280px, 1fr) minmax(0, 1.25fr);
-        gap: 56px;
+        grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.55fr);
+        gap: 44px;
         color: var(--muted);
         font-size: 14px;
+      }
+
+      .footer-brand {
+        min-width: 0;
+        padding: 28px;
+        border: 1px solid #e7ecf4;
+        border-radius: 8px;
+        background: #ffffff;
       }
 
       .footer-brand .footer-logo {
@@ -688,19 +788,56 @@
 
       .footer-brand p {
         max-width: 360px;
-        margin: 0;
+        margin: 0 0 22px;
         color: var(--muted);
         line-height: 1.7;
+      }
+
+      .footer-badges {
+        display: grid;
+        gap: 10px;
+      }
+
+      .footer-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 42px;
+        padding: 0 12px;
+        border: 1px solid #eef2f7;
+        border-radius: 8px;
+        color: #344054;
+        background: #f8fafc;
+        font-weight: 800;
+      }
+
+      .footer-badge i {
+        color: var(--blue);
+        font-size: 18px;
+      }
+
+      .footer-right {
+        min-width: 0;
+        display: grid;
+        gap: 20px;
       }
 
       .footer-columns {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 34px;
-        margin-bottom: 30px;
+        gap: 16px;
       }
 
-      .footer-column h3 {
+      .footer-column {
+        min-width: 0;
+        padding: 22px;
+        border: 1px solid #e7ecf4;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .footer-column h3,
+      .payment-title {
         margin: 0 0 14px;
         color: var(--ink);
         font-size: 13px;
@@ -709,46 +846,77 @@
       }
 
       .footer-column a {
-        display: block;
-        margin-bottom: 10px;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-bottom: 1px solid #eef2f7;
+        border-radius: 0;
         color: #344054;
+        background: #ffffff;
         font-size: 14px;
-        font-weight: 650;
+        font-weight: 750;
+        transition: 150ms ease;
+      }
+
+      .footer-column a:last-child {
+        border-bottom: 0;
       }
 
       .footer-column a:hover {
         color: var(--blue);
+        background: transparent;
       }
 
-      .payment-title {
-        margin: 0 0 12px;
-        color: var(--ink);
-        font-size: 14px;
-        font-weight: 900;
+      .footer-column a i {
+        color: #98a2b3;
+        font-size: 13px;
+      }
+
+      .footer-column a:hover i {
+        color: var(--blue);
+      }
+
+      .footer-payments {
+        padding: 22px;
+        border: 1px solid #e7ecf4;
+        border-radius: 8px;
+        background: #ffffff;
       }
 
       .payment-grid {
         display: grid;
-        grid-template-columns: repeat(10, 54px);
-        justify-content: start;
-        gap: 7px;
+        grid-template-columns: repeat(8, minmax(42px, 1fr));
+        gap: 8px;
       }
 
       .payment-grid img {
         width: 100%;
-        height: 24px;
+        height: 30px;
         display: block;
         object-fit: contain;
-        border-radius: 5px;
+        padding: 5px 6px;
+        border: 1px solid #eef2f7;
+        border-radius: 6px;
+        background: #ffffff;
       }
 
       .footer-bottom {
-        width: min(1160px, calc(100% - 40px));
-        margin: 32px auto 0;
-        padding-top: 18px;
-        border-top: 1px solid var(--line);
-        color: var(--muted);
+        margin: 46px 0 0;
+        padding: 18px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--dark);
+        color: #cbd5e1;
         font-size: 13px;
+      }
+
+      .footer-bottom-inner {
+        width: min(1160px, calc(100% - 40px));
+        margin: 0 auto;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -763,6 +931,7 @@
         .hero-grid,
         .cards,
         .split,
+        .link-hub,
         .steps {
           grid-template-columns: 1fr;
         }
@@ -910,17 +1079,22 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
+        .link-card {
+          min-height: 210px;
+        }
+
         .payment-grid img {
           height: 32px;
         }
 
-        .footer-bottom {
+        .footer-bottom-inner {
           width: calc(100% - 30px);
         }
 
         .footer-inner,
-        .footer-bottom {
+        .footer-bottom-inner {
           align-items: flex-start;
+          flex-direction: column;
         }
       }
     </style>
@@ -964,7 +1138,6 @@
                 <i class="lni lni-rocket"></i>
                 <%= data.currentUser ? 'Continue Your Plan' : 'Enter Member Area' %>
               </a>
-              <a href="/sign-in" class="btnx btn-lightx">Sign In</a>
             </div>
           </div>
 
@@ -1143,6 +1316,45 @@
         </div>
       </section>
 
+      <section class="section section-soft">
+        <div class="containerx">
+          <div class="section-head">
+            <h2>Everything important, one tap away.</h2>
+            <p>Members can move straight into the area they need without digging through menus.</p>
+          </div>
+
+          <div class="link-hub">
+            <a href="<%= dashboardHref %>" class="link-card">
+              <span class="link-card-icon"><i class="lni lni-grid-alt"></i></span>
+              <strong>Member Dashboard</strong>
+              <p>Continue your daily plan, check your streak, and see what needs attention next.</p>
+              <span>Open dashboard <i class="lni lni-arrow-right"></i></span>
+            </a>
+
+            <a href="#plans" class="link-card">
+              <span class="link-card-icon"><i class="lni lni-dumbbell"></i></span>
+              <strong>Workout Plans</strong>
+              <p>Review guided training for home or gym, matched to your level and goal.</p>
+              <span>View training <i class="lni lni-arrow-right"></i></span>
+            </a>
+
+            <a href="#nutrition" class="link-card">
+              <span class="link-card-icon"><i class="lni lni-dinner"></i></span>
+              <strong>Nutrition Guidance</strong>
+              <p>Find meal direction, recipe support, macros, and shopping help in one place.</p>
+              <span>See nutrition <i class="lni lni-arrow-right"></i></span>
+            </a>
+
+            <a href="#access" class="link-card">
+              <span class="link-card-icon"><i class="lni lni-lock-alt"></i></span>
+              <strong>Account Access</strong>
+              <p>Sign in or recover access so you can get back to your fitness plan quickly.</p>
+              <span>Manage access <i class="lni lni-arrow-right"></i></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section id="access" class="section section-dark">
         <div class="containerx cta">
           <div>
@@ -1161,62 +1373,78 @@
         <div class="containerx footer-inner">
           <div class="footer-brand">
             <a href="/" class="footer-logo" aria-label="FitAccess Home">
-              <img src="/images/logo/logo-white.svg" alt="FitAccess" />
+              <img src="/images/logo/logo.svg" alt="FitAccess" />
             </a>
             <p>
               Premium fitness membership with guided training, practical nutrition, progress tracking,
               and helpful AI Coach support.
             </p>
+
+            <div class="footer-badges">
+              <div class="footer-badge">
+                <i class="lni lni-shield"></i>
+                <span>Secure member access</span>
+              </div>
+              <div class="footer-badge">
+                <i class="lni lni-bolt-alt"></i>
+                <span>Built for daily consistency</span>
+              </div>
+            </div>
           </div>
 
           <div class="footer-right">
             <div class="footer-columns">
               <div class="footer-column">
                 <h3>Membership</h3>
-                <a href="#plans">Workout Plans</a>
-                <a href="#nutrition">Meal Guidance</a>
-                <a href="#experience">Member Experience</a>
+                <a href="#plans">Workout Plans <i class="lni lni-arrow-right"></i></a>
+                <a href="#nutrition">Meal Guidance <i class="lni lni-arrow-right"></i></a>
+                <a href="#experience">Member Experience <i class="lni lni-arrow-right"></i></a>
               </div>
 
               <div class="footer-column">
                 <h3>Account</h3>
-                <a href="/sign-in">Sign In</a>
-                <a href="/forgot-password">Reset Password</a>
+                <a href="/sign-in">Sign In <i class="lni lni-arrow-right"></i></a>
+                <a href="/forgot-password">Reset Password <i class="lni lni-arrow-right"></i></a>
               </div>
 
               <div class="footer-column">
                 <h3>Quick Links</h3>
-                <a href="#access">Account Access</a>
-                <a href="/">Home</a>
+                <a href="#access">Account Access <i class="lni lni-arrow-right"></i></a>
+                <a href="/">Home <i class="lni lni-arrow-right"></i></a>
                 <% if (data.currentUser?.role === 'admin') { %>
-                  <a href="<%= adminBasePath || '/panel' %>">Admin Panel</a>
+                  <a href="<%= adminBasePath || '/panel' %>">Admin Panel <i class="lni lni-arrow-right"></i></a>
                 <% } %>
               </div>
             </div>
 
-            <p class="payment-title">Accepted payment methods</p>
-            <div class="payment-grid" aria-label="Accepted payment brands">
-              <img src="/images/payment-brands/visa.svg" alt="Visa" />
-              <img src="/images/payment-brands/mastercard.svg" alt="Mastercard" />
-              <img src="/images/payment-brands/amex.svg" alt="American Express" />
-              <img src="/images/payment-brands/discover.svg" alt="Discover" />
-              <img src="/images/payment-brands/paypal.svg" alt="PayPal" />
-              <img src="/images/payment-brands/apple-pay.svg" alt="Apple Pay" />
-              <img src="/images/payment-brands/google-pay.svg" alt="Google Pay" />
-              <img src="/images/payment-brands/jcb.svg" alt="JCB" />
-              <img src="/images/payment-brands/diners.svg" alt="Diners Club" />
-              <img src="/images/payment-brands/unionpay.svg" alt="UnionPay" />
+            <div class="footer-payments">
+              <p class="payment-title">Accepted payment methods</p>
+              <div class="payment-grid" aria-label="Accepted payment brands">
+                <img src="/images/payment-brands/visa.svg" alt="Visa" />
+                <img src="/images/payment-brands/mastercard.svg" alt="Mastercard" />
+                <img src="/images/payment-brands/amex.svg" alt="American Express" />
+                <img src="/images/payment-brands/discover.svg" alt="Discover" />
+                <img src="/images/payment-brands/jcb.svg" alt="JCB" />
+                <img src="/images/payment-brands/diners.svg" alt="Diners Club" />
+                <img src="/images/payment-brands/unionpay.svg" alt="UnionPay" />
+                <img src="/images/payment-brands/maestro.svg" alt="Maestro" />
+              </div>
             </div>
           </div>
         </div>
 
         <div class="footer-bottom">
-          <span>FitAccess helps members stay consistent with fitness, meals, and progress in one secure account.</span>
-          <span>© <%= new Date().getFullYear() %> FitAccess</span>
+          <div class="footer-bottom-inner">
+            <span>FitAccess helps members stay consistent with fitness, meals, and progress in one secure account.</span>
+            <span>© <span id="footer-year"></span> FitAccess</span>
+          </div>
         </div>
       </footer>
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
   </body>
 </html>

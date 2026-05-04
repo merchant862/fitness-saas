@@ -15,7 +15,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 | Database | MySQL, Sequelize |
 | Auth | Password login, secure first-access links, stateless JWT sessions, optional activation codes |
 | Email | Resend |
-| Payments | ResponseCRM Add Order / payment update API |
+| Payments | ResponseCRM Add Order API |
 | Coach Chat | Pattern-based fitness coach widget |
 | Content | Sequelize migrations and seeders |
 | UI | Bootstrap-based dashboard assets |
@@ -24,7 +24,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 
 - Upsell purchase access endpoint.
 - ResponseCRM upsell payment capture before membership delivery.
-- Saved billing reference with card last 4 and charge dates only.
+- Saved billing method record with charge dates.
 - Member card update form on the profile page.
 - Billing lock that redirects members without a saved card to `/billing`.
 - Password login for active members.
@@ -44,7 +44,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 2. Customer accepts the FitAccess upsell during checkout.
 3. Funnel calls `POST /api/integrations/upsell-purchases`.
 4. FitAccess sends the upsell order and card details to ResponseCRM.
-5. After ResponseCRM approval, FitAccess stores only card last 4, charge date, and next charge date.
+5. After ResponseCRM approval, FitAccess stores the payment method record and charge dates.
 6. FitAccess creates or updates the customer account.
 7. FitAccess emails a secure first-access link.
 8. Customer opens `/session/verify?token=...`.
@@ -70,6 +70,8 @@ Minimum local `.env`:
 ```env
 NODE_ENV=development
 PORT=3000
+WEB_CONCURRENCY=
+TRUST_PROXY=loopback
 APP_URL=http://localhost:3000
 CORS_ORIGINS=
 
@@ -101,22 +103,21 @@ API_RATE_LIMIT=120
 UPSELL_WEBHOOK_RATE_LIMIT=5000
 
 ADMIN_API_TOKEN=
-ADMIN_EMAIL=
-UPSELL_WEBHOOK_TOKEN=
 
 RESPONSE_CRM_API_KEY=
 RESPONSE_CRM_API_KEY_HEADER=Authorization
 RESPONSE_CRM_API_KEY_PREFIX=Bearer
 RESPONSE_CRM_ADD_ORDER_URL=
-RESPONSE_CRM_UPDATE_PAYMENT_URL=
 RESPONSE_CRM_TIMEOUT_MS=15000
-RESPONSE_CRM_SITE_ID=
-RESPONSE_CRM_CAMPAIGN_ID=
-RESPONSE_CRM_PRODUCT_ID=
-RESPONSE_CRM_OFFER_ID=
-RESPONSE_CRM_VERIFICATION_PRODUCT_ID=
-RESPONSE_CRM_VERIFICATION_OFFER_ID=
-RESPONSE_CRM_RECURRING_DAYS=30
+RESPONSE_CRM_PROCESSOR_ID=
+RESPONSE_CRM_UPSELL_PRODUCT_ID=
+RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID=
+RESPONSE_CRM_RECURRING_MONTHS=1
+BILLING_WORKER_BATCH_SIZE=50
+BILLING_WORKER_POLL_MS=60000
+BILLING_MAX_RETRY_ATTEMPTS=3
+BILLING_RETRY_DELAYS_DAYS=1,2,3
+BILLING_LOCK_TIMEOUT_MS=600000
 
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=FitAccess <noreply@example.com>
@@ -153,6 +154,12 @@ Start the email worker in a separate process:
 npm run email:worker
 ```
 
+Start the billing worker in a separate process:
+
+```bash
+npm run billing:worker
+```
+
 Open:
 
 ```text
@@ -170,7 +177,8 @@ http://localhost:3000/sign-in
 | `npm run db:seed` | Seed workout and meal content |
 | `npm run db:seed:undo` | Undo all seeders |
 | `npm run email:worker` | Process durable email queue jobs |
-| `npm run admin:promote` | Promote `ADMIN_EMAIL` to admin |
+| `npm run billing:worker` | Process due monthly billing and retries |
+| `npm run admin:promote -- email password` | Create or promote an admin account |
 
 ## Public Routes
 
@@ -239,15 +247,18 @@ Example request from the external funnel:
 ```bash
 curl -X POST http://localhost:3000/api/integrations/upsell-purchases \
   -H "Content-Type: application/json" \
-  -H "X-Webhook-Token: your-shared-token" \
   -d '{
     "email": "customer@example.com",
-    "orderId": "ORDER-1001",
-    "productId": "fitaccess-upsell",
-    "funnelId": "frontsell-main",
-    "amount": "29.00",
-    "currency": "USD",
-    "accessDays": 30,
+    "customerId": 16528318,
+    "billing": {
+      "firstName": "Customer",
+      "lastName": "Name",
+      "address1": "123 Test Street",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zip": "90001",
+      "country": "US"
+    },
     "paymentMethod": {
       "cardNumber": "4111111111111111",
       "expiryMonth": "12",
@@ -258,7 +269,38 @@ curl -X POST http://localhost:3000/api/integrations/upsell-purchases \
   }'
 ```
 
-If `UPSELL_WEBHOOK_TOKEN` is empty, the endpoint accepts requests without the token. Set it in production.
+Browser example:
+
+```js
+await fetch('https://your-fitaccess-domain.com/api/integrations/upsell-purchases', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    email: 'customer@example.com',
+    customerId: 16528318,
+    billing: {
+      firstName: 'Customer',
+      lastName: 'Name',
+      address1: '123 Test Street',
+      city: 'Los Angeles',
+      state: 'CA',
+      zip: '90001',
+      country: 'US'
+    },
+    paymentMethod: {
+      cardNumber: '4111111111111111',
+      expiryMonth: '12',
+      expiryYear: '2030',
+      cvv: '123',
+      cardHolderName: 'Customer Name'
+    }
+  })
+});
+```
+
+The endpoint is intended for checkout/browser testing and is protected by rate limiting plus duplicate email/payment guards.
 
 ### ResponseCRM Payments
 
@@ -269,22 +311,16 @@ Required production values:
 ```env
 RESPONSE_CRM_API_KEY=your-responsecrm-open-api-key
 RESPONSE_CRM_ADD_ORDER_URL=https://...
-RESPONSE_CRM_UPDATE_PAYMENT_URL=https://...
-RESPONSE_CRM_SITE_ID=...
-RESPONSE_CRM_CAMPAIGN_ID=...
-RESPONSE_CRM_PRODUCT_ID=...
-RESPONSE_CRM_VERIFICATION_PRODUCT_ID=...
+RESPONSE_CRM_PROCESSOR_ID=...
+RESPONSE_CRM_UPSELL_PRODUCT_ID=...
+RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID=...
 ```
-
-Security rule: card number and CVV are forwarded to ResponseCRM only. FitAccess stores only:
-
-- `card_last4`
-- `last_charged_at`
-- `next_charged_at`
 
 Do not log webhook request bodies in production.
 
-Card changes use `RESPONSE_CRM_UPDATE_PAYMENT_URL` when provided. If that endpoint is not configured, FitAccess sends a `$0` card-verification Add Order request using `RESPONSE_CRM_VERIFICATION_PRODUCT_ID` when present, otherwise `RESPONSE_CRM_PRODUCT_ID`. The local payment method is replaced only after ResponseCRM returns an approved response.
+Upsell purchases, monthly billing, and card changes use `RESPONSE_CRM_ADD_ORDER_URL`. Upsell purchases and monthly billing use `RESPONSE_CRM_UPSELL_PRODUCT_ID`; normal active-account card changes use `RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID`, which should be a `$0` verification product in ResponseCRM. If a member is locked because the old card failed, adding a new card charges `RESPONSE_CRM_UPSELL_PRODUCT_ID` immediately and restores access only after ResponseCRM approves the charge. The local payment method is replaced only after ResponseCRM returns an approved response.
+
+Monthly billing is handled by `npm run billing:worker`, not by ResponseCRM recurring cycles. The worker claims due `payment_methods` rows in batches, charges them through ResponseCRM, advances `next_charged_at` by one calendar month on success, and retries failed charges with `BILLING_RETRY_DELAYS_DAYS`. After `BILLING_MAX_RETRY_ATTEMPTS`, the payment method status becomes `failed`, which locks member-only features through the existing billing guard.
 
 ## Fitness Content
 
@@ -328,7 +364,7 @@ Safety and cost controls:
 Promote an admin user:
 
 ```bash
-ADMIN_EMAIL=admin@example.com npm run admin:promote
+npm run admin:promote -- admin@example.com 'StrongPassword123!'
 ```
 
 Admin pages also accept `X-Admin-Token` when `ADMIN_API_TOKEN` is configured, useful for controlled integrations and smoke tests.
@@ -338,7 +374,6 @@ Admin pages also accept `X-Admin-Token` when `ADMIN_API_TOKEN` is configured, us
 - Set strong `SECRET` and `JWT_SECRET`.
 - Set `APP_URL` to the real HTTPS app URL.
 - Configure `RESEND_API_KEY` and verified `RESEND_FROM_EMAIL`.
-- Configure `UPSELL_WEBHOOK_TOKEN` before connecting an external funnel.
 - Keep `DB_LOGGING=false` in production.
 - Tune `DB_POOL_MAX` based on server size and MySQL capacity.
 - For multiple Node instances, use Redis-backed rate limiting later. Daily coach quota is already database-backed.

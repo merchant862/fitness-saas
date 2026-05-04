@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <title>FitAccess | Payment Transactions</title>
+  </head>
+  <body>
+    <% const data = adminData; const adminPath = typeof adminBasePath === 'string' ? adminBasePath : '/panel'; const pagination = data.pagination || { total: data.transactions.length, limit: data.filters.limit || 50, offset: data.filters.offset || 0 }; %>
+
+    <%- include('../partials/spinner.ejs') %>
+    <%- include('../partials/admin-sidebar.ejs', { activePage: 'admin-payments' }) %>
+
+    <main class="main-wrapper">
+      <%- include('../partials/header.ejs', {
+        pageTitle: 'Payment Transactions',
+        pageSubtitle: 'Review billing, renewals, and dispute evidence references.',
+        currentUser: data.currentUser
+      }) %>
+
+      <section class="section">
+        <div class="container-fluid">
+          <div class="title-wrapper pt-30">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="title">
+                  <h2>Payment Transactions</h2>
+                  <p class="text-sm text-medium">
+                    <%= pagination.total > data.transactions.length ? `${pagination.offset + 1}-${pagination.offset + data.transactions.length} of ${pagination.total} transactions shown.` : `${data.transactions.length} transactions shown.` %>
+                  </p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="breadcrumb-wrapper">
+                  <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item"><a href="<%= adminPath %>">Admin</a></li>
+                      <li class="breadcrumb-item active" aria-current="page">Payments</li>
+                    </ol>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-style mb-25">
+            <form action="<%= adminPath %>/payments" method="GET">
+              <div class="row align-items-end">
+                <div class="col-lg-4 col-md-6">
+                  <div class="input-style-1 mb-0">
+                    <label>Search Email</label>
+                    <input type="search" name="search" value="<%= data.filters.search %>" placeholder="customer@example.com" autocomplete="off" />
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                  <div class="select-style-1 mb-0">
+                    <label>Type</label>
+                    <div class="select-position">
+                      <select name="type">
+                        <option value="">All</option>
+                        <option value="upsell" <%= data.filters.type === 'upsell' ? 'selected' : '' %>>Initial Membership</option>
+                        <option value="renewal" <%= data.filters.type === 'renewal' ? 'selected' : '' %>>Monthly Renewal</option>
+                        <option value="card_update" <%= data.filters.type === 'card_update' ? 'selected' : '' %>>Card Update Charge</option>
+                        <option value="card_verification" <%= data.filters.type === 'card_verification' ? 'selected' : '' %>>Card Verification</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                  <div class="select-style-1 mb-0">
+                    <label>Status</label>
+                    <div class="select-position">
+                      <select name="status">
+                        <option value="">All</option>
+                        <option value="approved" <%= data.filters.status === 'approved' ? 'selected' : '' %>>Approved</option>
+                        <option value="declined" <%= data.filters.status === 'declined' ? 'selected' : '' %>>Declined</option>
+                        <option value="failed" <%= data.filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                  <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="main-btn primary-btn btn-hover btn-sm">Filter</button>
+                    <a href="<%= adminPath %>/payments" class="main-btn light-btn btn-hover btn-sm">Clear</a>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="card-style mb-30">
+            <div class="table-wrapper table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th><h6>Customer</h6></th>
+                    <th><h6>Type</h6></th>
+                    <th><h6>Status</h6></th>
+                    <th><h6>Card</h6></th>
+                    <th><h6>CRM Order</h6></th>
+                    <th><h6>CRM Transaction</h6></th>
+                    <th><h6>Charged</h6></th>
+                    <th><h6>Next Charge</h6></th>
+                    <th><h6>Failure</h6></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (!data.transactions.length) { %>
+                    <tr>
+                      <td colspan="9"><p class="text-sm mb-0">No payment transactions found.</p></td>
+                    </tr>
+                  <% } %>
+
+                  <% data.transactions.forEach(function(transaction) { %>
+                    <tr>
+                      <td>
+                        <p class="text-sm mb-0"><%= transaction.user?.email || '-' %></p>
+                        <p class="text-xs text-medium mb-0">Customer ID: <%= transaction.customerId || '-' %></p>
+                      </td>
+                      <td><p class="text-sm mb-0"><%= transaction.typeLabel %></p></td>
+                      <td>
+                        <span class="status-btn <%= transaction.status === 'approved' ? 'success-btn' : (transaction.status === 'declined' ? 'warning-btn' : 'close-btn') %>">
+                          <%= transaction.statusLabel %>
+                        </span>
+                      </td>
+                      <td><p class="text-sm mb-0"><%= transaction.cardLast4 ? `**** ${transaction.cardLast4}` : '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= transaction.responseCrmOrderId || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= transaction.responseCrmTransactionId || '-' %></p></td>
+                      <td><p class="text-sm mb-0"><%= transaction.chargedAtLabel %></p></td>
+                      <td><p class="text-sm mb-0"><%= transaction.nextChargedAtLabel %></p></td>
+                      <td><p class="text-sm mb-0"><%= transaction.failureReason || '-' %></p></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-25">
+              <p class="text-sm text-medium mb-0">
+                Page <%= Math.floor(pagination.offset / pagination.limit) + 1 %>
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <% const baseQuery = `search=${encodeURIComponent(data.filters.search)}&type=${encodeURIComponent(data.filters.type)}&status=${encodeURIComponent(data.filters.status)}&limit=${pagination.limit}`; %>
+                <% const prevOffset = Math.max(pagination.offset - pagination.limit, 0); %>
+                <% const nextOffset = pagination.offset + pagination.limit; %>
+                <a href="<%= adminPath %>/payments?<%= baseQuery %>&offset=<%= prevOffset %>" class="main-btn light-btn btn-hover btn-sm <%= pagination.offset <= 0 ? 'disabled' : '' %>">Previous</a>
+                <a href="<%= adminPath %>/payments?<%= baseQuery %>&offset=<%= nextOffset %>" class="main-btn primary-btn btn-hover btn-sm <%= pagination.offset + data.transactions.length >= pagination.total ? 'disabled' : '' %>">Next</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('../partials/scripts.ejs') %>
+  </body>
+</html>

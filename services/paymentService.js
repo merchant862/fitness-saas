@@ -1,6 +1,6 @@
 'use strict';
 
-const { PaymentMethod, sequelize } = require('../database/models');
+const { PaymentMethod, UserProfile, sequelize } = require('../database/models');
 const { postResponseCrm } = require('../apis/responseCrmApi');
 const { normalizeCheckoutCustomer } = require('../utils/checkoutCustomerUtils');
 const { normalizeEmail } = require('../utils/securityUtils');
@@ -20,12 +20,19 @@ async function chargeUpsellOrder(payload)
     const error = new Error('Upsell payment was declined');
     error.status = 402;
     error.crmResult = crmResult.publicResult;
+    error.idempotencyKey = crmPayload._idempotencyKey;
+    error.cardLast4 = cardLast4(payment.cardNumber);
     throw error;
   }
 
   return {
     crmResult,
+    idempotencyKey: crmPayload._idempotencyKey,
+    cardNo: payment.cardNumber,
     cardLast4: cardLast4(payment.cardNumber),
+    expiryMonth: payment.expiryMonth,
+    expiryYear: payment.expiryYear,
+    cvv: payment.cvv,
     chargedAt,
     nextChargedAt: calculateNextChargedAt(
       payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at,
@@ -39,39 +46,88 @@ async function updateCustomerPaymentMethod(user, payload)
   const payment = extractPayment(payload);
   validatePayment(payment);
   const activePaymentMethod = await findActivePaymentMethod(user.id);
+  const latestPaymentMethod = activePaymentMethod || await findLatestPaymentMethod(user.id);
+  const storedCustomer = await findStoredCustomer(user.id);
+  const shouldChargeNow = !activePaymentMethod;
 
-  const usesVerificationOrder = !process.env.RESPONSE_CRM_UPDATE_PAYMENT_URL;
-  const crmPayload = usesVerificationOrder ?
-    buildResponseCrmCardVerificationPayload(user, payload, payment) :
-    buildResponseCrmPaymentUpdatePayload(user, payload, payment);
-  const url = process.env.RESPONSE_CRM_UPDATE_PAYMENT_URL || process.env.RESPONSE_CRM_ADD_ORDER_URL;
-  const response = await postResponseCrm(url, crmPayload);
+  const crmPayload = shouldChargeNow ?
+    buildResponseCrmCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer) :
+    buildResponseCrmCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer);
+  const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
   const crmResult = normalizeCrmResult(response.body);
 
   if (!crmResult.approved)
   {
-    const error = new Error('Card verification was declined');
+    const error = new Error(shouldChargeNow ? 'Payment was declined' : 'Card verification was declined');
     error.status = 402;
     error.crmResult = crmResult.publicResult;
+    error.idempotencyKey = crmPayload._idempotencyKey;
+    error.cardLast4 = cardLast4(payment.cardNumber);
+    error.transactionType = shouldChargeNow ? 'card_update' : 'card_verification';
+    throw error;
+  }
+
+  const chargedAt = shouldChargeNow ? new Date() : null;
+
+  return {
+    crmResult,
+    idempotencyKey: crmPayload._idempotencyKey,
+    chargedNow: shouldChargeNow,
+    paymentMethod: await savePaymentMethod(user.id, {
+      customerId: crmCustomerId(user, crmResult, payload),
+      cardNo: payment.cardNumber,
+      cardLast4: cardLast4(payment.cardNumber),
+      expiryMonth: payment.expiryMonth,
+      expiryYear: payment.expiryYear,
+      cvv: payment.cvv,
+      lastChargedAt: chargedAt,
+      nextChargedAt: shouldChargeNow ?
+        calculateNextChargedAt(null, chargedAt) :
+        calculateNextChargedAt(
+          payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at || activePaymentMethod.nextChargedAt
+        )
+    })
+  };
+}
+
+async function chargeStoredPaymentMethod(paymentMethod, user, options = {})
+{
+  const payment = {
+    cardNumber: paymentMethod.cardNo,
+    expiryMonth: paymentMethod.expiryMonth,
+    expiryYear: paymentMethod.expiryYear,
+    cvv: paymentMethod.cvv,
+    cardHolderName: options.cardHolderName || user.name || user.email
+  };
+  validatePayment(payment);
+
+  const chargedAt = new Date();
+  const storedCustomer = await findStoredCustomer(user.id);
+  const crmPayload = buildResponseCrmStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options);
+  const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
+  const crmResult = normalizeCrmResult(response.body);
+
+  if (!crmResult.approved)
+  {
+    const error = new Error('Recurring payment was declined');
+    error.status = 402;
+    error.crmResult = crmResult.publicResult;
+    error.idempotencyKey = crmPayload._idempotencyKey;
+    error.cardLast4 = paymentMethod.cardLast4;
     throw error;
   }
 
   return {
     crmResult,
-    paymentMethod: await savePaymentMethod(user.id, {
-      customerId: crmCustomerId(user, crmResult, payload),
-      cardLast4: cardLast4(payment.cardNumber),
-      lastChargedAt: null,
-      nextChargedAt: calculateNextChargedAt(
-        payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at || activePaymentMethod?.nextChargedAt
-      )
-    })
+    idempotencyKey: crmPayload._idempotencyKey,
+    chargedAt,
+    nextChargedAt: calculateNextChargedAt(options.nextChargedAt, chargedAt)
   };
 }
 
 async function savePaymentMethod(userId, data, options = {})
 {
-  return sequelize.transaction(async (transaction) =>
+  const persist = async (transaction) =>
   {
     await PaymentMethod.update(
       { status: 'replaced' },
@@ -87,12 +143,22 @@ async function savePaymentMethod(userId, data, options = {})
     return PaymentMethod.create({
       userId,
       customerId: data.customerId || null,
-      cardLast4: data.cardLast4,
+      cardNo: data.cardNo,
+      expiryMonth: data.expiryMonth,
+      expiryYear: data.expiryYear,
+      cvv: data.cvv,
       lastChargedAt: data.lastChargedAt || null,
       nextChargedAt: data.nextChargedAt || null,
       status: data.status || 'active'
-    }, { transaction: options.transaction || transaction });
-  });
+    }, { transaction });
+  };
+
+  if (options.transaction)
+  {
+    return persist(options.transaction);
+  }
+
+  return sequelize.transaction(persist);
 }
 
 async function findActivePaymentMethod(userId)
@@ -106,149 +172,185 @@ async function findActivePaymentMethod(userId)
   });
 }
 
+async function findLatestPaymentMethod(userId)
+{
+  return PaymentMethod.findOne({
+    where: {
+      userId
+    },
+    order: [['createdAt', 'DESC']]
+  });
+}
+
 function buildResponseCrmOrderPayload(payload, payment)
 {
   const customer = normalizeCheckoutCustomer(payload);
 
   return stripEmpty({
-    ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
-    site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
-    campaign_id: payload.campaignId || payload.campaign_id || process.env.RESPONSE_CRM_CAMPAIGN_ID,
-    product_id: payload.productId || payload.product_id || process.env.RESPONSE_CRM_PRODUCT_ID,
-    offer_id: payload.offerId || payload.offer_id || process.env.RESPONSE_CRM_OFFER_ID,
-    email: normalizeEmail(payload.email),
-    first_name: customer.firstName,
-    last_name: customer.lastName,
-    phone: customer.phone,
-    address1: customer.address1,
-    address2: customer.address2,
-    city: customer.city,
-    state: customer.state,
-    zip: customer.zip,
-    country: customer.country,
-    amount: payload.amount || null,
-    currency: payload.currency || 'USD',
-    order_id: payload.orderId || payload.order_id || null,
-    parent_order_id: payload.parentOrderId || payload.parent_order_id || payload.frontsellOrderId || payload.frontsell_order_id || null,
-    idempotency_id: idempotencyId('upsell', payload.orderId || payload.order_id, payload.email),
-    is_upsell: true,
-    upsell: true,
-    billing: {
-      ...customer.billing,
-      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
-    },
-    shipping: {
-      ...customer.shipping,
-      ...safeObject(payload.shipping || payload.shippingAddress || payload.shipping_address)
-    },
-    customer: {
-      first_name: customer.firstName,
-      last_name: customer.lastName,
-      phone: customer.phone,
-      address1: customer.address1,
-      address2: customer.address2,
-      city: customer.city,
-      state: customer.state,
-      zip: customer.zip,
-      country: customer.country
-    },
-    payment: responseCrmPayment(payment),
-    metadata: sanitizeMetadata({
-      source: 'fitaccess_upsell',
-      funnelId: payload.funnelId || payload.funnel_id || null,
-      frontendOrderId: payload.orderId || payload.order_id || null
-    })
+    CustomerID: responseCrmCustomerId(payload),
+    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    BillingAddress: responseCrmBillingAddress(customer),
+    PaymentInformation: responseCrmPayment(payment),
+    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
+    _idempotencyKey: idempotencyId('upsell', responseCrmCustomerId(payload), payload.email)
   });
 }
 
-function buildResponseCrmPaymentUpdatePayload(user, payload, payment)
+function buildResponseCrmCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer)
 {
-  const customer = normalizeCheckoutCustomer(payload);
+  const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
+  const cycleKey = billingCycleKey(latestPaymentMethod?.nextChargedAt || new Date());
 
   return stripEmpty({
-    ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
-    site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
-    campaign_id: payload.campaignId || payload.campaign_id || process.env.RESPONSE_CRM_CAMPAIGN_ID,
-    product_id: payload.productId || payload.product_id || process.env.RESPONSE_CRM_PRODUCT_ID,
-    email: user.email,
-    first_name: customer.firstName || user.name || null,
-    last_name: customer.lastName || null,
-    phone: customer.phone,
-    customer_id: payload.customerId || payload.customer_id || user.metadata?.responseCrmCustomerId || null,
-    order_id: payload.orderId || payload.order_id || user.metadata?.responseCrmOrderId || null,
-    idempotency_id: idempotencyId('payment-update', payload.orderId || payload.order_id || user.metadata?.responseCrmOrderId, user.email),
-    update_payment_method: true,
-    amount: payload.amount || 0,
-    currency: payload.currency || 'USD',
-    billing: {
-      ...customer.billing,
-      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
-    },
-    payment: responseCrmPayment(payment),
-    metadata: sanitizeMetadata({
-      source: 'fitaccess_payment_update',
-      userId: user.id
-    })
+    CustomerID: responseCrmCustomerId(payload, user, latestPaymentMethod),
+    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    BillingAddress: responseCrmBillingAddress(customer, user),
+    PaymentInformation: responseCrmPayment(payment),
+    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
+    _idempotencyKey: idempotencyId('card-renewal', `${user.id}:${cycleKey}`, user.email)
   });
 }
 
-function buildResponseCrmCardVerificationPayload(user, payload, payment)
+function buildResponseCrmCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer)
 {
-  const customer = normalizeCheckoutCustomer(payload);
+  const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
 
   return stripEmpty({
-    ...safeObject(payload.crm || payload.responseCrm || payload.response_crm),
-    site_id: payload.siteId || payload.site_id || process.env.RESPONSE_CRM_SITE_ID,
-    campaign_id: payload.campaignId || payload.campaign_id || process.env.RESPONSE_CRM_CAMPAIGN_ID,
-    product_id: payload.verificationProductId || payload.verification_product_id || process.env.RESPONSE_CRM_VERIFICATION_PRODUCT_ID || process.env.RESPONSE_CRM_PRODUCT_ID,
-    offer_id: payload.verificationOfferId || payload.verification_offer_id || process.env.RESPONSE_CRM_VERIFICATION_OFFER_ID || process.env.RESPONSE_CRM_OFFER_ID,
-    email: user.email,
-    first_name: customer.firstName || user.name || null,
-    last_name: customer.lastName || null,
-    phone: customer.phone,
-    amount: 0,
-    currency: payload.currency || 'USD',
-    order_id: payload.orderId || payload.order_id || null,
-    customer_id: payload.customerId || payload.customer_id || user.metadata?.responseCrmCustomerId || null,
-    parent_order_id: payload.parentOrderId || payload.parent_order_id || user.metadata?.responseCrmOrderId || null,
-    idempotency_id: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber)),
-    verify_card: true,
-    card_verification: true,
-    payment_update: true,
-    billing: {
-      ...customer.billing,
-      ...safeObject(payload.billing || payload.billingAddress || payload.billing_address)
-    },
-    payment: responseCrmPayment(payment),
-    metadata: sanitizeMetadata({
-      source: 'fitaccess_card_verification',
-      userId: user.id,
-      purpose: 'payment_method_update'
-    })
+    CustomerID: responseCrmCustomerId(payload, user, activePaymentMethod),
+    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    BillingAddress: responseCrmBillingAddress(customer, user),
+    PaymentInformation: responseCrmPayment(payment),
+    Products: responseCrmProducts(payload.verificationProductId || payload.verification_product_id || process.env.RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID),
+    _idempotencyKey: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber))
+  });
+}
+
+function buildResponseCrmStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options = {})
+{
+  return stripEmpty({
+    CustomerID: responseCrmCustomerId({}, user, paymentMethod),
+    IpAddress: options.ipAddress || null,
+    BillingAddress: responseCrmBillingAddress(storedCustomer, user),
+    PaymentInformation: responseCrmPayment(payment),
+    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
+    _idempotencyKey: idempotencyId(
+      'monthly-billing',
+      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
+      user.email
+    )
   });
 }
 
 function responseCrmPayment(payment)
 {
   return stripEmpty({
-    card_number: payment.cardNumber,
-    card_exp_month: payment.expiryMonth,
-    card_exp_year: payment.expiryYear,
-    cvv: payment.cvv,
-    cardholder_name: payment.cardHolderName
+    ExpMonth: payment.expiryMonth,
+    ExpYear: payment.expiryYear,
+    CCNumber: payment.cardNumber,
+    NameOnCard: payment.cardHolderName,
+    CVV: payment.cvv,
+    ProcessorID: process.env.RESPONSE_CRM_PROCESSOR_ID
   });
+}
+
+function responseCrmBillingAddress(customer, user = null)
+{
+  const nameParts = splitName(user?.name);
+
+  return stripEmpty({
+    FirstName: customer.firstName || nameParts.firstName,
+    LastName: customer.lastName || nameParts.lastName,
+    Address1: customer.address1,
+    Address2: customer.address2,
+    City: customer.city,
+    CountryISO: customer.country,
+    State: customer.state,
+    ZipCode: customer.zip
+  });
+}
+
+function responseCrmProducts(productId)
+{
+  if (!productId)
+  {
+    throwValidationError('ResponseCRM product id is not configured.');
+  }
+
+  return [{
+    ProductID: normalizeNumberValue(productId),
+    Quantity: 1
+  }];
+}
+
+function responseCrmCustomerId(payload, user = null, activePaymentMethod = null)
+{
+  const customerId =
+    payload.customerId ||
+    payload.customer_id ||
+    payload.CustomerID ||
+    activePaymentMethod?.customerId ||
+    user?.metadata?.responseCrmCustomerId ||
+    null;
+
+  return normalizeNumberValue(customerId);
+}
+
+async function findStoredCustomer(userId)
+{
+  const profile = await UserProfile.findOne({
+    where: { userId }
+  });
+
+  const preferences = safeObject(profile?.preferences);
+
+  return {
+    firstName: preferences.firstName || null,
+    lastName: preferences.lastName || null,
+    fullName: [preferences.firstName, preferences.lastName].filter(Boolean).join(' ') || null,
+    phone: preferences.phone || null,
+    address1: preferences.address1 || null,
+    address2: preferences.address2 || null,
+    city: preferences.city || null,
+    state: preferences.state || null,
+    zip: preferences.zip || null,
+    country: preferences.country || null,
+    billing: {},
+    shipping: {}
+  };
+}
+
+function mergeCustomer(primary, secondary)
+{
+  return Object.keys({
+    ...primary,
+    ...secondary
+  }).reduce((merged, key) =>
+  {
+    merged[key] = secondary[key] || primary[key] || null;
+    return merged;
+  }, {});
+}
+
+function splitName(value)
+{
+  const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
+
+  return {
+    firstName: parts[0] || null,
+    lastName: parts.slice(1).join(' ') || null
+  };
 }
 
 function extractPayment(payload)
 {
-  const source = payload.paymentMethod || payload.payment_method || payload.card || payload;
+  const source = payload.paymentMethod || payload.payment_method || payload.PaymentInformation || payload.card || payload;
 
   return {
-    cardNumber: digits(source.cardNumber || source.card_number || source.ccNumber || source.cc_number),
-    expiryMonth: twoDigits(source.expiryMonth || source.expiry_month || source.cardExpMonth || source.card_exp_month),
-    expiryYear: fourDigitYear(source.expiryYear || source.expiry_year || source.cardExpYear || source.card_exp_year),
-    cvv: digits(source.cvv || source.cvc || source.cardCvv || source.card_cvv).slice(0, 4),
-    cardHolderName: String(source.cardHolderName || source.card_holder_name || source.nameOnCard || source.name_on_card || '').trim().slice(0, 120)
+    cardNumber: digits(source.cardNumber || source.card_number || source.ccNumber || source.cc_number || source.CCNumber),
+    expiryMonth: twoDigits(source.expiryMonth || source.expiry_month || source.cardExpMonth || source.card_exp_month || source.ExpMonth),
+    expiryYear: fourDigitYear(source.expiryYear || source.expiry_year || source.cardExpYear || source.card_exp_year || source.ExpYear),
+    cvv: digits(source.cvv || source.cvc || source.cardCvv || source.card_cvv || source.CVV).slice(0, 4),
+    cardHolderName: String(source.cardHolderName || source.card_holder_name || source.nameOnCard || source.name_on_card || source.NameOnCard || '').trim().slice(0, 120)
   };
 }
 
@@ -568,7 +670,7 @@ function stripEmpty(value)
 {
   return Object.keys(value).reduce((clean, key) =>
   {
-    if (value[key] !== undefined && value[key] !== null && value[key] !== '')
+    if (value[key] !== undefined && value[key] !== null && value[key] !== '' && (!Array.isArray(value[key]) || value[key].length))
     {
       clean[key] = value[key];
     }
@@ -580,6 +682,20 @@ function stripEmpty(value)
 function digits(value)
 {
   return String(value || '').replace(/\D/g, '');
+}
+
+function normalizeNumberValue(value)
+{
+  const clean = digits(value);
+
+  if (!clean)
+  {
+    return null;
+  }
+
+  const number = Number(clean);
+
+  return Number.isSafeInteger(number) ? number : clean;
 }
 
 function twoDigits(value)
@@ -607,7 +723,20 @@ function idempotencyId(prefix, orderId, email)
     .slice(0, 191);
 }
 
+function billingCycleKey(value)
+{
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime()))
+  {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
 module.exports = {
+  chargeStoredPaymentMethod,
   chargeUpsellOrder,
   findActivePaymentMethod,
   sanitizeMetadata,

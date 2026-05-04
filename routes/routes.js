@@ -24,6 +24,7 @@ const adminLoginViewController = require('../controllers/views/adminLoginViewCon
 const adminUsersViewController = require('../controllers/views/adminUsersViewController');
 const adminUserActionsController = require('../controllers/views/adminUserActionsController');
 const adminActivityLogViewController = require('../controllers/views/adminActivityLogViewController');
+const adminPaymentTransactionsViewController = require('../controllers/views/adminPaymentTransactionsViewController');
 const adminUsersExportController = require('../controllers/views/adminUsersExportController');
 const adminContentViewController = require('../controllers/views/adminContentViewController');
 const adminContentActionsController = require('../controllers/views/adminContentActionsController');
@@ -73,8 +74,8 @@ router.post('/profile', requireOnboarding, userController.updateProfile);
 router.get('/activity-log', requireOnboarding, requireProfileComplete, requirePasswordSetup, requireBilling, activityLogViewController);
 router.get('/billing', requireOnboarding, requireProfileComplete, requirePasswordSetup, billingViewController);
 router.post('/billing/payment-method', requireOnboarding, requireProfileComplete, authLimiter, billingController.updatePaymentMethod);
-router.get('/change-password', requireOnboarding, requireProfileComplete, requirePasswordSetup, changePasswordViewController);
-router.post('/change-password', requireOnboarding, requireProfileComplete, requirePasswordSetup, authLimiter, passwordController.update);
+router.get('/change-password', requireOnboarding, requireProfileComplete, changePasswordViewController);
+router.post('/change-password', requireOnboarding, requireProfileComplete, authLimiter, passwordController.update);
 
 // Member API routes
 router.post('/api/sessions/email-link', authLimiter, authController.magicLinkRequest);
@@ -110,6 +111,7 @@ router.get(adminRoute('/users'), requireAdmin, adminUsersViewController);
 router.post(adminRoute('/users/:id/status'), requireAdmin, adminUserActionsController.updateStatus);
 router.get(adminRoute('/users/export.csv'), requireAdmin, adminUsersExportController);
 router.get(adminRoute('/activity-log'), requireAdmin, adminActivityLogViewController);
+router.get(adminRoute('/payments'), requireAdmin, adminPaymentTransactionsViewController);
 router.get(adminRoute('/content'), requireAdmin, adminContentViewController);
 router.get(adminRoute('/content/workout-plans/:id'), requireAdmin, adminContentActionsController.editWorkout);
 router.post(adminRoute('/content/workout-plans/:id'), requireAdmin, adminContentActionsController.updateWorkout);

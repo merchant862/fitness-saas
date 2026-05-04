@@ -5,6 +5,7 @@ const DEFAULT_TIMEOUT_MS = 15000;
 async function postResponseCrm(url, payload)
 {
   const apiKey = process.env.RESPONSE_CRM_API_KEY;
+  const { _idempotencyKey, ...requestPayload } = payload;
 
   if (!url || !apiKey)
   {
@@ -23,8 +24,8 @@ async function postResponseCrm(url, payload)
   {
     const response = await fetch(url, {
       method: 'POST',
-      headers: responseCrmHeaders(apiKey, payload),
-      body: JSON.stringify(payload),
+      headers: responseCrmHeaders(apiKey, requestPayload, _idempotencyKey),
+      body: JSON.stringify(requestPayload),
       signal: controller.signal
     });
 
@@ -61,12 +62,12 @@ async function postResponseCrm(url, payload)
   }
 }
 
-function responseCrmHeaders(apiKey, payload)
+function responseCrmHeaders(apiKey, payload, idempotencyKeyOverride = null)
 {
   const headerName = process.env.RESPONSE_CRM_API_KEY_HEADER || 'Authorization';
   const prefix = process.env.RESPONSE_CRM_API_KEY_PREFIX || 'Bearer';
   const authorizationValue = prefix ? `${prefix} ${apiKey}` : apiKey;
-  const idempotencyKey = payload.idempotency_id || payload.idempotencyId || payload.metadata?.idempotencyId;
+  const idempotencyKey = idempotencyKeyOverride || payload.idempotency_id || payload.idempotencyId || payload.metadata?.idempotencyId;
 
   const headers = {
     'Content-Type': 'application/json',

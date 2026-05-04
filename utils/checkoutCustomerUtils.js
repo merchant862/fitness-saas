@@ -4,8 +4,8 @@ function normalizeCheckoutCustomer(payload = {})
 {
   const customer = asObject(payload.customer || payload.customerInfo || payload.customer_info);
   const billing = mergeAddress(
-    customer.billing || customer.billingAddress || customer.billing_address,
-    payload.billing || payload.billingAddress || payload.billing_address,
+    customer.billing || customer.billingAddress || customer.billing_address || customer.BillingAddress,
+    payload.billing || payload.billingAddress || payload.billing_address || payload.BillingAddress,
     payload,
     customer
   );
@@ -19,24 +19,32 @@ function normalizeCheckoutCustomer(payload = {})
   const firstName = pickText([
     payload.firstName,
     payload.first_name,
+    payload.FirstName,
     customer.firstName,
     customer.first_name,
+    customer.FirstName,
     billing.firstName,
-    billing.first_name
+    billing.first_name,
+    billing.FirstName
   ]);
 
   const lastName = pickText([
     payload.lastName,
     payload.last_name,
+    payload.LastName,
     customer.lastName,
     customer.last_name,
+    customer.LastName,
     billing.lastName,
-    billing.last_name
+    billing.last_name,
+    billing.LastName
   ]);
 
   const phone = pickText([
     payload.phone,
+    payload.Phone,
     customer.phone,
+    customer.Phone,
     billing.phone,
     shipping.phone
   ]);
@@ -46,14 +54,17 @@ function normalizeCheckoutCustomer(payload = {})
     payload.address_1,
     payload.addressLine1,
     payload.address_line1,
+    payload.Address1,
     customer.address1,
     customer.address_1,
     customer.addressLine1,
     customer.address_line1,
+    customer.Address1,
     billing.address1,
     billing.address_1,
     billing.addressLine1,
     billing.address_line1,
+    billing.Address1,
     billing.address,
     shipping.address1,
     shipping.address_1,
@@ -67,10 +78,12 @@ function normalizeCheckoutCustomer(payload = {})
     payload.address_2,
     payload.addressLine2,
     payload.address_line2,
+    payload.Address2,
     customer.address2,
     customer.address_2,
     customer.addressLine2,
     customer.address_line2,
+    customer.Address2,
     billing.address2,
     billing.address_2,
     billing.addressLine2,
@@ -83,18 +96,24 @@ function normalizeCheckoutCustomer(payload = {})
 
   const city = pickText([
     payload.city,
+    payload.City,
     customer.city,
+    customer.City,
     billing.city,
+    billing.City,
     shipping.city
   ]);
 
   const state = pickText([
     payload.state,
     payload.province,
+    payload.State,
     customer.state,
     customer.province,
+    customer.State,
     billing.state,
     billing.province,
+    billing.State,
     shipping.state,
     shipping.province
   ]);
@@ -103,12 +122,15 @@ function normalizeCheckoutCustomer(payload = {})
     payload.zip,
     payload.postalCode,
     payload.postal_code,
+    payload.ZipCode,
     customer.zip,
     customer.postalCode,
     customer.postal_code,
+    customer.ZipCode,
     billing.zip,
     billing.postalCode,
     billing.postal_code,
+    billing.ZipCode,
     shipping.zip,
     shipping.postalCode,
     shipping.postal_code
@@ -116,8 +138,11 @@ function normalizeCheckoutCustomer(payload = {})
 
   const country = pickText([
     payload.country,
+    payload.CountryISO,
     customer.country,
+    customer.CountryISO,
     billing.country,
+    billing.CountryISO,
     shipping.country
   ]);
 
@@ -149,16 +174,16 @@ function normalizeCheckoutCustomer(payload = {})
 
 function normalizeAddressObject(source = {})
 {
-  const address1 = pickText([source.address1, source.address_1, source.addressLine1, source.address_line1, source.address]);
+  const address1 = pickText([source.address1, source.address_1, source.addressLine1, source.address_line1, source.Address1, source.address]);
   const address2 = pickText([source.address2, source.address_2, source.addressLine2, source.address_line2]);
-  const city = pickText([source.city]);
-  const state = pickText([source.state, source.province]);
-  const zip = pickText([source.zip, source.postalCode, source.postal_code]);
-  const country = pickText([source.country]);
+  const city = pickText([source.city, source.City]);
+  const state = pickText([source.state, source.province, source.State]);
+  const zip = pickText([source.zip, source.postalCode, source.postal_code, source.ZipCode]);
+  const country = pickText([source.country, source.CountryISO]);
 
   return stripEmpty({
-    first_name: pickText([source.firstName, source.first_name]),
-    last_name: pickText([source.lastName, source.last_name]),
+    first_name: pickText([source.firstName, source.first_name, source.FirstName]),
+    last_name: pickText([source.lastName, source.last_name, source.LastName]),
     name: pickText([source.name]),
     phone: pickText([source.phone]),
     address1,
@@ -181,15 +206,15 @@ function mergeAddress(primary, secondary, payload, customer = {})
   return {
     ...source,
     address: pickText([source.address, source.address1, source.address_1, payload.address, payload.address1, payload.address_1]),
-    address1: pickText([source.address1, source.address_1, source.addressLine1, source.address_line1, payload.address1, payload.address_1, payload.addressLine1, payload.address_line1]),
-    address2: pickText([source.address2, source.address_2, source.addressLine2, source.address_line2, payload.address2, payload.address_2, payload.addressLine2, payload.address_line2]),
-    city: pickText([source.city, payload.city]),
-    state: pickText([source.state, source.province, payload.state, payload.province]),
-    zip: pickText([source.zip, source.postalCode, source.postal_code, payload.zip, payload.postalCode, payload.postal_code]),
-    country: pickText([source.country, payload.country]),
-    phone: pickText([source.phone, payload.phone]),
-    firstName: pickText([source.firstName, source.first_name, payload.firstName, payload.first_name]),
-    lastName: pickText([source.lastName, source.last_name, payload.lastName, payload.last_name])
+    address1: pickText([source.address1, source.address_1, source.addressLine1, source.address_line1, source.Address1, payload.address1, payload.address_1, payload.addressLine1, payload.address_line1, payload.Address1]),
+    address2: pickText([source.address2, source.address_2, source.addressLine2, source.address_line2, source.Address2, payload.address2, payload.address_2, payload.addressLine2, payload.address_line2, payload.Address2]),
+    city: pickText([source.city, source.City, payload.city, payload.City]),
+    state: pickText([source.state, source.province, source.State, payload.state, payload.province, payload.State]),
+    zip: pickText([source.zip, source.postalCode, source.postal_code, source.ZipCode, payload.zip, payload.postalCode, payload.postal_code, payload.ZipCode]),
+    country: pickText([source.country, source.CountryISO, payload.country, payload.CountryISO]),
+    phone: pickText([source.phone, source.Phone, payload.phone, payload.Phone]),
+    firstName: pickText([source.firstName, source.first_name, source.FirstName, payload.firstName, payload.first_name, payload.FirstName]),
+    lastName: pickText([source.lastName, source.last_name, source.LastName, payload.lastName, payload.last_name, payload.LastName])
   };
 }
 

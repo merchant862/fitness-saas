@@ -1,0 +1,46 @@
+services:
+  fitaccess-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitaccess-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:7000:${PORT:-3000}"
+
+  fitaccess-email-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitaccess-email-worker
+    restart: unless-stopped
+    command: ["npm", "run", "email:worker"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  fitaccess-billing-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitaccess-billing-worker
+    restart: unless-stopped
+    command: ["npm", "run", "billing:worker"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -10,6 +10,7 @@
     "db:seed": "npx sequelize-cli db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
     "email:worker": "node scripts/emailWorker.js",
+    "billing:worker": "node scripts/billingWorker.js",
     "seed:webhook-users": "node scripts/seedWebhookUsers.js",
     "admin:promote": "node scripts/promoteAdmin.js"
   },

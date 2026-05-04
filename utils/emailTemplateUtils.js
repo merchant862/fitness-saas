@@ -67,6 +67,48 @@ function passwordResetEmail({ email, token })
   });
 }
 
+function billingSuccessEmail({ email, nextChargedAt })
+{
+  return brandedEmail({
+    to: email,
+    subject: 'Your FitAccess membership payment was received',
+    eyebrow: 'Payment received',
+    title: 'Your membership is active',
+    intro: `Your FitAccess payment was processed successfully. Your next billing date is ${formatDate(nextChargedAt)}.`,
+    buttonText: 'Open Dashboard',
+    buttonUrl: appUrl('/dashboard'),
+    footerText: 'You can keep using your workouts, meals, progress tracking, and AI Coach without interruption.'
+  });
+}
+
+function billingRetryFailedEmail({ email, retryAttempt, nextRetryAt })
+{
+  return brandedEmail({
+    to: email,
+    subject: 'FitAccess payment retry scheduled',
+    eyebrow: 'Payment retry',
+    title: 'We could not process your payment',
+    intro: `Your FitAccess payment did not go through. We will retry automatically on ${formatDate(nextRetryAt)}. This is retry ${retryAttempt} of ${Number(process.env.BILLING_MAX_RETRY_ATTEMPTS || 3)}.`,
+    buttonText: 'Update Card',
+    buttonUrl: appUrl('/billing'),
+    footerText: 'Please update your card if your current payment method is expired, blocked, or no longer available.'
+  });
+}
+
+function billingLockedEmail({ email })
+{
+  return brandedEmail({
+    to: email,
+    subject: 'Your FitAccess account is locked',
+    eyebrow: 'Account locked',
+    title: 'Your membership needs a new card',
+    intro: 'We could not process your FitAccess payment after the final retry, so your account has been locked until a valid card is added.',
+    buttonText: 'Add New Card',
+    buttonUrl: appUrl('/billing'),
+    footerText: 'Add a new card from your account to restore access to your workouts, meals, progress tracking, and AI Coach.'
+  });
+}
+
 function brandedEmail({ to, subject, eyebrow, title, intro, buttonText, buttonUrl, code = null, footerText })
 {
   const text = [
@@ -263,8 +305,25 @@ function escapeAttribute(value)
   return escapeHtml(value).replace(/`/g, '&#096;');
 }
 
+function formatDate(value)
+{
+  if (!value)
+  {
+    return 'your next billing date';
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(value));
+}
+
 module.exports = {
   accessCodeEmail,
   magicLinkEmail,
-  passwordResetEmail
+  passwordResetEmail,
+  billingSuccessEmail,
+  billingRetryFailedEmail,
+  billingLockedEmail
 };

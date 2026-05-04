@@ -3,6 +3,9 @@
   const form = document.getElementById('admin-users-filter');
   const tableBody = document.getElementById('admin-users-table-body');
   const countLabel = document.getElementById('admin-users-count');
+  const pageLabel = document.getElementById('admin-users-page-label');
+  const prevButton = document.getElementById('admin-users-prev');
+  const nextButton = document.getElementById('admin-users-next');
   const exportLink = document.getElementById('admin-users-export');
 
   if (!form || !tableBody)
@@ -16,6 +19,7 @@
   const apiBase = form.dataset.adminUsersApi || '/api/panel/users';
   const adminPath = tableBody.dataset.adminPath || '/panel';
   const limit = Number(form.dataset.adminUsersLimit || 25);
+  let currentOffset = Math.max(Number(form.dataset.adminUsersOffset || 0), 0);
   let debounceTimer = null;
   let activeController = null;
 
@@ -30,17 +34,36 @@
     field.addEventListener(eventName, function ()
     {
       window.clearTimeout(debounceTimer);
-      debounceTimer = window.setTimeout(loadUsers, field === searchInput ? 300 : 0);
+      debounceTimer = window.setTimeout(function ()
+      {
+        loadUsers(0);
+      }, field === searchInput ? 300 : 0);
     });
   });
 
   form.addEventListener('submit', function (event)
   {
     event.preventDefault();
-    loadUsers();
+    loadUsers(0);
   });
 
-  async function loadUsers()
+  if (prevButton)
+  {
+    prevButton.addEventListener('click', function ()
+    {
+      loadUsers(Math.max(currentOffset - limit, 0));
+    });
+  }
+
+  if (nextButton)
+  {
+    nextButton.addEventListener('click', function ()
+    {
+      loadUsers(currentOffset + limit);
+    });
+  }
+
+  async function loadUsers(offset)
   {
     if (activeController)
     {
@@ -54,7 +77,7 @@
     {
       const params = new URLSearchParams(new FormData(form));
       params.set('limit', String(limit));
-      params.set('offset', '0');
+      params.set('offset', String(Math.max(Number(offset || 0), 0)));
 
       const response = await fetch(`${apiBase}?${params.toString()}`, {
         headers: {
@@ -71,8 +94,10 @@
         throw new Error(payload.error || 'Users could not be loaded.');
       }
 
+      currentOffset = Number(payload.offset || 0);
       renderUsers(payload.users || []);
-      updateCount(payload.total || 0, payload.users?.length || 0);
+      updateCount(payload.total || 0, payload.users?.length || 0, currentOffset);
+      updatePagination(payload.total || 0, payload.users?.length || 0, currentOffset);
       updateUrl(params);
     }
     catch (error)
@@ -197,24 +222,48 @@
     tableBody.appendChild(row);
   }
 
-  function updateCount(total, shown)
+  function updateCount(total, shown, offset)
   {
     if (!countLabel)
     {
       return;
     }
 
-    countLabel.textContent = total > shown ? `${shown} of ${total} users shown.` : `${shown} users shown.`;
+    if (!shown)
+    {
+      countLabel.textContent = '0 users shown.';
+      return;
+    }
+
+    countLabel.textContent = total > shown ? `${offset + 1}-${offset + shown} of ${total} users shown.` : `${shown} users shown.`;
+  }
+
+  function updatePagination(total, shown, offset)
+  {
+    if (pageLabel)
+    {
+      pageLabel.textContent = `Page ${Math.floor(offset / limit) + 1}`;
+    }
+
+    if (prevButton)
+    {
+      prevButton.disabled = offset <= 0;
+    }
+
+    if (nextButton)
+    {
+      nextButton.disabled = offset + shown >= total;
+    }
   }
 
   function updateUrl(params)
   {
     const url = new URL(window.location.href);
-    ['search', 'status', 'goal'].forEach(function (key)
+    ['search', 'status', 'goal', 'offset'].forEach(function (key)
     {
       const value = params.get(key);
 
-      if (value)
+      if (value && !(key === 'offset' && value === '0'))
       {
         url.searchParams.set(key, value);
       }

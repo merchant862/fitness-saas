@@ -66,6 +66,34 @@
 <script>
   (function () {
     document.addEventListener('click', function (event) {
+      const logoutLink = event.target.closest('a[href="/logout"]');
+
+      if (!logoutLink) {
+        return;
+      }
+
+      if (!window.confirm('Are you sure you want to log out?')) {
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener('submit', function (event) {
+      const form = event.target;
+
+      if (!(form instanceof HTMLFormElement) || form.getAttribute('action') !== '/logout') {
+        return;
+      }
+
+      if (!window.confirm('Are you sure you want to log out?')) {
+        event.preventDefault();
+      }
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    document.addEventListener('click', function (event) {
       const toggle = event.target.closest('[data-password-toggle]');
 
       if (!toggle) {

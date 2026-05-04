@@ -1,18 +1,18 @@
 'use strict';
 
-const { searchAdminUsers } = require('../../services/adminService');
+const { listPaymentTransactions } = require('../../services/paymentTransactionService');
 
-async function adminUsersViewController(req, res, next)
+async function adminPaymentTransactionsViewController(req, res, next)
 {
   try
   {
     const filters = normalizeFilters(req.query);
-    const result = await searchAdminUsers(filters);
+    const result = await listPaymentTransactions(filters);
 
-    return res.status(200).render('../views/admin/users.ejs', {
+    return res.status(200).render('../views/admin/payment-transactions.ejs', {
       adminData: {
         currentUser: req.user,
-        users: result.users,
+        transactions: result.transactions,
         pagination: {
           total: result.total,
           limit: result.limit,
@@ -32,9 +32,9 @@ function normalizeFilters(query)
 {
   return {
     search: String(query.search || '').trim().slice(0, 120),
-    status: allowed(query.status, ['active', 'pending', 'suspended']),
-    goal: allowed(query.goal, ['weight_loss', 'muscle_gain', 'general_fitness']),
-    limit: Number(query.limit || 25),
+    type: allowed(query.type, ['upsell', 'renewal', 'card_update', 'card_verification']),
+    status: allowed(query.status, ['approved', 'declined', 'failed']),
+    limit: Number(query.limit || 50),
     offset: Number(query.offset || 0)
   };
 }
@@ -42,8 +42,7 @@ function normalizeFilters(query)
 function allowed(value, options)
 {
   const text = String(value || '').trim();
-
   return options.includes(text) ? text : '';
 }
 
-module.exports = adminUsersViewController;
+module.exports = adminPaymentTransactionsViewController;

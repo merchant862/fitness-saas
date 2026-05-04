@@ -8,12 +8,12 @@ const { normalizeEmail, isEmail } = require('../utils/securityUtils');
 
 async function main()
 {
-  const email = normalizeEmail(process.env.ADMIN_EMAIL || process.argv[2]);
-  const password = process.env.ADMIN_PASSWORD || process.argv[3] || null;
+  const email = normalizeEmail(process.argv[2]);
+  const password = process.argv[3] || null;
 
   if (!isEmail(email))
   {
-    throw new Error('Set ADMIN_EMAIL in .env or pass an email: npm run admin:promote -- admin@example.com');
+    throw new Error('Pass an email: npm run admin:promote -- admin@example.com optionalPassword');
   }
 
   const { created } = await promoteAdminUser(email, password);

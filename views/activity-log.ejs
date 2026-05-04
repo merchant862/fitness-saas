@@ -61,7 +61,7 @@
 
                   <% data.events.forEach(function(event) { %>
                     <tr>
-                      <td><p class="text-sm mb-0"><%= event.eventType %></p></td>
+                      <td><p class="text-sm mb-0"><%= event.eventLabel || event.eventType %></p></td>
                       <td><p class="text-sm mb-0"><%= event.ipAddress || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= event.userAgentLabel || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= event.timeLabel || '-' %></p></td>

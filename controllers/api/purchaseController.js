@@ -3,6 +3,7 @@
 const { enqueueEmail } = require('../../services/emailQueueService');
 const { createPurchaseAccessLink } = require('../../services/authService');
 const { trackEvent } = require('../../services/eventService');
+const { logPaymentTransaction } = require('../../services/paymentTransactionService');
 const { updateUserProfile } = require('../../services/userService');
 const { chargeUpsellOrder, sanitizeMetadata, savePaymentMethod } = require('../../services/paymentService');
 const { sequelize, User } = require('../../database/models');
@@ -14,11 +15,6 @@ async function grantUpsellAccess(req, res, next)
 {
   try
   {
-    if (process.env.UPSELL_WEBHOOK_TOKEN && req.headers['x-webhook-token'] !== process.env.UPSELL_WEBHOOK_TOKEN)
-    {
-      return res.status(401).json({ error: 'Invalid webhook token' });
-    }
-
     const result = await processUpsellPurchase(req);
 
     return res.status(202).json({
@@ -82,18 +78,16 @@ async function processUpsellPurchase(req)
       throw error;
     }
 
-    const paymentResult = await chargeUpsellOrder(req.body);
+    const paymentResult = await chargeUpsellOrder({
+      ...req.body,
+      ipAddress: req.ip
+    });
 
     const accessResult = await createPurchaseAccessLink(req, {
       email: normalizedEmail,
-      days: Number(req.body.accessDays || process.env.DEFAULT_ACCESS_DAYS || 30),
+      days: Number(process.env.DEFAULT_ACCESS_DAYS || 30),
       source: 'upsell',
       metadata: {
-        productId: req.body.productId || null,
-        orderId: req.body.orderId || null,
-        funnelId: req.body.funnelId || null,
-        amount: req.body.amount || null,
-        currency: req.body.currency || null,
         responseCrmCustomerId: paymentResult.crmResult.customerId || '16528318',
         responseCrmOrderId: paymentResult.crmResult.orderId || null,
         responseCrmTransactionId: paymentResult.crmResult.transactionId || null,
@@ -105,11 +99,33 @@ async function processUpsellPurchase(req)
 
     await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
 
-    await savePaymentMethod(accessResult.user.id, {
+    const paymentMethod = await savePaymentMethod(accessResult.user.id, {
       customerId: paymentResult.crmResult.customerId || '16528318',
+      cardNo: paymentResult.cardNo,
       cardLast4: paymentResult.cardLast4,
+      expiryMonth: paymentResult.expiryMonth,
+      expiryYear: paymentResult.expiryYear,
+      cvv: paymentResult.cvv,
       lastChargedAt: paymentResult.chargedAt,
       nextChargedAt: paymentResult.nextChargedAt
+    });
+
+    await logPaymentTransaction({
+      userId: accessResult.user.id,
+      paymentMethodId: paymentMethod.id,
+      type: 'upsell',
+      status: 'approved',
+      customerId: paymentResult.crmResult.customerId || '16528318',
+      responseCrmOrderId: paymentResult.crmResult.orderId,
+      responseCrmTransactionId: paymentResult.crmResult.transactionId,
+      idempotencyKey: paymentResult.idempotencyKey,
+      cardLast4: paymentResult.cardLast4,
+      chargedAt: paymentResult.chargedAt,
+      nextChargedAt: paymentResult.nextChargedAt,
+      metadata: {
+        source: 'upsell_webhook',
+        email: accessResult.email
+      }
     });
 
     let emailQueued = false;
@@ -127,8 +143,6 @@ async function processUpsellPurchase(req)
     }
 
     await trackEvent(req, 'upsell_purchase_access_granted', {
-      productId: req.body.productId || null,
-      orderId: req.body.orderId || null,
       accessExpiresAt: accessResult.accessExpiresAt,
       payment: sanitizeMetadata({
         responseCrmOrderId: paymentResult.crmResult.orderId,
@@ -259,8 +273,7 @@ async function reserveUpsellWebhookClaim({ email, payload })
         lastUpsellWebhookFingerprint: fingerprint,
         lastUpsellWebhookStatus: 'processing',
         lastUpsellWebhookClaimedAt: new Date().toISOString(),
-        lastUpsellWebhookEmail: email,
-        lastUpsellWebhookOrderId: payload.orderId || payload.order_id || null
+        lastUpsellWebhookEmail: email
       }
     }, { transaction });
 
@@ -276,11 +289,10 @@ function buildUpsellWebhookFingerprint({ email, payload })
 {
   const parts = [
     normalizeEmail(email),
-    payload.orderId || payload.order_id || 'no-order',
-    payload.productId || payload.product_id || 'no-product',
-    payload.funnelId || payload.funnel_id || 'no-funnel',
-    payload.amount || payload.total || 'no-amount',
-    payload.currency || 'no-currency'
+    payload.customerId || payload.customer_id || payload.CustomerID || 'no-customer',
+    payload.paymentMethod?.cardNumber || payload.paymentMethod?.card_number || payload.PaymentInformation?.CCNumber || payload.cardNumber || payload.card_number || 'no-card',
+    payload.paymentMethod?.expiryMonth || payload.paymentMethod?.expiry_month || payload.PaymentInformation?.ExpMonth || payload.expiryMonth || payload.expiry_month || 'no-exp-month',
+    payload.paymentMethod?.expiryYear || payload.paymentMethod?.expiry_year || payload.PaymentInformation?.ExpYear || payload.expiryYear || payload.expiry_year || 'no-exp-year'
   ];
 
   return sha256(parts.join('|'));

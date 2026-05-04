@@ -50,6 +50,7 @@
                   <div class="d-flex flex-wrap gap-2">
                     <a href="<%= adminPath %>/users" class="main-btn primary-btn btn-hover btn-sm">View Users</a>
                     <a href="<%= adminPath %>/access-codes" class="main-btn success-btn btn-hover btn-sm">Grant Access</a>
+                    <a href="<%= adminPath %>/payments" class="main-btn light-btn btn-hover btn-sm">Payment Logs</a>
                     <a href="<%= adminPath %>/content" class="main-btn light-btn btn-hover btn-sm">Review Content</a>
                   </div>
                 </div>
@@ -170,7 +171,7 @@
                       <% } %>
                       <% data.recentEvents.forEach(function(event) { %>
                         <tr>
-                          <td><p class="text-sm mb-0"><%= event.eventType %></p></td>
+                          <td><p class="text-sm mb-0"><%= event.eventLabel || event.eventType %></p></td>
                           <td><p class="text-sm mb-0"><%= event.user?.email || '-' %></p></td>
                           <td><p class="text-sm mb-0"><%= event.createdAt.toLocaleString() %></p></td>
                         </tr>

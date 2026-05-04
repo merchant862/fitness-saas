@@ -61,7 +61,7 @@
 
                   <% data.events.forEach(function(event) { %>
                     <tr>
-                      <td><p class="text-sm mb-0"><%= event.eventType %></p></td>
+                      <td><p class="text-sm mb-0"><%= event.eventLabel || event.eventType %></p></td>
                       <td>
                         <p class="text-sm mb-0">
                           <%= event.user?.email || (event.userId ? `User #${event.userId}` : '-') %>
