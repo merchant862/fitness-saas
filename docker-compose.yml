@@ -9,11 +9,9 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DB_HOST: host.docker.internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports:
-      - "127.0.0.1:7000:${PORT:-3000}"
+      PORT: 7000
+      DB_HOST: 127.0.0.1
+    network_mode: host
 
   fitaccess-email-worker:
     build:
@@ -26,9 +24,8 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DB_HOST: host.docker.internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      DB_HOST: 127.0.0.1
+    network_mode: host
 
   fitaccess-billing-worker:
     build:
@@ -41,6 +38,5 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DB_HOST: host.docker.internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      DB_HOST: 127.0.0.1
+    network_mode: host
