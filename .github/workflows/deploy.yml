@@ -46,6 +46,6 @@ jobs:
 
           docker compose build fitaccess-app
           docker compose run --rm fitaccess-app npm run db:migrate
-          docker compose up -d --no-deps fitaccess-app
+          docker compose up -d --no-deps --force-recreate fitaccess-app
           docker image prune -f
           REMOTE_SCRIPT
