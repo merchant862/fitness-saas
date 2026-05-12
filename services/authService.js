@@ -22,6 +22,14 @@ const { verifyPassword } = require('../utils/passwordUtils');
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'fitaccess_token';
 const SESSION_DAYS = Number(process.env.JWT_EXPIRES_DAYS || 14);
+const MAGIC_LINK_TTL_MINUTES = minutesFromEnv('MAGIC_LINK_TTL_MINUTES', 30);
+const PURCHASE_MAGIC_LINK_TTL_MINUTES = minutesFromEnv('PURCHASE_MAGIC_LINK_TTL_MINUTES', 4320);
+
+function minutesFromEnv(key, fallback)
+{
+  const value = Number(process.env[key]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
 
 async function issueSession(req, res, user, options = {})
 {
@@ -169,7 +177,7 @@ async function requestMagicLink(req, { email })
   await MagicLink.create({
     userId: user.id,
     tokenHash: sha256(token),
-    expiresAt: new Date(Date.now() + Number(process.env.MAGIC_LINK_TTL_MINUTES || 15) * 60 * 1000),
+    expiresAt: new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60 * 1000),
     requestIp: clientIp(req),
     userAgent: String(req.headers['user-agent'] || '').slice(0, 255)
   });
@@ -245,7 +253,7 @@ async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsel
     await MagicLink.create({
       userId: user.id,
       tokenHash: sha256(token),
-      expiresAt: new Date(Date.now() + Number(process.env.MAGIC_LINK_TTL_MINUTES || 15) * 60 * 1000),
+      expiresAt: new Date(Date.now() + PURCHASE_MAGIC_LINK_TTL_MINUTES * 60 * 1000),
       requestIp: clientIp(req),
       userAgent: String(req.headers['user-agent'] || '').slice(0, 255)
     }, { transaction });

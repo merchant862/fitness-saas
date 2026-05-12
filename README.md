@@ -160,6 +160,12 @@ Start the billing worker in a separate process:
 npm run billing:worker
 ```
 
+Start the onboarding reminder worker in a separate process:
+
+```bash
+npm run onboarding:worker
+```
+
 Open:
 
 ```text
@@ -178,6 +184,7 @@ http://localhost:3000/sign-in
 | `npm run db:seed:undo` | Undo all seeders |
 | `npm run email:worker` | Process durable email queue jobs |
 | `npm run billing:worker` | Process due monthly billing and retries |
+| `npm run onboarding:worker` | Queue daily setup reminders for paid users who have not completed onboarding |
 | `npm run admin:promote -- email password` | Create or promote an admin account |
 
 ## Public Routes
@@ -321,6 +328,8 @@ Do not log webhook request bodies in production.
 Upsell purchases, monthly billing, and card changes use `RESPONSE_CRM_ADD_ORDER_URL`. Upsell purchases and monthly billing use `RESPONSE_CRM_UPSELL_PRODUCT_ID`; normal active-account card changes use `RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID`, which should be a `$0` verification product in ResponseCRM. If a member is locked because the old card failed, adding a new card charges `RESPONSE_CRM_UPSELL_PRODUCT_ID` immediately and restores access only after ResponseCRM approves the charge. The local payment method is replaced only after ResponseCRM returns an approved response.
 
 Monthly billing is handled by `npm run billing:worker`, not by ResponseCRM recurring cycles. The worker claims due `payment_methods` rows in batches, charges them through ResponseCRM, advances `next_charged_at` by one calendar month on success, and retries failed charges with `BILLING_RETRY_DELAYS_DAYS`. After `BILLING_MAX_RETRY_ATTEMPTS`, the payment method status becomes `failed`, which locks member-only features through the existing billing guard.
+
+Onboarding reminders are handled by `npm run onboarding:worker`. The worker claims paid, active users who have not completed onboarding, queues one reminder every `ONBOARDING_REMINDER_INTERVAL_HOURS`, and stops after `ONBOARDING_REMINDER_MAX_ATTEMPTS`. `ONBOARDING_REMINDER_WINDOW_HOURS` prevents very old accounts from receiving new reminder campaigns after a late deploy. Each reminder gets a fresh one-time secure setup link using `PURCHASE_MAGIC_LINK_TTL_MINUTES`.
 
 ## Fitness Content
 

@@ -11,6 +11,7 @@
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
     "email:worker": "node scripts/emailWorker.js",
     "billing:worker": "node scripts/billingWorker.js",
+    "onboarding:worker": "node scripts/onboardingReminderWorker.js",
     "seed:webhook-users": "node scripts/seedWebhookUsers.js",
     "admin:promote": "node scripts/promoteAdmin.js"
   },

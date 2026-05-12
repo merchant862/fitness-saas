@@ -35,6 +35,20 @@ module.exports = (sequelize, DataTypes) =>
       type: DataTypes.DATE,
       field: 'onboarding_completed_at'
     },
+    onboardingRemindersSent: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0,
+      field: 'onboarding_reminders_sent'
+    },
+    onboardingLastRemindedAt: {
+      type: DataTypes.DATE,
+      field: 'onboarding_last_reminded_at'
+    },
+    onboardingReminderLockedAt: {
+      type: DataTypes.DATE,
+      field: 'onboarding_reminder_locked_at'
+    },
     tags: {
       type: DataTypes.JSON,
       allowNull: false,
@@ -61,6 +75,7 @@ module.exports = (sequelize, DataTypes) =>
     User.hasMany(models.Event, { foreignKey: 'userId', as: 'events' });
     User.hasMany(models.AiMessage, { foreignKey: 'userId', as: 'aiMessages' });
     User.hasMany(models.PaymentMethod, { foreignKey: 'userId', as: 'paymentMethods' });
+    User.hasMany(models.PaymentTransaction, { foreignKey: 'userId', as: 'paymentTransactions' });
   };
 
   return User;

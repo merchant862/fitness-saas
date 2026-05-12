@@ -51,6 +51,22 @@ function magicLinkEmail({ email, token })
   });
 }
 
+function onboardingReminderEmail({ email, token, reminderNumber, maxReminders })
+{
+  const loginUrl = appUrl(`/session/verify?token=${encodeURIComponent(token)}`);
+
+  return brandedEmail({
+    to: email,
+    subject: 'Your FitAccess setup is waiting',
+    eyebrow: 'Finish setup',
+    title: 'Your FitAccess membership is ready',
+    intro: 'You already have access. Finish your quick setup now so your dashboard can personalize workouts, meals, progress tracking, and coach guidance.',
+    buttonText: 'Finish Setup',
+    buttonUrl: loginUrl,
+    footerText: `Reminder ${reminderNumber} of ${maxReminders}. This secure setup link can only be used once.`
+  });
+}
+
 function passwordResetEmail({ email, token })
 {
   const resetUrl = appUrl(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
@@ -322,6 +338,7 @@ function formatDate(value)
 module.exports = {
   accessCodeEmail,
   magicLinkEmail,
+  onboardingReminderEmail,
   passwordResetEmail,
   billingSuccessEmail,
   billingRetryFailedEmail,
