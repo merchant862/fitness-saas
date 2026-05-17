@@ -1,7 +1,8 @@
 'use strict';
 
-const { PaymentMethod, UserProfile, sequelize } = require('../database/models');
-const { postResponseCrm } = require('../apis/responseCrmApi');
+const { Op } = require('sequelize');
+const { PaymentMethod, PaymentTransaction, UserProfile, sequelize } = require('../database/models');
+const { postStickyOrder } = require('../apis/stickyApi');
 const { normalizeCheckoutCustomer } = require('../utils/checkoutCustomerUtils');
 const { normalizeEmail } = require('../utils/securityUtils');
 
@@ -11,9 +12,9 @@ async function chargeUpsellOrder(payload)
   validatePayment(payment);
   const chargedAt = new Date();
 
-  const crmPayload = buildResponseCrmOrderPayload(payload, payment);
-  const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
-  const crmResult = normalizeCrmResult(response.body);
+  const crmPayload = buildStickyOrderPayload(payload, payment);
+  const response = await postStickyOrder(crmPayload);
+  const crmResult = normalizeStickyResult(response.body);
 
   if (!crmResult.approved)
   {
@@ -51,10 +52,10 @@ async function updateCustomerPaymentMethod(user, payload)
   const shouldChargeNow = !activePaymentMethod;
 
   const crmPayload = shouldChargeNow ?
-    buildResponseCrmCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer) :
-    buildResponseCrmCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer);
-  const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
-  const crmResult = normalizeCrmResult(response.body);
+    buildStickyCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer) :
+    buildStickyCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer);
+  const response = await postStickyOrder(crmPayload);
+  const crmResult = normalizeStickyResult(response.body);
 
   if (!crmResult.approved)
   {
@@ -74,7 +75,7 @@ async function updateCustomerPaymentMethod(user, payload)
     idempotencyKey: crmPayload._idempotencyKey,
     chargedNow: shouldChargeNow,
     paymentMethod: await savePaymentMethod(user.id, {
-      customerId: crmCustomerId(user, crmResult, payload),
+      customerId: providerCustomerId(user, crmResult, payload, latestPaymentMethod),
       cardNo: payment.cardNumber,
       cardLast4: cardLast4(payment.cardNumber),
       expiryMonth: payment.expiryMonth,
@@ -103,9 +104,12 @@ async function chargeStoredPaymentMethod(paymentMethod, user, options = {})
 
   const chargedAt = new Date();
   const storedCustomer = await findStoredCustomer(user.id);
-  const crmPayload = buildResponseCrmStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options);
-  const response = await postResponseCrm(process.env.RESPONSE_CRM_ADD_ORDER_URL, crmPayload);
-  const crmResult = normalizeCrmResult(response.body);
+  const previousOrderId = await findLatestApprovedOrderId(user.id, paymentMethod.id);
+  const crmPayload = previousOrderId ?
+    buildStickyCardOnFilePayload(paymentMethod, user, storedCustomer, options, previousOrderId) :
+    buildStickyStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options);
+  const response = await postStickyOrder(crmPayload);
+  const crmResult = normalizeStickyResult(response.body);
 
   if (!crmResult.approved)
   {
@@ -182,58 +186,63 @@ async function findLatestPaymentMethod(userId)
   });
 }
 
-function buildResponseCrmOrderPayload(payload, payment)
+function buildStickyOrderPayload(payload, payment)
 {
   const customer = normalizeCheckoutCustomer(payload);
+  const customerId = providerCustomerIdFromPayload(payload);
 
-  return stripEmpty({
-    CustomerID: responseCrmCustomerId(payload),
-    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
-    BillingAddress: responseCrmBillingAddress(customer),
-    PaymentInformation: responseCrmPayment(payment),
-    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
-    _idempotencyKey: idempotencyId('upsell', responseCrmCustomerId(payload), payload.email)
+  return stickyNewOrderPayload({
+    customer,
+    payment,
+    productId: stickyProductId('STICKY_UPSELL_PRODUCT_ID'),
+    ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    email: payload.email,
+    idempotencyKey: idempotencyId('upsell', customerId, payload.email),
+    stepNum: process.env.STICKY_UPSELL_STEP_NUM
   });
 }
 
-function buildResponseCrmCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer)
+function buildStickyCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer)
 {
   const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
   const cycleKey = billingCycleKey(latestPaymentMethod?.nextChargedAt || new Date());
 
-  return stripEmpty({
-    CustomerID: responseCrmCustomerId(payload, user, latestPaymentMethod),
-    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
-    BillingAddress: responseCrmBillingAddress(customer, user),
-    PaymentInformation: responseCrmPayment(payment),
-    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
-    _idempotencyKey: idempotencyId('card-renewal', `${user.id}:${cycleKey}`, user.email)
+  return stickyNewOrderPayload({
+    customer,
+    user,
+    payment,
+    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
+    ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    email: user.email,
+    idempotencyKey: idempotencyId('card-renewal', `${user.id}:${cycleKey}`, user.email)
   });
 }
 
-function buildResponseCrmCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer)
+function buildStickyCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer)
 {
   const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
 
-  return stripEmpty({
-    CustomerID: responseCrmCustomerId(payload, user, activePaymentMethod),
-    IpAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
-    BillingAddress: responseCrmBillingAddress(customer, user),
-    PaymentInformation: responseCrmPayment(payment),
-    Products: responseCrmProducts(payload.verificationProductId || payload.verification_product_id || process.env.RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID),
-    _idempotencyKey: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber))
+  return stickyNewOrderPayload({
+    customer,
+    user,
+    payment,
+    productId: normalizeNumberValue(payload.verificationProductId || payload.verification_product_id || stickyProductId('STICKY_CARD_VERIFY_PRODUCT_ID')),
+    ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
+    email: user.email,
+    idempotencyKey: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber))
   });
 }
 
-function buildResponseCrmStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options = {})
+function buildStickyStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options = {})
 {
-  return stripEmpty({
-    CustomerID: responseCrmCustomerId({}, user, paymentMethod),
-    IpAddress: options.ipAddress || null,
-    BillingAddress: responseCrmBillingAddress(storedCustomer, user),
-    PaymentInformation: responseCrmPayment(payment),
-    Products: responseCrmProducts(process.env.RESPONSE_CRM_UPSELL_PRODUCT_ID),
-    _idempotencyKey: idempotencyId(
+  return stickyNewOrderPayload({
+    customer: storedCustomer,
+    user,
+    payment,
+    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
+    ipAddress: options.ipAddress || null,
+    email: user.email,
+    idempotencyKey: idempotencyId(
       'monthly-billing',
       `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
       user.email
@@ -241,58 +250,153 @@ function buildResponseCrmStoredPaymentPayload(paymentMethod, user, payment, stor
   });
 }
 
-function responseCrmPayment(payment)
+function buildStickyCardOnFilePayload(paymentMethod, user, storedCustomer, options, previousOrderId)
 {
   return stripEmpty({
-    ExpMonth: payment.expiryMonth,
-    ExpYear: payment.expiryYear,
-    CCNumber: payment.cardNumber,
-    NameOnCard: payment.cardHolderName,
+    method: 'NewOrderCardOnFile',
+    previousOrderId,
+    CVV: paymentMethod.cvv,
+    campaignId: stickyRequired('STICKY_CAMPAIGN_ID'),
+    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
+    shippingId: stickyRequired('STICKY_SHIPPING_ID'),
+    product_qty_1: 1,
+    forceGatewayId: process.env.STICKY_GATEWAY_ID,
+    ipAddress: options.ipAddress || null,
+    'product_step[1]': process.env.STICKY_RENEWAL_STEP_NUM || null,
+    _idempotencyKey: idempotencyId(
+      'monthly-billing',
+      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
+      user.email
+    ),
+    notes: stickyNotes(idempotencyId(
+      'monthly-billing',
+      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
+      user.email
+    ), storedCustomer)
+  });
+}
+
+function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAddress, email, idempotencyKey, stepNum = null })
+{
+  const nameParts = splitName(customer.fullName || user?.name || payment.cardHolderName);
+  const firstName = customer.firstName || nameParts.firstName;
+  const lastName = customer.lastName || nameParts.lastName;
+
+  return stripEmpty({
+    method: 'NewOrder',
+    firstName,
+    lastName,
+    shippingAddress1: customer.address1,
+    shippingAddress2: customer.address2,
+    shippingCity: customer.city,
+    shippingState: customer.state,
+    shippingZip: customer.zip,
+    shippingCountry: customer.country,
+    phone: customer.phone,
+    email: email || user?.email,
+    creditCardType: stickyCardType(payment.cardNumber),
+    creditCardNumber: payment.cardNumber,
+    expirationDate: stickyExpirationDate(payment),
     CVV: payment.cvv,
-    ProcessorID: process.env.RESPONSE_CRM_PROCESSOR_ID
+    tranType: process.env.STICKY_TRAN_TYPE || 'Sale',
+    ipAddress,
+    campaignId: stickyRequired('STICKY_CAMPAIGN_ID'),
+    productId,
+    shippingId: stickyRequired('STICKY_SHIPPING_ID'),
+    billingSameAsShipping: 'YES',
+    billingFirstName: firstName,
+    billingLastName: lastName,
+    billingAddress1: customer.address1,
+    billingAddress2: customer.address2,
+    billingCity: customer.city,
+    billingState: customer.state,
+    billingZip: customer.zip,
+    billingCountry: customer.country,
+    product_qty_1: 1,
+    forceGatewayId: process.env.STICKY_GATEWAY_ID,
+    'product_step[1]': stepNum || null,
+    _idempotencyKey: idempotencyKey,
+    notes: stickyNotes(idempotencyKey, customer)
   });
 }
 
-function responseCrmBillingAddress(customer, user = null)
+function stickyProductId(primaryEnv, fallbackEnv = null)
 {
-  const nameParts = splitName(user?.name);
+  const productId = process.env[primaryEnv] || (fallbackEnv ? process.env[fallbackEnv] : null);
 
-  return stripEmpty({
-    FirstName: customer.firstName || nameParts.firstName,
-    LastName: customer.lastName || nameParts.lastName,
-    Address1: customer.address1,
-    Address2: customer.address2,
-    City: customer.city,
-    CountryISO: customer.country,
-    State: customer.state,
-    ZipCode: customer.zip
-  });
-}
-
-function responseCrmProducts(productId)
-{
   if (!productId)
   {
-    throwValidationError('ResponseCRM product id is not configured.');
+    throwValidationError(`${primaryEnv} is not configured.`);
   }
 
-  return [{
-    ProductID: normalizeNumberValue(productId),
-    Quantity: 1
-  }];
+  return normalizeNumberValue(productId);
 }
 
-function responseCrmCustomerId(payload, user = null, activePaymentMethod = null)
+function stickyRequired(envName)
 {
-  const customerId =
-    payload.customerId ||
-    payload.customer_id ||
-    payload.CustomerID ||
-    activePaymentMethod?.customerId ||
-    user?.metadata?.responseCrmCustomerId ||
-    null;
+  if (!process.env[envName])
+  {
+    throwValidationError(`${envName} is not configured.`);
+  }
 
-  return normalizeNumberValue(customerId);
+  return process.env[envName];
+}
+
+function stickyCardType(cardNumber)
+{
+  const brand = detectCardBrand(cardNumber);
+
+  if (!brand)
+  {
+    return null;
+  }
+
+  const aliases = {
+    amex: 'amex',
+    diners: 'diners',
+    discover: 'discover',
+    elo: 'elo',
+    hipercard: 'hipercard',
+    jcb: 'jcb',
+    maestro: 'maestro',
+    mastercard: 'mastercard',
+    unionpay: 'unionpay',
+    visa: 'visa'
+  };
+
+  return aliases[brand.name] || brand.name;
+}
+
+function stickyExpirationDate(payment)
+{
+  return `${payment.expiryMonth}${String(payment.expiryYear).slice(-2)}`;
+}
+
+function stickyNotes(idempotencyKey, customer)
+{
+  return JSON.stringify(stripEmpty({
+    idempotencyKey,
+    source: 'fitaccess',
+    customerEmail: customer.email || null
+  })).slice(0, 500);
+}
+
+async function findLatestApprovedOrderId(userId, paymentMethodId)
+{
+  const transactions = await PaymentTransaction.findAll({
+    where: {
+      userId,
+      paymentMethodId,
+      status: 'approved',
+      responseCrmOrderId: { [Op.ne]: null }
+    },
+    order: [['createdAt', 'DESC']],
+    limit: 10
+  });
+
+  const transaction = transactions.find((row) => String(row.responseCrmOrderId || '').trim());
+
+  return transaction?.responseCrmOrderId || null;
 }
 
 async function findStoredCustomer(userId)
@@ -553,25 +657,40 @@ function throwValidationError(message)
   throw error;
 }
 
-function normalizeCrmResult(body)
+function normalizeStickyResult(body)
 {
+  const responseCode = String(
+    body.responseCode ||
+    body.response_code ||
+    body.ResponseCode ||
+    ''
+  );
+  const errorFound = String(body.errorFound ?? body.error_found ?? '').toLowerCase();
   const statusText = String(
     body.status ||
     body.result ||
     body.response ||
     body.transaction_status ||
     body.transactionStatus ||
+    body.resp_msg ||
+    body.declineReason ||
+    body.errorMessage ||
     ''
   ).toLowerCase();
 
-  const declined = ['declined', 'failed', 'failure', 'error', 'rejected'].some((word) => statusText.includes(word));
-  const approved = body.success === true || body.approved === true || statusText.includes('approved') || statusText.includes('success') || (!declined && !statusText);
+  const declined = errorFound === '1' ||
+    (responseCode && responseCode !== '100') ||
+    ['declined', 'failed', 'failure', 'error', 'rejected'].some((word) => statusText.includes(word));
+  const approved = body.success === true ||
+    body.approved === true ||
+    responseCode === '100' ||
+    (!declined && statusText.includes('approved'));
 
   return {
-    approved,
-    orderId: body.order_id || body.orderId || body.id || body.data?.order_id || body.data?.orderId || null,
-    transactionId: body.transaction_id || body.transactionId || body.trans_id || body.data?.transaction_id || body.data?.transactionId || null,
-    customerId: body.customer_id || body.customerId || body.data?.customer_id || body.data?.customerId || null,
+    approved: approved && !declined,
+    orderId: body.orderId || body.order_id || body.id || body.data?.order_id || body.data?.orderId || null,
+    transactionId: body.transactionID || body.transactionId || body.transaction_id || body.trans_id || body.data?.transaction_id || body.data?.transactionId || null,
+    customerId: body.customerId || body.customer_id || body.data?.customer_id || body.data?.customerId || null,
     publicResult: sanitizeMetadata(body)
   };
 }
@@ -588,7 +707,7 @@ function calculateNextChargedAt(value, baseDate = new Date())
     }
   }
 
-  const months = Number(process.env.RESPONSE_CRM_RECURRING_MONTHS || 1);
+  const months = Number(process.env.STICKY_RECURRING_MONTHS || 1);
   return addCalendarMonths(baseDate, Number.isFinite(months) && months > 0 ? months : 1);
 }
 
@@ -612,15 +731,27 @@ function cardLast4(value)
   return digits(value).slice(-4);
 }
 
-function crmCustomerId(user, crmResult, payload)
+function providerCustomerId(user, crmResult, payload, activePaymentMethod = null)
 {
-  return String(
-    crmResult.customerId ||
+  const customerId = crmResult.customerId || providerCustomerIdFromPayload(payload, user, activePaymentMethod);
+
+  return customerId ? String(customerId) : null;
+}
+
+function providerCustomerIdFromPayload(payload = {}, user = null, activePaymentMethod = null)
+{
+  const customerId =
     payload.customerId ||
     payload.customer_id ||
-    user.metadata?.responseCrmCustomerId ||
-    '16528318'
-  );
+    payload.CustomerID ||
+    payload.stickyCustomerId ||
+    payload.sticky_customer_id ||
+    activePaymentMethod?.customerId ||
+    user?.metadata?.stickyCustomerId ||
+    user?.metadata?.responseCrmCustomerId ||
+    null;
+
+  return normalizeNumberValue(customerId);
 }
 
 function sanitizeMetadata(value)

@@ -88,9 +88,9 @@ async function processUpsellPurchase(req)
       days: Number(process.env.DEFAULT_ACCESS_DAYS || 30),
       source: 'upsell',
       metadata: {
-        responseCrmCustomerId: paymentResult.crmResult.customerId || '16528318',
-        responseCrmOrderId: paymentResult.crmResult.orderId || null,
-        responseCrmTransactionId: paymentResult.crmResult.transactionId || null,
+        stickyCustomerId: paymentResult.crmResult.customerId || null,
+        stickyOrderId: paymentResult.crmResult.orderId || null,
+        stickyTransactionId: paymentResult.crmResult.transactionId || null,
         lastUpsellWebhookFingerprint: claim.fingerprint,
         lastUpsellWebhookStatus: 'success',
         lastUpsellWebhookProcessedAt: new Date().toISOString()
@@ -100,7 +100,7 @@ async function processUpsellPurchase(req)
     await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
 
     const paymentMethod = await savePaymentMethod(accessResult.user.id, {
-      customerId: paymentResult.crmResult.customerId || '16528318',
+      customerId: paymentResult.crmResult.customerId || null,
       cardNo: paymentResult.cardNo,
       cardLast4: paymentResult.cardLast4,
       expiryMonth: paymentResult.expiryMonth,
@@ -115,7 +115,7 @@ async function processUpsellPurchase(req)
       paymentMethodId: paymentMethod.id,
       type: 'upsell',
       status: 'approved',
-      customerId: paymentResult.crmResult.customerId || '16528318',
+      customerId: paymentResult.crmResult.customerId || null,
       responseCrmOrderId: paymentResult.crmResult.orderId,
       responseCrmTransactionId: paymentResult.crmResult.transactionId,
       idempotencyKey: paymentResult.idempotencyKey,
@@ -145,8 +145,8 @@ async function processUpsellPurchase(req)
     await trackEvent(req, 'upsell_purchase_access_granted', {
       accessExpiresAt: accessResult.accessExpiresAt,
       payment: sanitizeMetadata({
-        responseCrmOrderId: paymentResult.crmResult.orderId,
-        responseCrmTransactionId: paymentResult.crmResult.transactionId,
+        stickyOrderId: paymentResult.crmResult.orderId,
+        stickyTransactionId: paymentResult.crmResult.transactionId,
         cardLast4: paymentResult.cardLast4,
         chargedAt: paymentResult.chargedAt,
         nextChargedAt: paymentResult.nextChargedAt

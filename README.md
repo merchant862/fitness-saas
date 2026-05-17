@@ -4,7 +4,7 @@
 
 # FitAccess
 
-FitAccess is a premium fitness member area for checkout upsells. The front-sell funnel lives outside this app; when a customer accepts the fitness upsell, the funnel calls FitAccess, FitAccess charges through ResponseCRM, grants membership, and sends a secure first-access email.
+FitAccess is a premium fitness member area for checkout upsells. The front-sell funnel lives outside this app; when a customer accepts the fitness upsell, the funnel calls FitAccess, FitAccess charges through Sticky.io, grants membership, and sends a secure first-access email.
 
 ## Stack
 
@@ -15,7 +15,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 | Database | MySQL, Sequelize |
 | Auth | Password login, secure first-access links, stateless JWT sessions, optional activation codes |
 | Email | Resend |
-| Payments | ResponseCRM Add Order API |
+| Payments | Sticky.io NewOrder API |
 | Coach Chat | Pattern-based fitness coach widget |
 | Content | Sequelize migrations and seeders |
 | UI | Bootstrap-based dashboard assets |
@@ -23,7 +23,7 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 ## Implemented
 
 - Upsell purchase access endpoint.
-- ResponseCRM upsell payment capture before membership delivery.
+- Sticky.io upsell payment capture before membership delivery.
 - Saved billing method record with charge dates.
 - Member card update form on the profile page.
 - Billing lock that redirects members without a saved card to `/billing`.
@@ -43,8 +43,8 @@ FitAccess is a premium fitness member area for checkout upsells. The front-sell 
 1. Customer buys the external front-sell product.
 2. Customer accepts the FitAccess upsell during checkout.
 3. Funnel calls `POST /api/integrations/upsell-purchases`.
-4. FitAccess sends the upsell order and card details to ResponseCRM.
-5. After ResponseCRM approval, FitAccess stores the payment method record and charge dates.
+4. FitAccess sends the upsell order and card details to Sticky.io.
+5. After Sticky.io approval, FitAccess stores the payment method record and charge dates.
 6. FitAccess creates or updates the customer account.
 7. FitAccess emails a secure first-access link.
 8. Customer opens `/session/verify?token=...`.
@@ -104,15 +104,22 @@ UPSELL_WEBHOOK_RATE_LIMIT=5000
 
 ADMIN_API_TOKEN=
 
-RESPONSE_CRM_API_KEY=
-RESPONSE_CRM_API_KEY_HEADER=Authorization
-RESPONSE_CRM_API_KEY_PREFIX=Bearer
-RESPONSE_CRM_ADD_ORDER_URL=
-RESPONSE_CRM_TIMEOUT_MS=15000
-RESPONSE_CRM_PROCESSOR_ID=
-RESPONSE_CRM_UPSELL_PRODUCT_ID=
-RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID=
-RESPONSE_CRM_RECURRING_MONTHS=1
+STICKY_API_URL=
+STICKY_APP_KEY=
+STICKY_DOMAIN=sticky.io
+STICKY_API_USERNAME=
+STICKY_API_PASSWORD=
+STICKY_TIMEOUT_MS=15000
+STICKY_CAMPAIGN_ID=
+STICKY_SHIPPING_ID=
+STICKY_GATEWAY_ID=
+STICKY_TRAN_TYPE=Sale
+STICKY_UPSELL_PRODUCT_ID=
+STICKY_CARD_VERIFY_PRODUCT_ID=
+STICKY_RENEWAL_PRODUCT_ID=
+STICKY_UPSELL_STEP_NUM=
+STICKY_RENEWAL_STEP_NUM=
+STICKY_RECURRING_MONTHS=1
 BILLING_WORKER_BATCH_SIZE=50
 BILLING_WORKER_POLL_MS=60000
 BILLING_MAX_RETRY_ATTEMPTS=3
@@ -206,7 +213,7 @@ http://localhost:3000/sign-in
 | `GET /profile` | Profile settings |
 | `POST /profile` | Save profile settings |
 | `GET /activity-log` | Member activity log |
-| `POST /billing/payment-method` | Update member card through ResponseCRM |
+| `POST /billing/payment-method` | Update member card through Sticky.io |
 
 ## API Routes
 
@@ -227,7 +234,7 @@ http://localhost:3000/sign-in
 | `GET /api/progress` | Progress data |
 | `POST /api/progress/weight` | Log weight |
 | `GET /api/billing/payment-method` | Current saved billing reference |
-| `POST /api/billing/payment-method` | Update member card through ResponseCRM |
+| `POST /api/billing/payment-method` | Update member card through Sticky.io |
 
 ## Admin Routes
 
@@ -309,25 +316,29 @@ await fetch('https://your-fitaccess-domain.com/api/integrations/upsell-purchases
 
 The endpoint is intended for checkout/browser testing and is protected by rate limiting plus duplicate email/payment guards.
 
-### ResponseCRM Payments
+### Sticky.io Payments
 
-ResponseCRM docs describe Add Order as the checkout and upsell endpoint, with product IDs required for billing/checkout/upsell pages. FitAccess uses that flow through `RESPONSE_CRM_ADD_ORDER_URL`.
+FitAccess uses Sticky.io's legacy `NewOrder` transaction endpoint through `STICKY_API_URL` or `STICKY_APP_KEY` + `STICKY_DOMAIN`. Authentication is sent with HTTP Basic Auth and card fields are sent in the POST body, not in query parameters.
 
 Required production values:
 
 ```env
-RESPONSE_CRM_API_KEY=your-responsecrm-open-api-key
-RESPONSE_CRM_ADD_ORDER_URL=https://...
-RESPONSE_CRM_PROCESSOR_ID=...
-RESPONSE_CRM_UPSELL_PRODUCT_ID=...
-RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID=...
+STICKY_API_URL=https://your-app-key.sticky.io/admin/transact.php
+STICKY_API_USERNAME=your-sticky-api-user
+STICKY_API_PASSWORD=your-sticky-api-password
+STICKY_CAMPAIGN_ID=...
+STICKY_SHIPPING_ID=...
+STICKY_GATEWAY_ID=...
+STICKY_UPSELL_PRODUCT_ID=...
+STICKY_CARD_VERIFY_PRODUCT_ID=...
+STICKY_RENEWAL_PRODUCT_ID=...
 ```
 
 Do not log webhook request bodies in production.
 
-Upsell purchases, monthly billing, and card changes use `RESPONSE_CRM_ADD_ORDER_URL`. Upsell purchases and monthly billing use `RESPONSE_CRM_UPSELL_PRODUCT_ID`; normal active-account card changes use `RESPONSE_CRM_CARD_VERIFY_PRODUCT_ID`, which should be a `$0` verification product in ResponseCRM. If a member is locked because the old card failed, adding a new card charges `RESPONSE_CRM_UPSELL_PRODUCT_ID` immediately and restores access only after ResponseCRM approves the charge. The local payment method is replaced only after ResponseCRM returns an approved response.
+Upsell purchases, monthly billing, and card changes use Sticky.io. Upsell purchases use `STICKY_UPSELL_PRODUCT_ID`; normal active-account card changes use `STICKY_CARD_VERIFY_PRODUCT_ID`, which should be a verification product in Sticky.io. If a member is locked because the old card failed, adding a new card charges `STICKY_RENEWAL_PRODUCT_ID` or `STICKY_UPSELL_PRODUCT_ID` immediately and restores access only after Sticky.io approves the charge. The local payment method is replaced only after Sticky.io returns an approved response.
 
-Monthly billing is handled by `npm run billing:worker`, not by ResponseCRM recurring cycles. The worker claims due `payment_methods` rows in batches, charges them through ResponseCRM, advances `next_charged_at` by one calendar month on success, and retries failed charges with `BILLING_RETRY_DELAYS_DAYS`. After `BILLING_MAX_RETRY_ATTEMPTS`, the payment method status becomes `failed`, which locks member-only features through the existing billing guard.
+Monthly billing is handled by `npm run billing:worker`, not by Sticky.io recurring cycles. The worker claims due `payment_methods` rows in batches, charges them through Sticky.io, advances `next_charged_at` by one calendar month on success, and retries failed charges with `BILLING_RETRY_DELAYS_DAYS`. After `BILLING_MAX_RETRY_ATTEMPTS`, the payment method status becomes `failed`, which locks member-only features through the existing billing guard.
 
 Onboarding reminders are handled by `npm run onboarding:worker`. The worker claims paid, active users who have not completed onboarding, queues one reminder every `ONBOARDING_REMINDER_INTERVAL_HOURS`, and stops after `ONBOARDING_REMINDER_MAX_ATTEMPTS`. `ONBOARDING_REMINDER_WINDOW_HOURS` prevents very old accounts from receiving new reminder campaigns after a late deploy. Each reminder gets a fresh one-time secure setup link using `PURCHASE_MAGIC_LINK_TTL_MINUTES`.
 
