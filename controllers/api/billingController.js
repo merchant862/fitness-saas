@@ -27,6 +27,8 @@ async function updatePaymentMethod(req, res, next)
 {
   try
   {
+    console.log('billing_update_request_body', req.body);
+
     const result = await updateCustomerPaymentMethod(req.user, {
       ...req.body,
       ipAddress: req.ip

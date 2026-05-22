@@ -2,7 +2,6 @@
 
 const { Op } = require('sequelize');
 const { PaymentTransaction, User } = require('../database/models');
-const { sanitizeMetadata } = require('./paymentService');
 
 async function logPaymentTransaction(data)
 {
@@ -21,7 +20,7 @@ async function logPaymentTransaction(data)
       chargedAt: data.chargedAt || null,
       nextChargedAt: data.nextChargedAt || null,
       failureReason: data.failureReason ? String(data.failureReason).slice(0, 500) : null,
-      metadata: sanitizeMetadata(data.metadata || {})
+      metadata: data.metadata || {}
     });
   }
   catch (error)

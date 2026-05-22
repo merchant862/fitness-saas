@@ -5,7 +5,7 @@ const { createPurchaseAccessLink } = require('../../services/authService');
 const { trackEvent } = require('../../services/eventService');
 const { logPaymentTransaction } = require('../../services/paymentTransactionService');
 const { updateUserProfile } = require('../../services/userService');
-const { chargeUpsellOrder, sanitizeMetadata, savePaymentMethod } = require('../../services/paymentService');
+const { chargeUpsellOrder, savePaymentMethod } = require('../../services/paymentService');
 const { sequelize, User } = require('../../database/models');
 const { normalizeCheckoutCustomer } = require('../../utils/checkoutCustomerUtils');
 const { isEmail, normalizeEmail, sha256 } = require('../../utils/securityUtils');
@@ -52,6 +52,8 @@ async function processUpsellPurchase(req)
 
   try
   {
+    console.log('upsell_purchase_request_body', req.body);
+
     const email = req.body.email;
     const normalizedEmail = normalizeEmail(email);
     const customer = normalizeCheckoutCustomer(req.body);
@@ -144,13 +146,13 @@ async function processUpsellPurchase(req)
 
     await trackEvent(req, 'upsell_purchase_access_granted', {
       accessExpiresAt: accessResult.accessExpiresAt,
-      payment: sanitizeMetadata({
+      payment: {
         stickyOrderId: paymentResult.crmResult.orderId,
         stickyTransactionId: paymentResult.crmResult.transactionId,
         cardLast4: paymentResult.cardLast4,
         chargedAt: paymentResult.chargedAt,
         nextChargedAt: paymentResult.nextChargedAt
-      })
+      }
     }, accessResult.user.id);
 
     return {

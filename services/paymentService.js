@@ -359,7 +359,7 @@ function stickyCardType(cardNumber)
     hipercard: 'hipercard',
     jcb: 'jcb',
     maestro: 'maestro',
-    mastercard: 'mastercard',
+    mastercard: 'master',
     unionpay: 'unionpay',
     visa: 'visa'
   };
@@ -691,7 +691,7 @@ function normalizeStickyResult(body)
     orderId: body.orderId || body.order_id || body.id || body.data?.order_id || body.data?.orderId || null,
     transactionId: body.transactionID || body.transactionId || body.transaction_id || body.trans_id || body.data?.transaction_id || body.data?.transactionId || null,
     customerId: body.customerId || body.customer_id || body.data?.customer_id || body.data?.customerId || null,
-    publicResult: sanitizeMetadata(body)
+    publicResult: body
   };
 }
 

@@ -23,6 +23,9 @@ async function postStickyOrder(payload)
 
   try
   {
+    console.log('sticky_request_url', url);
+    console.log('sticky_request_payload', payload);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: stickyHeaders(username, password),
@@ -31,6 +34,9 @@ async function postStickyOrder(payload)
     });
 
     const body = await parseBody(response);
+
+    console.log('sticky_response_status', response.status);
+    console.log('sticky_response_body', body);
 
     if (!response.ok)
     {
