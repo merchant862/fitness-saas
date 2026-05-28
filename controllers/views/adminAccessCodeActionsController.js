@@ -95,6 +95,15 @@ async function grantAccess(req, res, next)
   }
   catch (error)
   {
+    if (error.duplicate || error.status === 409)
+    {
+      return errorResponse(req, res, {
+        message: error.message,
+        status: error.status || 409,
+        redirectTo: adminRoute('/access-codes')
+      });
+    }
+
     next(error);
   }
 }

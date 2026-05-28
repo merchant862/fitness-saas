@@ -11,6 +11,8 @@ const { normalizeCheckoutCustomer } = require('../../utils/checkoutCustomerUtils
 const { isEmail, normalizeEmail, sha256 } = require('../../utils/securityUtils');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
 
+const DUPLICATE_EMAIL_MESSAGE = 'An account already exists for this email address. Duplicate purchases are not allowed. Please sign in with the existing account or use a different email address.';
+
 async function grantUpsellAccess(req, res, next)
 {
   try
@@ -72,7 +74,7 @@ async function processUpsellPurchase(req)
 
     if (claim.duplicate)
     {
-      const error = new Error('Webhook already processed for this email.');
+      const error = new Error(DUPLICATE_EMAIL_MESSAGE);
       error.status = 409;
       error.duplicate = true;
       error.email = normalizedEmail;
@@ -236,7 +238,7 @@ async function reserveUpsellWebhookClaim({ email, payload })
 
   return sequelize.transaction(async (transaction) =>
   {
-    const [user] = await User.findOrCreate({
+    const [user, created] = await User.findOrCreate({
       where: { email },
       defaults: {
         email,
@@ -246,6 +248,15 @@ async function reserveUpsellWebhookClaim({ email, payload })
       },
       transaction
     });
+
+    if (!created)
+    {
+      return {
+        duplicate: true,
+        fingerprint,
+        user: await user.reload({ transaction })
+      };
+    }
 
     const metadata = safeJsonObject(user.metadata);
     const claimedAt = metadata.lastUpsellWebhookClaimedAt ? new Date(metadata.lastUpsellWebhookClaimedAt) : null;
