@@ -5,9 +5,10 @@ const os = require('os');
 
 const PORT = process.env.PORT || 3000;
 const WEB_CONCURRENCY = resolveWorkerCount();
+const ENABLE_NODE_CLUSTER = shouldUseInternalCluster();
 let shuttingDown = false;
 
-if (process.env.NODE_ENV === 'production')
+if (process.env.NODE_ENV === 'production' && ENABLE_NODE_CLUSTER)
 {
     if (cluster.isPrimary)
     {
@@ -39,7 +40,7 @@ if (process.env.NODE_ENV === 'production')
 } 
 else 
 {
-    startDevelopment();
+    startSingleProcess();
 }
 
 function startWorker()
@@ -50,18 +51,24 @@ function startWorker()
         console.log(`Worker ${process.pid} started - listening on http://localhost:${PORT}`);
     });
 
+    configureServerTimeouts(server);
     process.on('SIGTERM', () => shutdownWorker(server));
     process.on('SIGINT', () => shutdownWorker(server));
 }
 
-function startDevelopment()
+function startSingleProcess()
 {
     const app = require('./app');
 
-    app.listen(PORT, () =>
+    const server = app.listen(PORT, () =>
     {
-        console.log(`Development Environment - http://localhost:${PORT}`);
+        const mode = process.env.NODE_ENV === 'production' ? 'Production' : 'Development';
+        console.log(`${mode} server ${process.pid} listening on http://localhost:${PORT}`);
     });
+
+    configureServerTimeouts(server);
+    process.on('SIGTERM', () => shutdownWorker(server));
+    process.on('SIGINT', () => shutdownWorker(server));
 }
 
 function shutdownPrimary()
@@ -72,11 +79,14 @@ function shutdownPrimary()
     {
         cluster.workers[id].kill('SIGTERM');
     }
+
+    setTimeout(() => process.exit(0), Number(process.env.SHUTDOWN_TIMEOUT_MS || 10000)).unref();
 }
 
 function shutdownWorker(server)
 {
     server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), Number(process.env.SHUTDOWN_TIMEOUT_MS || 10000)).unref();
 }
 
 function resolveWorkerCount()
@@ -89,4 +99,33 @@ function resolveWorkerCount()
     }
 
     return os.availableParallelism?.() || os.cpus().length || 1;
+}
+
+function shouldUseInternalCluster()
+{
+    const setting = String(process.env.ENABLE_NODE_CLUSTER || 'auto').toLowerCase();
+
+    if (setting === 'false' || setting === '0' || setting === 'off')
+    {
+        return false;
+    }
+
+    if (setting === 'true' || setting === '1' || setting === 'on')
+    {
+        return true;
+    }
+
+    if (process.env.NODE_APP_INSTANCE !== undefined || process.env.pm_id !== undefined)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+function configureServerTimeouts(server)
+{
+    server.keepAliveTimeout = Number(process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS || 65000);
+    server.headersTimeout = Number(process.env.HTTP_HEADERS_TIMEOUT_MS || 66000);
+    server.requestTimeout = Number(process.env.HTTP_REQUEST_TIMEOUT_MS || 120000);
 }

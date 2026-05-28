@@ -173,6 +173,41 @@ Start the onboarding reminder worker in a separate process:
 npm run onboarding:worker
 ```
 
+## Production Scaling
+
+If you run the web app with PM2 cluster mode, keep the app's internal Node cluster disabled:
+
+```env
+ENABLE_NODE_CLUSTER=false
+WEB_CONCURRENCY=1
+```
+
+If you run the app directly without PM2 cluster mode, you can enable the built-in cluster:
+
+```env
+ENABLE_NODE_CLUSTER=auto
+WEB_CONCURRENCY=4
+```
+
+Size the DB pool against total processes, not one process. Total possible DB connections are roughly:
+
+```text
+(web processes + email workers + billing workers + onboarding workers) * DB_POOL_MAX
+```
+
+For high traffic behind a proxy or load balancer, keep these production defaults explicit:
+
+```env
+TRUST_PROXY=loopback
+HTTP_KEEP_ALIVE_TIMEOUT_MS=65000
+HTTP_HEADERS_TIMEOUT_MS=66000
+HTTP_REQUEST_TIMEOUT_MS=120000
+COMPRESSION_LEVEL=4
+COMPRESSION_THRESHOLD=1kb
+```
+
+`/healthz` returns a lightweight JSON response for load balancer health checks. Rate limits use the default in-process limiter; with multiple PM2 instances the effective limit is per process. Use an external rate-limit store if you need a strict global limit across all instances.
+
 Open:
 
 ```text

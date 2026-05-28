@@ -17,19 +17,19 @@ const app = express();
 app.disable('x-powered-by');
 app.set('etag', false);
 app.set('trust proxy', process.env.TRUST_PROXY || 'loopback');
+const isProduction = process.env.NODE_ENV === 'production';
 
 // View engine
 app.set('views', path.join(__dirname, '..', 'views'));
 app.set('view engine', 'ejs');
 
 // Middleware
-app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
+if (process.env.HTTP_ACCESS_LOGS !== 'false')
+{
+    app.use(logger(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
+}
 app.use(express.json({
-    limit: '1mb',
-    verify: function(req, res, buffer)
-    {
-        req.rawBody = buffer.toString('utf8');
-    }
+    limit: '1mb'
 }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(cookieParser());
@@ -76,15 +76,19 @@ app.use((req, res, next) =>
     next();
 });
 
-// Compression (Brotli fallback)
-app.use(compression({ level: 9 }));
+// Compression
+app.use(compression({
+    level: Number(process.env.COMPRESSION_LEVEL || 4),
+    threshold: process.env.COMPRESSION_THRESHOLD || '1kb'
+}));
 
 // Static files with caching
 const oneWeek = 7 * 24 * 60 * 60 * 1000;
 app.use('/', express.static(path.join(__dirname, '..', 'public'), {
     etag: false,
-    lastModified: false
-    /* maxAge: oneWeek */
+    lastModified: false,
+    maxAge: isProduction ? oneWeek : 0,
+    immutable: isProduction
 }));
 // CORS
 const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean);
@@ -102,6 +106,11 @@ app.use(cors({
 }));
 app.use('/api', apiLimiter);
 app.use(attachUser);
+
+app.get('/healthz', (req, res) =>
+{
+    res.status(200).json({ ok: true });
+});
 
 // Routes
 app.use('/', router);
