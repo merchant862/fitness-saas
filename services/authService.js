@@ -149,6 +149,30 @@ async function loginWithPassword(req, res, { email, password })
   return user;
 }
 
+async function loginAdminWithPassword(req, res, { email, password })
+{
+  const normalizedEmail = normalizeEmail(email);
+  const user = await User.findOne({
+    where: {
+      email: normalizedEmail,
+      role: 'admin',
+      status: 'active'
+    },
+    include: [{ model: UserProfile, as: 'profile' }]
+  });
+
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash))
+  {
+    const error = new Error('Invalid email or password');
+    error.status = 401;
+    throw error;
+  }
+
+  await user.update({ lastLoginAt: new Date() });
+  await issueSession(req, res, user);
+  return user;
+}
+
 async function createPurchaseAccessLink(req, { email, days = 30, source = 'upsell', metadata = {} })
 {
   const normalizedEmail = normalizeEmail(email);
@@ -236,6 +260,7 @@ module.exports = {
   createPurchaseAccessLink,
   findUserForSession,
   issueSession,
+  loginAdminWithPassword,
   loginWithPassword,
   requestMagicLink,
   revokeCurrentSession,

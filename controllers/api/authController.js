@@ -3,6 +3,7 @@
 const { trackEvent } = require('../../services/eventService');
 const { enqueueEmail } = require('../../services/emailQueueService');
 const {
+  loginAdminWithPassword,
   loginWithPassword,
   requestMagicLink,
   revokeCurrentSession,
@@ -59,13 +60,7 @@ async function adminPasswordLogin(req, res, next)
       return respondAdminLoginFailure(req, res, 'Valid email and password are required.');
     }
 
-    const user = await loginWithPassword(req, res, { email, password });
-
-    if (user.role !== 'admin')
-    {
-      await revokeCurrentSession(req, res);
-      return respondAdminLoginFailure(req, res, 'Admin access required.');
-    }
+    const user = await loginAdminWithPassword(req, res, { email, password });
 
     await trackEvent(req, 'admin_password_login', {}, user.id);
 
