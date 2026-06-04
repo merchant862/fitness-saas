@@ -6,7 +6,7 @@ const { trackEvent } = require('../../services/eventService');
 const { logPaymentTransaction } = require('../../services/paymentTransactionService');
 const { updateUserProfile } = require('../../services/userService');
 const { chargeUpsellOrder } = require('../../services/paymentService');
-const { sequelize, User } = require('../../database/models');
+const { User } = require('../../database/models');
 const { normalizeCheckoutCustomer } = require('../../utils/checkoutCustomerUtils');
 const { isEmail, normalizeEmail, sha256 } = require('../../utils/securityUtils');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
@@ -50,132 +50,96 @@ async function grantUpsellAccess(req, res, next)
 
 async function processUpsellPurchase(req)
 {
-  let claim = null;
+  console.log('upsell_purchase_request_body', req.body);
 
-  try
+  const email = req.body.email;
+  const normalizedEmail = normalizeEmail(email);
+  const customer = normalizeCheckoutCustomer(req.body);
+
+  if (!isEmail(email))
   {
-    console.log('upsell_purchase_request_body', req.body);
-
-    const email = req.body.email;
-    const normalizedEmail = normalizeEmail(email);
-    const customer = normalizeCheckoutCustomer(req.body);
-
-    if (!isEmail(email))
-    {
-      const error = new Error('Valid customer email is required');
-      error.status = 422;
-      throw error;
-    }
-
-    claim = await reserveUpsellWebhookClaim({
-      email: normalizedEmail,
-      payload: req.body
-    });
-
-    if (claim.duplicate)
-    {
-      const error = new Error(DUPLICATE_EMAIL_MESSAGE);
-      error.status = 409;
-      error.duplicate = true;
-      error.email = normalizedEmail;
-      error.accessExpiresAt = claim.user?.accessExpiresAt || null;
-      throw error;
-    }
-
-    const paymentResult = await chargeUpsellOrder({
-      ...req.body,
-      ipAddress: req.ip
-    });
-
-    const accessResult = await createPurchaseAccessLink(req, {
-      email: normalizedEmail,
-      days: Number(process.env.DEFAULT_ACCESS_DAYS || 30),
-      source: 'upsell',
-      metadata: {
-        stickyCustomerId: paymentResult.crmResult.customerId || null,
-        stickyOrderId: paymentResult.crmResult.orderId || null,
-        stickyTransactionId: paymentResult.crmResult.transactionId || null,
-        lastUpsellWebhookFingerprint: claim.fingerprint,
-        lastUpsellWebhookStatus: 'success',
-        lastUpsellWebhookProcessedAt: new Date().toISOString()
-      }
-    });
-
-    await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
-
-    await logPaymentTransaction({
-      userId: accessResult.user.id,
-      type: 'upsell',
-      status: 'approved',
-      customerId: paymentResult.crmResult.customerId || null,
-      responseCrmOrderId: paymentResult.crmResult.orderId,
-      responseCrmTransactionId: paymentResult.crmResult.transactionId,
-      idempotencyKey: paymentResult.idempotencyKey,
-      cardLast4: paymentResult.cardLast4,
-      chargedAt: paymentResult.chargedAt,
-      metadata: {
-        source: 'upsell_webhook',
-        email: accessResult.email
-      }
-    });
-
-    let emailQueued = false;
-    try
-    {
-      await enqueueEmail(await magicLinkEmail({
-        email: accessResult.email,
-        token: accessResult.token
-      }));
-      emailQueued = true;
-    }
-    catch (emailError)
-    {
-      console.error('Upsell magic link email failed:', emailError);
-    }
-
-    await trackEvent(req, 'upsell_purchase_access_granted', {
-      accessExpiresAt: accessResult.accessExpiresAt,
-      payment: {
-        stickyOrderId: paymentResult.crmResult.orderId,
-        stickyTransactionId: paymentResult.crmResult.transactionId,
-        cardLast4: paymentResult.cardLast4,
-        chargedAt: paymentResult.chargedAt
-      }
-    }, accessResult.user.id);
-
-    return {
-      email: accessResult.email,
-      accessExpiresAt: accessResult.accessExpiresAt,
-      payment: {
-        cardLast4: paymentResult.cardLast4,
-        chargedAt: paymentResult.chargedAt
-      },
-      emailQueued
-    };
-  }
-  catch (error)
-  {
-    if (claim && !claim.duplicate && claim.user)
-    {
-      try
-      {
-        await claim.user.update({
-          metadata: {
-            ...safeJsonObject(claim.user.metadata),
-            lastUpsellWebhookStatus: 'failed',
-            lastUpsellWebhookFailedAt: new Date().toISOString(),
-            lastUpsellWebhookError: String(error.message || 'Upsell webhook processing failed').slice(0, 255)
-          }
-        });
-      }
-      catch (metadataError)
-      {
-        console.error('Failed to mark upsell webhook as failed:', metadataError);
-      }
-    }
-
+    const error = new Error('Valid customer email is required');
+    error.status = 422;
     throw error;
   }
+
+  await assertUpsellEmailAvailable(normalizedEmail);
+
+  const webhookFingerprint = buildUpsellWebhookFingerprint({
+    email: normalizedEmail,
+    payload: req.body
+  });
+
+  const paymentResult = await chargeUpsellOrder({
+    ...req.body,
+    ipAddress: req.ip
+  });
+
+  const accessResult = await createPurchaseAccessLink(req, {
+    email: normalizedEmail,
+    days: Number(process.env.DEFAULT_ACCESS_DAYS || 30),
+    source: 'upsell',
+    metadata: {
+      stickyCustomerId: paymentResult.crmResult.customerId || null,
+      stickyOrderId: paymentResult.crmResult.orderId || null,
+      stickyTransactionId: paymentResult.crmResult.transactionId || null,
+      lastUpsellWebhookFingerprint: webhookFingerprint,
+      lastUpsellWebhookStatus: 'success',
+      lastUpsellWebhookProcessedAt: new Date().toISOString()
+    }
+  });
+
+  await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
+
+  await logPaymentTransaction({
+    userId: accessResult.user.id,
+    type: 'upsell',
+    status: 'approved',
+    customerId: paymentResult.crmResult.customerId || null,
+    responseCrmOrderId: paymentResult.crmResult.orderId,
+    responseCrmTransactionId: paymentResult.crmResult.transactionId,
+    idempotencyKey: paymentResult.idempotencyKey,
+    cardLast4: paymentResult.cardLast4,
+    chargedAt: paymentResult.chargedAt,
+    metadata: {
+      source: 'upsell_webhook',
+      email: accessResult.email
+    }
+  });
+
+  let emailQueued = false;
+  try
+  {
+    await enqueueEmail(await magicLinkEmail({
+      email: accessResult.email,
+      token: accessResult.token
+    }));
+    emailQueued = true;
+  }
+  catch (emailError)
+  {
+    console.error('Upsell magic link email failed:', emailError);
+  }
+
+  await trackEvent(req, 'upsell_purchase_access_granted', {
+    accessExpiresAt: accessResult.accessExpiresAt,
+    payment: {
+      stickyOrderId: paymentResult.crmResult.orderId,
+      stickyTransactionId: paymentResult.crmResult.transactionId,
+      cardLast4: paymentResult.cardLast4,
+      chargedAt: paymentResult.chargedAt
+    }
+  }, accessResult.user.id);
+
+  return {
+    email: accessResult.email,
+    accessExpiresAt: accessResult.accessExpiresAt,
+    payment: {
+      cardLast4: paymentResult.cardLast4,
+      chargedAt: paymentResult.chargedAt
+    },
+    emailQueued
+  };
 }
 
 function buildCustomerProfileUpdate(customer)
@@ -217,70 +181,21 @@ function buildCustomerProfileUpdate(customer)
   return update;
 }
 
-async function reserveUpsellWebhookClaim({ email, payload })
+async function assertUpsellEmailAvailable(email)
 {
-  const fingerprint = buildUpsellWebhookFingerprint({ email, payload });
+  const user = await User.findOne({ where: { email } });
 
-  return sequelize.transaction(async (transaction) =>
+  if (!user)
   {
-    const [user, created] = await User.findOrCreate({
-      where: { email },
-      defaults: {
-        email,
-        status: 'pending',
-        tags: [],
-        metadata: {}
-      },
-      transaction
-    });
+    return;
+  }
 
-    if (!created)
-    {
-      return {
-        duplicate: true,
-        fingerprint,
-        user: await user.reload({ transaction })
-      };
-    }
-
-    const metadata = safeJsonObject(user.metadata);
-    const claimedAt = metadata.lastUpsellWebhookClaimedAt ? new Date(metadata.lastUpsellWebhookClaimedAt) : null;
-    const sameFingerprint =
-      metadata.lastUpsellWebhookFingerprint === fingerprint &&
-      (
-        metadata.lastUpsellWebhookStatus === 'success' ||
-        (
-          metadata.lastUpsellWebhookStatus === 'processing' &&
-          claimedAt &&
-          Date.now() - claimedAt.getTime() < 15 * 60 * 1000
-        )
-      );
-
-    if (sameFingerprint)
-    {
-      return {
-        duplicate: true,
-        fingerprint,
-        user: await user.reload({ transaction })
-      };
-    }
-
-    await user.update({
-      metadata: {
-        ...metadata,
-        lastUpsellWebhookFingerprint: fingerprint,
-        lastUpsellWebhookStatus: 'processing',
-        lastUpsellWebhookClaimedAt: new Date().toISOString(),
-        lastUpsellWebhookEmail: email
-      }
-    }, { transaction });
-
-    return {
-      duplicate: false,
-      fingerprint,
-      user: await user.reload({ transaction })
-    };
-  });
+  const error = new Error(DUPLICATE_EMAIL_MESSAGE);
+  error.status = 409;
+  error.duplicate = true;
+  error.email = email;
+  error.accessExpiresAt = user.accessExpiresAt || null;
+  throw error;
 }
 
 function buildUpsellWebhookFingerprint({ email, payload })
@@ -294,66 +209,6 @@ function buildUpsellWebhookFingerprint({ email, payload })
   ];
 
   return sha256(parts.join('|'));
-}
-
-function safeJsonObject(value)
-{
-  if (!value)
-  {
-    return {};
-  }
-
-  if (typeof value === 'string')
-  {
-    if (value.length > 10000)
-    {
-      return {};
-    }
-
-    try
-    {
-      const parsed = JSON.parse(value);
-      return sanitizeMetadataShape(parsed);
-    }
-    catch
-    {
-      return {};
-    }
-  }
-
-  if (typeof value === 'object' && !Array.isArray(value))
-  {
-    return sanitizeMetadataShape(value);
-  }
-
-  return {};
-}
-
-function sanitizeMetadataShape(value)
-{
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-  {
-    return {};
-  }
-
-  const keys = Object.keys(value);
-  if (!keys.length)
-  {
-    return {};
-  }
-
-  if (keys.length > 50)
-  {
-    return {};
-  }
-
-  const numericKeys = keys.filter((key) => /^\d+$/.test(key)).length;
-  if (numericKeys / keys.length > 0.6)
-  {
-    return {};
-  }
-
-  return value;
 }
 
 module.exports = {
