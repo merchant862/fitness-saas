@@ -2,11 +2,11 @@
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-async function postStickyOrder(payload)
+async function postStickyOrder(payload, stickySettings = {})
 {
-  const url = stickyApiUrl();
-  const username = process.env.STICKY_API_USERNAME;
-  const password = process.env.STICKY_API_PASSWORD;
+  const url = stickyApiUrl(stickySettings);
+  const username = stickySettings.sticky_api_username;
+  const password = stickySettings.sticky_api_password;
 
   if (!url || !username || !password)
   {
@@ -18,7 +18,7 @@ async function postStickyOrder(payload)
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
-    Number(process.env.STICKY_TIMEOUT_MS || DEFAULT_TIMEOUT_MS)
+    Number(stickySettings.sticky_timeout_ms || DEFAULT_TIMEOUT_MS)
   );
 
   try
@@ -69,22 +69,18 @@ async function postStickyOrder(payload)
   }
 }
 
-function stickyApiUrl()
+function stickyApiUrl(stickySettings = {})
 {
-  if (process.env.STICKY_API_URL)
+  const appKey = String(stickySettings.sticky_app_key || '').trim();
+  const domain = String(stickySettings.sticky_domain || 'sticky.io').trim().replace(/^\.+/, '');
+  const apiPath = String(stickySettings.sticky_api_path || '/admin/transact.php').trim();
+
+  if (appKey)
   {
-    return process.env.STICKY_API_URL;
+    return `https://${appKey}.${domain}${apiPath.startsWith('/') ? apiPath : `/${apiPath}`}`;
   }
 
-  const appKey = String(process.env.STICKY_APP_KEY || '').trim();
-  const domain = String(process.env.STICKY_DOMAIN || 'sticky.io').trim().replace(/^\.+/, '');
-
-  if (!appKey)
-  {
-    return '';
-  }
-
-  return `https://${appKey}.${domain}/admin/transact.php`;
+  return '';
 }
 
 function stickyHeaders(username, password)

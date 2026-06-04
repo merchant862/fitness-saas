@@ -31,6 +31,26 @@ module.exports = (sequelize, DataTypes) =>
       type: DataTypes.DATE,
       field: 'last_login_at'
     },
+    activeSessionTokenHash: {
+      type: DataTypes.STRING(64),
+      field: 'active_session_token_hash'
+    },
+    activeSessionExpiresAt: {
+      type: DataTypes.DATE,
+      field: 'active_session_expires_at'
+    },
+    activeSessionStartedAt: {
+      type: DataTypes.DATE,
+      field: 'active_session_started_at'
+    },
+    activeSessionIp: {
+      type: DataTypes.STRING(64),
+      field: 'active_session_ip'
+    },
+    activeSessionUserAgent: {
+      type: DataTypes.STRING(255),
+      field: 'active_session_user_agent'
+    },
     onboardingCompletedAt: {
       type: DataTypes.DATE,
       field: 'onboarding_completed_at'
@@ -67,15 +87,14 @@ module.exports = (sequelize, DataTypes) =>
   User.associate = (models) =>
   {
     User.hasOne(models.UserProfile, { foreignKey: 'userId', as: 'profile' });
-    User.hasMany(models.AccessCode, { foreignKey: 'userId', as: 'accessCodes' });
     User.hasMany(models.PasswordResetToken, { foreignKey: 'userId', as: 'passwordResetTokens' });
     User.hasMany(models.WeightLog, { foreignKey: 'userId', as: 'weightLogs' });
     User.hasMany(models.WorkoutCompletion, { foreignKey: 'userId', as: 'workoutCompletions' });
     User.hasMany(models.MealCompletion, { foreignKey: 'userId', as: 'mealCompletions' });
     User.hasMany(models.Event, { foreignKey: 'userId', as: 'events' });
     User.hasMany(models.AiMessage, { foreignKey: 'userId', as: 'aiMessages' });
-    User.hasMany(models.PaymentMethod, { foreignKey: 'userId', as: 'paymentMethods' });
     User.hasMany(models.PaymentTransaction, { foreignKey: 'userId', as: 'paymentTransactions' });
+    User.hasMany(models.UserLoginSession, { foreignKey: 'userId', as: 'loginSessions' });
   };
 
   return User;

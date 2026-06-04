@@ -22,7 +22,7 @@ async function forgot(req, res, next)
 
     if (result)
     {
-      await enqueueEmail(passwordResetEmail({ email: result.email, token: result.token }));
+      await enqueueEmail(await passwordResetEmail({ email: result.email, token: result.token }));
       await trackEvent(req, 'password_reset_requested', {}, result.user.id);
     }
 

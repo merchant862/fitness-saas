@@ -1,7 +1,6 @@
 'use strict';
 
 const jwt = require('jsonwebtoken');
-const { PaymentMethod } = require('../database/models');
 const { COOKIE_NAME, findUserForSession } = require('../services/authService');
 const { getPostAuthRedirect, isProfileComplete } = require('../utils/profileCompletion');
 const { jwtOptions, jwtSecret } = require('../utils/jwtUtils');
@@ -31,6 +30,7 @@ async function attachUser(req, res, next)
       return next();
     }
 
+    req.authSessionId = payload.sid || null;
     req.user = session.user;
     res.locals.currentUser = session.user;
     return next();
@@ -122,49 +122,6 @@ function requireProfileComplete(req, res, next)
   return res.redirect('/profile');
 }
 
-async function requireBilling(req, res, next)
-{
-  if (!req.user)
-  {
-    return requireAuth(req, res, next);
-  }
-
-  if (req.user.role === 'admin')
-  {
-    return next();
-  }
-
-  try
-  {
-    const paymentMethod = await PaymentMethod.findOne({
-      where: {
-        userId: req.user.id,
-        status: 'active'
-      }
-    });
-
-    if (paymentMethod)
-    {
-      req.paymentMethod = paymentMethod;
-      return next();
-    }
-
-    if (req.path.startsWith('/api/'))
-    {
-      return res.status(402).json({
-        error: 'Payment method required',
-        billingUrl: '/billing'
-      });
-    }
-
-    return res.redirect('/billing');
-  }
-  catch (error)
-  {
-    next(error);
-  }
-}
-
 function requirePasswordSetup(req, res, next)
 {
   if (!req.user)
@@ -236,7 +193,6 @@ module.exports = {
   attachUser,
   requireAdmin,
   requireAuth,
-  requireBilling,
   requireGuest,
   requireOnboarding,
   requirePasswordSetup,

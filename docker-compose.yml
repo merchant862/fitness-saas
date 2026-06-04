@@ -27,20 +27,6 @@ services:
       DB_HOST: 127.0.0.1
     network_mode: host
 
-  fitaccess-billing-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fitaccess-billing-worker
-    restart: unless-stopped
-    command: ["npm", "run", "billing:worker"]
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: production
-      DB_HOST: 127.0.0.1
-    network_mode: host
-
   fitaccess-onboarding-worker:
     build:
       context: .

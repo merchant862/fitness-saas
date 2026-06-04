@@ -13,7 +13,7 @@
     <main class="main-wrapper">
       <%- include('../partials/header.ejs', {
         pageTitle: 'Payment Transactions',
-        pageSubtitle: 'Review billing, renewals, and dispute evidence references.',
+        pageSubtitle: 'Review one-time purchase and dispute evidence references.',
         currentUser: data.currentUser
       }) %>
 
@@ -58,10 +58,7 @@
                     <div class="select-position">
                       <select name="type">
                         <option value="">All</option>
-                        <option value="upsell" <%= data.filters.type === 'upsell' ? 'selected' : '' %>>Initial Membership</option>
-                        <option value="renewal" <%= data.filters.type === 'renewal' ? 'selected' : '' %>>Monthly Renewal</option>
-                        <option value="card_update" <%= data.filters.type === 'card_update' ? 'selected' : '' %>>Card Update Charge</option>
-                        <option value="card_verification" <%= data.filters.type === 'card_verification' ? 'selected' : '' %>>Card Verification</option>
+                        <option value="upsell" <%= data.filters.type === 'upsell' ? 'selected' : '' %>>One-Time Membership</option>
                       </select>
                     </div>
                   </div>
@@ -103,14 +100,13 @@
                     <th><h6>Provider Order</h6></th>
                     <th><h6>Provider Transaction</h6></th>
                     <th><h6>Charged</h6></th>
-                    <th><h6>Next Charge</h6></th>
                     <th><h6>Failure</h6></th>
                   </tr>
                 </thead>
                 <tbody>
                   <% if (!data.transactions.length) { %>
                     <tr>
-                      <td colspan="9"><p class="text-sm mb-0">No payment transactions found.</p></td>
+                      <td colspan="8"><p class="text-sm mb-0">No payment transactions found.</p></td>
                     </tr>
                   <% } %>
 
@@ -130,7 +126,6 @@
                       <td><p class="text-sm mb-0"><%= transaction.responseCrmOrderId || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= transaction.responseCrmTransactionId || '-' %></p></td>
                       <td><p class="text-sm mb-0"><%= transaction.chargedAtLabel %></p></td>
-                      <td><p class="text-sm mb-0"><%= transaction.nextChargedAtLabel %></p></td>
                       <td><p class="text-sm mb-0"><%= transaction.failureReason || '-' %></p></td>
                     </tr>
                   <% }) %>

@@ -3,16 +3,16 @@
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const {
-  AccessCode,
   MagicLink,
   User,
+  UserLoginSession,
   UserProfile,
   sequelize
 } = require('../database/models');
+const { getMemberDeviceLimit } = require('./appSettingsService');
 const {
   addDays,
   clientIp,
-  generateAccessCode,
   generateToken,
   normalizeEmail,
   sha256
@@ -34,15 +34,21 @@ function minutesFromEnv(key, fallback)
 async function issueSession(req, res, user, options = {})
 {
   const expiresAt = addDays(SESSION_DAYS);
+  const sid = generateToken(32);
 
   const token = jwt.sign(
-    { sub: user.id, role: user.role },
+    { sub: user.id, role: user.role, sid },
     jwtSecret(),
     {
       expiresIn: `${SESSION_DAYS}d`,
       ...jwtOptions()
     }
   );
+
+  if (user.role === 'user')
+  {
+    await saveMemberLoginSession(req, user, sid, expiresAt, options);
+  }
 
   res.cookie(COOKIE_NAME, token, authCookieOptions(expiresAt));
   return token;
@@ -63,98 +69,32 @@ async function findUserForSession(payload)
     return null;
   }
 
+  if (user.role === 'user' && !(await isCurrentMemberLoginSession(user, payload.sid)))
+  {
+    return null;
+  }
+
   return { user };
 }
 
 async function revokeCurrentSession(req, res)
 {
-  res.clearCookie(COOKIE_NAME, { path: '/' });
-}
-
-async function createAccessCode({ email, days = 30, source = 'manual', metadata = {} })
-{
-  const normalizedEmail = normalizeEmail(email);
-  const plainCode = generateAccessCode();
-  const expiresAt = addDays(days);
-
-  const record = await AccessCode.create({
-    email: normalizedEmail,
-    codeHash: sha256(plainCode),
-    expiresAt,
-    source,
-    metadata
-  });
-
-  return { accessCode: record, plainCode };
-}
-
-async function redeemAccessCode(req, res, { email, accessCode })
-{
-  const normalizedEmail = normalizeEmail(email);
-  const codeHash = sha256(String(accessCode || '').trim().toUpperCase());
-
-  return sequelize.transaction(async (transaction) =>
+  if (req.user?.role === 'user' && req.authSessionId)
   {
-    const code = await AccessCode.findOne({
-      where: { codeHash },
-      transaction,
-      lock: transaction.LOCK.UPDATE
-    });
-
-    if (!code || code.email !== normalizedEmail)
-    {
-      const error = new Error('Invalid access code');
-      error.status = 401;
-      throw error;
-    }
-
-    if (code.status !== 'unused' || code.expiresAt <= new Date())
-    {
-      if (code.status === 'unused')
+    const currentHash = sha256(req.authSessionId);
+    await UserLoginSession.update(
+      { revokedAt: new Date() },
       {
-        await code.update({ status: 'expired' }, { transaction });
+        where: {
+          userId: req.user.id,
+          sessionTokenHash: currentHash,
+          revokedAt: null
+        }
       }
+    );
+  }
 
-      const error = new Error('Access code is expired or already used');
-      error.status = 401;
-      throw error;
-    }
-
-    const [user] = await User.findOrCreate({
-      where: { email: normalizedEmail },
-      defaults: {
-        email: normalizedEmail,
-        status: 'active',
-        accessExpiresAt: code.expiresAt,
-        tags: ['access_redeemed']
-      },
-      transaction
-    });
-
-    const tags = new Set(user.tags || []);
-    tags.add('access_redeemed');
-    await user.update({
-      status: 'active',
-      accessExpiresAt: code.expiresAt,
-      lastLoginAt: new Date(),
-      tags: Array.from(tags)
-    }, { transaction });
-
-    await UserProfile.findOrCreate({
-      where: { userId: user.id },
-      defaults: { userId: user.id },
-      transaction
-    });
-
-    await code.update({
-      userId: user.id,
-      status: 'redeemed',
-      redeemedAt: new Date()
-    }, { transaction });
-
-    await issueSession(req, res, user, { transaction });
-    return user.reload({ include: [{ model: UserProfile, as: 'profile' }], transaction });
-  });
+  res.clearCookie(COOKIE_NAME, { path: '/' });
 }
 
 async function requestMagicLink(req, { email })
@@ -285,24 +225,106 @@ async function verifyMagicLink(req, res, token)
     throw error;
   }
 
+  await issueSession(req, res, link.user);
   await link.update({ usedAt: new Date() });
   await link.user.update({ lastLoginAt: new Date() });
-  await issueSession(req, res, link.user);
   return link.user;
 }
 
 module.exports = {
   COOKIE_NAME,
-  createAccessCode,
   createPurchaseAccessLink,
   findUserForSession,
   issueSession,
   loginWithPassword,
-  redeemAccessCode,
   requestMagicLink,
   revokeCurrentSession,
   verifyMagicLink
 };
+
+async function saveMemberLoginSession(req, user, sid, expiresAt, options = {})
+{
+  if (!options.transaction)
+  {
+    return sequelize.transaction(async (transaction) =>
+      saveMemberLoginSession(req, user, sid, expiresAt, { ...options, transaction })
+    );
+  }
+
+  const now = new Date();
+  const sessionHash = sha256(sid);
+  const transaction = options.transaction;
+
+  const lockedUser = transaction
+    ? await User.findByPk(user.id, { transaction, lock: transaction.LOCK.UPDATE })
+    : await User.findByPk(user.id);
+
+  if (!lockedUser)
+  {
+    const error = new Error('User account is no longer available');
+    error.status = 401;
+    throw error;
+  }
+
+  await UserLoginSession.destroy({
+    where: {
+      userId: lockedUser.id,
+      [Op.or]: [
+        { expiresAt: { [Op.lte]: now } },
+        { revokedAt: { [Op.ne]: null } }
+      ]
+    },
+    transaction
+  });
+
+  const [deviceLimit, activeSessionCount] = await Promise.all([
+    getMemberDeviceLimit({ transaction }),
+    UserLoginSession.count({
+      where: {
+        userId: lockedUser.id,
+        revokedAt: null,
+        expiresAt: { [Op.gt]: now }
+      },
+      transaction
+    })
+  ]);
+
+  if (activeSessionCount >= deviceLimit)
+  {
+    const error = new Error(`This account is already signed in on ${deviceLimit} allowed ${deviceLimit === 1 ? 'device' : 'devices'}. Please log out from an active device before signing in again.`);
+    error.status = 409;
+    throw error;
+  }
+
+  await UserLoginSession.create({
+    userId: lockedUser.id,
+    sessionTokenHash: sessionHash,
+    expiresAt,
+    ipAddress: String(clientIp(req) || '').slice(0, 64) || null,
+    userAgent: String(req.headers['user-agent'] || '').slice(0, 255) || null
+  }, { transaction });
+
+  Object.assign(user, lockedUser.get({ plain: true }));
+}
+
+async function isCurrentMemberLoginSession(user, sid)
+{
+  if (!sid)
+  {
+    return false;
+  }
+
+  const session = await UserLoginSession.findOne({
+    where: {
+      userId: user.id,
+      sessionTokenHash: sha256(sid),
+      revokedAt: null,
+      expiresAt: { [Op.gt]: new Date() }
+    }
+  });
+
+  return Boolean(session);
+}
 
 function safeJsonObject(value)
 {

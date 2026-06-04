@@ -1,6 +1,6 @@
 'use strict';
 
-const { Event, MealCompletion, PaymentMethod, WorkoutCompletion } = require('../../database/models');
+const { Event, MealCompletion, WorkoutCompletion } = require('../../database/models');
 const { Op } = require('sequelize');
 const { getAvatarType, getProfilePreferences, isProfileComplete } = require('../../utils/profileCompletion');
 
@@ -8,7 +8,7 @@ async function profileViewController(req, res, next)
 {
     try
     {
-        const [workoutsCompleted, mealCompletions, recentProgressEvents, paymentMethod] = await Promise.all([
+        const [workoutsCompleted, mealCompletions, recentProgressEvents] = await Promise.all([
             WorkoutCompletion.count({ where: { userId: req.user.id } }),
             MealCompletion.count({ where: { userId: req.user.id } }),
             Event.findAll({
@@ -22,13 +22,6 @@ async function profileViewController(req, res, next)
                 order: [['createdAt', 'DESC']],
                 limit: 50
             }),
-            PaymentMethod.findOne({
-                where: {
-                    userId: req.user.id,
-                    status: 'active'
-                },
-                order: [['createdAt', 'DESC']]
-            })
         ]);
         const currentUser = presentUser(req.user);
         const preferences = getProfilePreferences(req.user);
@@ -76,10 +69,8 @@ async function profileViewController(req, res, next)
                 workoutsCompleted,
                 mealsFollowed: mealCompletions
             },
-            billing: presentPaymentMethod(paymentMethod),
             note: 'Your profile settings help personalize your workouts, meals, and AI guidance.',
-            message: null,
-            billingMessage: null
+            message: null
         };
 
         return res.status(200).render('../views/profile.ejs', { profileData });
@@ -120,24 +111,6 @@ function calculateStreakDays(events)
     }
 
     return streak;
-}
-
-function presentPaymentMethod(paymentMethod)
-{
-    if (!paymentMethod)
-    {
-        return {
-            cardLast4: null,
-            nextChargedAt: null,
-            status: 'Not added'
-        };
-    }
-
-    return {
-        cardLast4: paymentMethod.cardLast4,
-        nextChargedAt: paymentMethod.nextChargedAt ? paymentMethod.nextChargedAt.toISOString().slice(0, 10) : null,
-        status: label(paymentMethod.status)
-    };
 }
 
 function presentUser(user)

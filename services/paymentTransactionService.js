@@ -9,7 +9,6 @@ async function logPaymentTransaction(data)
   {
     return await PaymentTransaction.create({
       userId: data.userId,
-      paymentMethodId: data.paymentMethodId || null,
       type: data.type,
       status: data.status,
       customerId: data.customerId || null,
@@ -18,7 +17,6 @@ async function logPaymentTransaction(data)
       idempotencyKey: data.idempotencyKey || null,
       cardLast4: data.cardLast4 || null,
       chargedAt: data.chargedAt || null,
-      nextChargedAt: data.nextChargedAt || null,
       failureReason: data.failureReason ? String(data.failureReason).slice(0, 500) : null,
       metadata: data.metadata || {}
     });
@@ -37,7 +35,7 @@ async function listPaymentTransactions(filters = {})
   const limit = Math.min(Math.max(Number(filters.limit || 50), 1), 100);
   const offset = Math.max(Number(filters.offset || 0), 0);
 
-  if (['upsell', 'renewal', 'card_update', 'card_verification'].includes(filters.type))
+  if (['upsell'].includes(filters.type))
   {
     where.type = filters.type;
   }
@@ -86,18 +84,14 @@ function formatPaymentTransaction(transaction)
     ...plain,
     typeLabel: transactionTypeLabel(plain.type),
     statusLabel: statusLabel(plain.status),
-    chargedAtLabel: formatDateTime(plain.chargedAt || plain.createdAt),
-    nextChargedAtLabel: plain.nextChargedAt ? formatDateTime(plain.nextChargedAt) : '-'
+    chargedAtLabel: formatDateTime(plain.chargedAt || plain.createdAt)
   };
 }
 
 function transactionTypeLabel(type)
 {
   const labels = {
-    upsell: 'Initial membership',
-    renewal: 'Monthly renewal',
-    card_update: 'Card update charge',
-    card_verification: 'Card verification'
+    upsell: 'One-time membership'
   };
 
   return labels[type] || type || '-';

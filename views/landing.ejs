@@ -146,6 +146,18 @@
         border-color: var(--line);
       }
 
+      .btn-outlinex {
+        color: var(--ink) !important;
+        background: transparent;
+        border-color: #cfd6e3;
+      }
+
+      .btn-outlinex:hover {
+        color: var(--blue) !important;
+        border-color: #b9c5ff;
+        background: #f3f6ff;
+      }
+
       .hero {
         position: relative;
         min-height: 92vh;
@@ -734,6 +746,24 @@
         color: #ffffff;
       }
 
+      .section-dark .link-card {
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .section-dark .link-card:nth-child(even) {
+        background: rgba(255, 255, 255, 0.11);
+      }
+
+      .section-dark .link-card p {
+        color: #cbd5e1;
+      }
+
+      .section-dark .link-card span:last-child {
+        color: #ffffff;
+      }
+
       .cta {
         display: flex;
         align-items: center;
@@ -743,7 +773,7 @@
 
       .cta h2 {
         margin: 0 0 10px;
-        color: #ffffff;
+        color: var(--ink);
         font-size: 38px;
         line-height: 1.16;
         font-weight: 900;
@@ -756,24 +786,24 @@
 
       .footer {
         padding: 72px 0 0;
-        border-top: 1px solid var(--line);
-        background: #f8fafc;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--dark);
       }
 
       .footer-inner {
         display: grid;
         grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.55fr);
         gap: 44px;
-        color: var(--muted);
+        color: #cbd5e1;
         font-size: 14px;
       }
 
       .footer-brand {
         min-width: 0;
         padding: 28px;
-        border: 1px solid #e7ecf4;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 8px;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .footer-brand .footer-logo {
@@ -789,7 +819,7 @@
       .footer-brand p {
         max-width: 360px;
         margin: 0 0 22px;
-        color: var(--muted);
+        color: #cbd5e1;
         line-height: 1.7;
       }
 
@@ -804,10 +834,10 @@
         gap: 10px;
         min-height: 42px;
         padding: 0 12px;
-        border: 1px solid #eef2f7;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 8px;
-        color: #344054;
-        background: #f8fafc;
+        color: #e5e7eb;
+        background: rgba(255, 255, 255, 0.07);
         font-weight: 800;
       }
 
@@ -831,15 +861,15 @@
       .footer-column {
         min-width: 0;
         padding: 22px;
-        border: 1px solid #e7ecf4;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 8px;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .footer-column h3,
       .payment-title {
         margin: 0 0 14px;
-        color: var(--ink);
+        color: #ffffff;
         font-size: 13px;
         font-weight: 900;
         text-transform: uppercase;
@@ -854,12 +884,14 @@
         margin: 0;
         padding: 0;
         border: 0;
-        border-bottom: 1px solid #eef2f7;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 0;
-        color: #344054;
-        background: #ffffff;
+        color: #cbd5e1;
+        background: transparent;
         font-size: 14px;
-        font-weight: 750;
+        font-weight: 500;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
         transition: 150ms ease;
       }
 
@@ -873,7 +905,8 @@
       }
 
       .footer-column a i {
-        color: #98a2b3;
+        flex: 0 0 auto;
+        color: #94a3b8;
         font-size: 13px;
       }
 
@@ -883,9 +916,9 @@
 
       .footer-payments {
         padding: 22px;
-        border: 1px solid #e7ecf4;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 8px;
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .payment-grid {
@@ -900,7 +933,7 @@
         display: block;
         object-fit: contain;
         padding: 5px 6px;
-        border: 1px solid #eef2f7;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 6px;
         background: #ffffff;
       }
@@ -908,8 +941,8 @@
       .footer-bottom {
         margin: 46px 0 0;
         padding: 18px 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        background: var(--dark);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.14);
         color: #cbd5e1;
         font-size: 13px;
       }
@@ -921,6 +954,36 @@
         align-items: center;
         justify-content: space-between;
         gap: 18px;
+      }
+
+      .footer-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .footer-meta span,
+      .footer-meta a {
+        color: #cbd5e1;
+      }
+
+      .footer-tagline {
+        color: #94a3b8 !important;
+        font-weight: 400;
+      }
+
+      .footer-meta a {
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .footer-meta a:hover {
+        color: #ffffff;
+      }
+
+      .footer-copy {
+        flex: 0 0 auto;
       }
 
       @media (max-width: 991px) {
@@ -1074,9 +1137,40 @@
           grid-template-columns: 1fr;
         }
 
-        .footer-columns,
+        .footer-brand {
+          padding: 22px;
+        }
+
+        .footer-brand p {
+          max-width: none;
+          margin-bottom: 18px;
+        }
+
+        .footer-columns {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .footer-column {
+          padding: 18px;
+        }
+
+        .footer-column a {
+          min-height: 34px;
+          justify-content: flex-start;
+        }
+
+        .footer-column a i {
+          margin-left: auto;
+        }
+
         .payment-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 6px;
+        }
+
+        .footer-payments {
+          padding: 18px;
         }
 
         .link-card {
@@ -1089,12 +1183,28 @@
 
         .footer-bottom-inner {
           width: calc(100% - 30px);
+          gap: 10px;
         }
 
         .footer-inner,
         .footer-bottom-inner {
           align-items: flex-start;
           flex-direction: column;
+        }
+
+        .footer-meta {
+          width: 100%;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+          line-height: 1.55;
+        }
+
+        .footer-meta span,
+        .footer-meta a,
+        .footer-copy {
+          max-width: 100%;
+          overflow-wrap: anywhere;
         }
       }
     </style>
@@ -1129,8 +1239,8 @@
             <div class="eyebrow">FitAccess Premium Membership</div>
             <h1>Personal fitness guidance from day one.</h1>
             <p>
-              FitAccess gives members guided workouts, meal plans, progress tracking, secure billing,
-              and an AI Coach experience in one clean fitness dashboard.
+              FitAccess gives members guided workouts, meal plans, progress tracking, protected account
+              access, and an AI Coach experience in one clean fitness dashboard.
             </p>
 
             <div class="actions">
@@ -1264,8 +1374,8 @@
               <div class="check">
                 <i class="lni lni-checkmark-circle"></i>
                 <div>
-                  <strong>Secure billing experience</strong>
-                  <span>Members can update their card from the account area while sensitive card details stay protected.</span>
+                  <strong>Protected member access</strong>
+                  <span>Members complete checkout before entry, then continue through a secure account area without extra payment steps inside the app.</span>
                 </div>
               </div>
 
@@ -1316,7 +1426,7 @@
         </div>
       </section>
 
-      <section class="section section-soft">
+      <section class="section section-dark">
         <div class="containerx">
           <div class="section-head">
             <h2>Everything important, one tap away.</h2>
@@ -1355,7 +1465,7 @@
         </div>
       </section>
 
-      <section id="access" class="section section-dark">
+      <section id="access" class="section section-soft">
         <div class="containerx cta">
           <div>
             <h2>Already have FitAccess?</h2>
@@ -1363,8 +1473,8 @@
           </div>
 
           <div class="actions">
-            <a href="/sign-in" class="btnx btn-lightx">Sign In</a>
-            <a href="/forgot-password" class="btnx btn-lightx">Reset Password</a>
+            <a href="/sign-in" class="btnx btn-primaryx">Sign In</a>
+            <a href="/forgot-password" class="btnx btn-outlinex">Reset Password</a>
           </div>
         </div>
       </section>
@@ -1373,7 +1483,7 @@
         <div class="containerx footer-inner">
           <div class="footer-brand">
             <a href="/" class="footer-logo" aria-label="FitAccess Home">
-              <img src="/images/logo/logo.svg" alt="FitAccess" />
+              <img src="/images/logo/logo-white.svg" alt="FitAccess" />
             </a>
             <p>
               Premium fitness membership with guided training, practical nutrition, progress tracking,
@@ -1395,13 +1505,6 @@
           <div class="footer-right">
             <div class="footer-columns">
               <div class="footer-column">
-                <h3>Membership</h3>
-                <a href="#plans">Workout Plans <i class="lni lni-arrow-right"></i></a>
-                <a href="#nutrition">Meal Guidance <i class="lni lni-arrow-right"></i></a>
-                <a href="#experience">Member Experience <i class="lni lni-arrow-right"></i></a>
-              </div>
-
-              <div class="footer-column">
                 <h3>Account</h3>
                 <a href="/sign-in">Sign In <i class="lni lni-arrow-right"></i></a>
                 <a href="/forgot-password">Reset Password <i class="lni lni-arrow-right"></i></a>
@@ -1414,6 +1517,14 @@
                 <% if (data.currentUser?.role === 'admin') { %>
                   <a href="<%= adminBasePath || '/panel' %>">Admin Panel <i class="lni lni-arrow-right"></i></a>
                 <% } %>
+              </div>
+
+              <div class="footer-column">
+                <h3>Legal</h3>
+                <a href="/terms-and-conditions">Terms and Conditions <i class="lni lni-arrow-right"></i></a>
+                <a href="/privacy-policy">Privacy Policy <i class="lni lni-arrow-right"></i></a>
+                <a href="/refund-policy">Refund Policy <i class="lni lni-arrow-right"></i></a>
+                <a href="/do-not-sell-or-share">Do Not Sell or Share My Personal Information <i class="lni lni-arrow-right"></i></a>
               </div>
             </div>
 
@@ -1435,8 +1546,13 @@
 
         <div class="footer-bottom">
           <div class="footer-bottom-inner">
-            <span>FitAccess helps members stay consistent with fitness, meals, and progress in one secure account.</span>
-            <span>© <span id="footer-year"></span> FitAccess</span>
+            <div class="footer-meta">
+              <span class="footer-tagline" style="color: #94a3b8 !important; font-weight: 400;">FitAccess helps members stay consistent with fitness, meals, and progress in one secure account.</span>
+              <% if (data.supportEmail) { %>
+                <a href="mailto:<%= data.supportEmail %>">Support: <%= data.supportEmail %></a>
+              <% } %>
+            </div>
+            <span class="footer-copy">© <span id="footer-year"></span> FitAccess</span>
           </div>
         </div>
       </footer>

@@ -5,7 +5,7 @@ const { createPurchaseAccessLink } = require('../../services/authService');
 const { trackEvent } = require('../../services/eventService');
 const { logPaymentTransaction } = require('../../services/paymentTransactionService');
 const { updateUserProfile } = require('../../services/userService');
-const { chargeUpsellOrder, savePaymentMethod } = require('../../services/paymentService');
+const { chargeUpsellOrder } = require('../../services/paymentService');
 const { sequelize, User } = require('../../database/models');
 const { normalizeCheckoutCustomer } = require('../../utils/checkoutCustomerUtils');
 const { isEmail, normalizeEmail, sha256 } = require('../../utils/securityUtils');
@@ -103,20 +103,8 @@ async function processUpsellPurchase(req)
 
     await updateUserProfile(accessResult.user, buildCustomerProfileUpdate(customer));
 
-    const paymentMethod = await savePaymentMethod(accessResult.user.id, {
-      customerId: paymentResult.crmResult.customerId || null,
-      cardNo: paymentResult.cardNo,
-      cardLast4: paymentResult.cardLast4,
-      expiryMonth: paymentResult.expiryMonth,
-      expiryYear: paymentResult.expiryYear,
-      cvv: paymentResult.cvv,
-      lastChargedAt: paymentResult.chargedAt,
-      nextChargedAt: paymentResult.nextChargedAt
-    });
-
     await logPaymentTransaction({
       userId: accessResult.user.id,
-      paymentMethodId: paymentMethod.id,
       type: 'upsell',
       status: 'approved',
       customerId: paymentResult.crmResult.customerId || null,
@@ -125,7 +113,6 @@ async function processUpsellPurchase(req)
       idempotencyKey: paymentResult.idempotencyKey,
       cardLast4: paymentResult.cardLast4,
       chargedAt: paymentResult.chargedAt,
-      nextChargedAt: paymentResult.nextChargedAt,
       metadata: {
         source: 'upsell_webhook',
         email: accessResult.email
@@ -135,7 +122,7 @@ async function processUpsellPurchase(req)
     let emailQueued = false;
     try
     {
-      await enqueueEmail(magicLinkEmail({
+      await enqueueEmail(await magicLinkEmail({
         email: accessResult.email,
         token: accessResult.token
       }));
@@ -152,8 +139,7 @@ async function processUpsellPurchase(req)
         stickyOrderId: paymentResult.crmResult.orderId,
         stickyTransactionId: paymentResult.crmResult.transactionId,
         cardLast4: paymentResult.cardLast4,
-        chargedAt: paymentResult.chargedAt,
-        nextChargedAt: paymentResult.nextChargedAt
+        chargedAt: paymentResult.chargedAt
       }
     }, accessResult.user.id);
 
@@ -162,8 +148,7 @@ async function processUpsellPurchase(req)
       accessExpiresAt: accessResult.accessExpiresAt,
       payment: {
         cardLast4: paymentResult.cardLast4,
-        chargedAt: paymentResult.chargedAt,
-        nextChargedAt: paymentResult.nextChargedAt
+        chargedAt: paymentResult.chargedAt
       },
       emailQueued
     };
@@ -372,6 +357,5 @@ function sanitizeMetadataShape(value)
 }
 
 module.exports = {
-  grantUpsellAccess,
-  processUpsellPurchase
+  grantUpsellAccess
 };

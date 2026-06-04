@@ -8,10 +8,6 @@ module.exports = (sequelize, DataTypes) =>
       allowNull: false,
       field: 'user_id'
     },
-    paymentMethodId: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      field: 'payment_method_id'
-    },
     type: {
       type: DataTypes.ENUM('upsell', 'renewal', 'card_update', 'card_verification'),
       allowNull: false
@@ -44,10 +40,6 @@ module.exports = (sequelize, DataTypes) =>
       type: DataTypes.DATE,
       field: 'charged_at'
     },
-    nextChargedAt: {
-      type: DataTypes.DATE,
-      field: 'next_charged_at'
-    },
     failureReason: {
       type: DataTypes.STRING(500),
       field: 'failure_reason'
@@ -65,7 +57,6 @@ module.exports = (sequelize, DataTypes) =>
   PaymentTransaction.associate = (models) =>
   {
     PaymentTransaction.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-    PaymentTransaction.belongsTo(models.PaymentMethod, { foreignKey: 'paymentMethodId', as: 'paymentMethod' });
   };
 
   return PaymentTransaction;

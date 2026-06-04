@@ -2,7 +2,6 @@
 
 const { Op } = require('sequelize');
 const {
-  AccessCode,
   AiMessage,
   Event,
   MealDay,
@@ -23,9 +22,6 @@ async function getAdminDashboardStats()
     totalUsers,
     activeUsers,
     onboardedUsers,
-    unusedCodes,
-    redeemedCodes,
-    revokedCodes,
     workoutCompletions,
     aiMessages,
     workoutPlans,
@@ -35,9 +31,6 @@ async function getAdminDashboardStats()
     User.count({ where: { role: 'user' } }),
     User.count({ where: { role: 'user', status: 'active' } }),
     User.count({ where: { role: 'user', onboardingCompletedAt: { [Op.ne]: null } } }),
-    AccessCode.count({ where: { status: 'unused' } }),
-    AccessCode.count({ where: { status: 'redeemed' } }),
-    AccessCode.count({ where: { status: 'revoked' } }),
     WorkoutCompletion.count(),
     AiMessage.count(),
     WorkoutPlan.count({ where: { isActive: true } }),
@@ -59,14 +52,10 @@ async function getAdminDashboardStats()
       totalUsers,
       activeUsers,
       onboardedUsers,
-      unusedCodes,
-      redeemedCodes,
-      revokedCodes,
       workoutCompletions,
       aiMessages,
       workoutPlans,
       mealPlans,
-      activationRate: percentage(redeemedCodes, redeemedCodes + unusedCodes),
       onboardingRate: percentage(onboardedUsers, totalUsers),
       generatedAt: now
     },
@@ -162,15 +151,6 @@ async function searchAdminUsers(filters = {})
     limit,
     offset
   };
-}
-
-async function listAdminAccessCodes()
-{
-  return AccessCode.findAll({
-    include: [{ model: User, as: 'user' }],
-    order: [['createdAt', 'DESC']],
-    limit: 200
-  });
 }
 
 async function updateAdminUserStatus(id, status)
@@ -338,7 +318,6 @@ module.exports = {
   getAdminDashboardStats,
   getAdminMealPlan,
   getAdminWorkoutPlan,
-  listAdminAccessCodes,
   listAdminUsers,
   promoteAdminUser,
   searchAdminUsers,

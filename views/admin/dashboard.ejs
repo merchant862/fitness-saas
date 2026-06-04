@@ -12,7 +12,7 @@
     <main class="main-wrapper">
       <%- include('../partials/header.ejs', {
         pageTitle: 'Admin Dashboard',
-        pageSubtitle: 'Manage users, access codes, and app activity.',
+        pageSubtitle: 'Manage users, content, payments, and app activity.',
         currentUser: data.currentUser
       }) %>
 
@@ -49,11 +49,256 @@
                   </div>
                   <div class="d-flex flex-wrap gap-2">
                     <a href="<%= adminPath %>/users" class="main-btn primary-btn btn-hover btn-sm">View Users</a>
-                    <a href="<%= adminPath %>/access-codes" class="main-btn success-btn btn-hover btn-sm">Grant Access</a>
                     <a href="<%= adminPath %>/payments" class="main-btn light-btn btn-hover btn-sm">Payment Logs</a>
                     <a href="<%= adminPath %>/content" class="main-btn light-btn btn-hover btn-sm">Review Content</a>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xl-5 col-lg-7">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium mb-1">Member Login Devices</h6>
+                  <p class="text-sm mb-0">Set how many devices each member account can stay signed in on at the same time.</p>
+                </div>
+
+                <% if (data.settings.message) { %>
+                  <div class="alert-box success-alert mb-20">
+                    <p class="text-sm mb-0"><%= data.settings.message %></p>
+                  </div>
+                <% } %>
+
+                <form action="<%= adminPath %>/settings/device-limit" method="POST">
+                  <div class="row align-items-end">
+                    <div class="col-sm-7">
+                      <div class="input-style-1 mb-0">
+                        <label>Allowed Devices</label>
+                        <input
+                          type="number"
+                          name="memberDeviceLimit"
+                          min="<%= data.settings.memberDeviceLimitMin %>"
+                          max="<%= data.settings.memberDeviceLimitMax %>"
+                          step="1"
+                          value="<%= data.settings.memberDeviceLimit %>"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-sm-5 mt-3 mt-sm-0">
+                      <button class="main-btn primary-btn btn-hover w-100" type="submit">Save</button>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray mb-0 mt-15">
+                    Current limit: <%= data.settings.memberDeviceLimit %> <%= data.settings.memberDeviceLimit === 1 ? 'device' : 'devices' %>.
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xl-6">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium mb-1">Email Settings</h6>
+                  <p class="text-sm mb-0">Set the Resend sender used by account access and security emails.</p>
+                </div>
+
+                <% if (data.settings.emailMessage) { %>
+                  <div class="alert-box success-alert mb-20">
+                    <p class="text-sm mb-0"><%= data.settings.emailMessage %></p>
+                  </div>
+                <% } %>
+
+                <% const emailSettings = data.settings.email; %>
+                <form action="<%= adminPath %>/settings/email" method="POST">
+                  <div class="input-style-1">
+                    <label>Resend API key</label>
+                    <input type="password" name="resendApiKey" value="<%= emailSettings.resend_api_key %>" autocomplete="new-password" />
+                  </div>
+                  <div class="input-style-1 mb-0">
+                    <label>Resend from email</label>
+                    <input type="text" name="resendFromEmail" value="<%= emailSettings.resend_from_email %>" placeholder="FitAccess <noreply@example.com>" />
+                  </div>
+                  <button class="main-btn primary-btn btn-hover mt-20" type="submit">Save Email Settings</button>
+                </form>
+              </div>
+            </div>
+
+            <div class="col-xl-6">
+              <div class="card-style mb-30">
+                <div class="title mb-20">
+                  <h6 class="text-medium mb-1">Brand and Legal Settings</h6>
+                  <p class="text-sm mb-0">Control support email, company names, and public website URL from the backend.</p>
+                </div>
+
+                <% if (data.settings.brandMessage) { %>
+                  <div class="alert-box success-alert mb-20">
+                    <p class="text-sm mb-0"><%= data.settings.brandMessage %></p>
+                  </div>
+                <% } %>
+
+                <% const brand = data.settings.brand; %>
+                <form action="<%= adminPath %>/settings/brand" method="POST">
+                  <div class="input-style-1">
+                    <label>Support email</label>
+                    <input type="email" name="supportEmail" value="<%= brand.support_email %>" />
+                  </div>
+                  <div class="input-style-1">
+                    <label>Website URL</label>
+                    <input type="url" name="websiteUrl" value="<%= brand.website_url %>" placeholder="https://www.fitaccess.app/" />
+                  </div>
+                  <div class="input-style-1 mb-0">
+                    <label>Company names</label>
+                    <textarea name="companyNames" rows="3"><%= brand.company_names.split(' and ').join('\n') %></textarea>
+                  </div>
+                  <button class="main-btn primary-btn btn-hover mt-20" type="submit">Save Brand Settings</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card-style mb-30">
+                <div class="title mb-25">
+                  <h6 class="text-medium mb-1">Sticky Settings</h6>
+                  <p class="text-sm mb-0">Update the Sticky checkout configuration used by the one-time membership webhook.</p>
+                </div>
+
+                <% if (data.settings.stickyMessage) { %>
+                  <div class="alert-box success-alert mb-20">
+                    <p class="text-sm mb-0"><%= data.settings.stickyMessage %></p>
+                  </div>
+                <% } %>
+
+                <form action="<%= adminPath %>/settings/sticky" method="POST">
+                  <% const sticky = data.settings.sticky; %>
+                  <div class="row">
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky gateway ID</label>
+                        <input type="text" name="stickyGatewayId" value="<%= sticky.sticky_gateway_id %>" placeholder="forceGatewayId" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky app key</label>
+                        <input type="text" name="stickyAppKey" value="<%= sticky.sticky_app_key %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky domain</label>
+                        <input type="text" name="stickyDomain" value="<%= sticky.sticky_domain %>" placeholder="sticky.io" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky API path</label>
+                        <input type="text" name="stickyApiPath" value="<%= sticky.sticky_api_path %>" placeholder="/admin/transact.php" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky API username</label>
+                        <input type="text" name="stickyApiUsername" value="<%= sticky.sticky_api_username %>" autocomplete="off" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky API password</label>
+                        <input type="password" name="stickyApiPassword" value="<%= sticky.sticky_api_password %>" autocomplete="new-password" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky campaign ID</label>
+                        <input type="text" name="stickyCampaignId" value="<%= sticky.sticky_campaign_id %>" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky shipping ID</label>
+                        <input type="text" name="stickyShippingId" value="<%= sticky.sticky_shipping_id %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Default affiliate ID</label>
+                        <input type="text" name="stickyDefaultAffiliateId" value="<%= sticky.sticky_default_affiliate_id %>" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Tracker postback URL</label>
+                        <input type="url" name="stickyTrackerPostbackUrl" value="<%= sticky.sticky_tracker_postback_url %>" placeholder="https://track.example.com/acquisition?click_id={click_id}" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Product key</label>
+                        <input type="text" name="stickyProductKey" value="<%= sticky.sticky_product_key %>" placeholder="main" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Product label</label>
+                        <input type="text" name="stickyProductLabel" value="<%= sticky.sticky_product_label %>" placeholder="Main product" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky offer ID</label>
+                        <input type="text" name="stickyOfferId" value="<%= sticky.sticky_offer_id %>" />
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky product ID</label>
+                        <input type="text" name="stickyProductId" value="<%= sticky.sticky_product_id %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                      <div class="input-style-1">
+                        <label>Sticky billing model ID</label>
+                        <input type="text" name="stickyBillingModelId" value="<%= sticky.sticky_billing_model_id %>" />
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                      <div class="input-style-1">
+                        <label>Transaction type</label>
+                        <input type="text" name="stickyTranType" value="<%= sticky.sticky_tran_type %>" placeholder="Sale" />
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                      <div class="input-style-1">
+                        <label>Step number</label>
+                        <input type="text" name="stickyUpsellStepNum" value="<%= sticky.sticky_upsell_step_num %>" />
+                      </div>
+                    </div>
+
+                    <div class="col-lg-3 col-sm-6">
+                      <div class="input-style-1 mb-lg-0">
+                        <label>Timeout ms</label>
+                        <input type="number" name="stickyTimeoutMs" min="1000" step="500" value="<%= sticky.sticky_timeout_ms %>" />
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 d-flex align-items-end">
+                      <button class="main-btn primary-btn btn-hover w-100 mb-30 mb-lg-0" type="submit">Save Sticky Settings</button>
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
@@ -66,28 +311,6 @@
                   <h6 class="mb-10">Total Users</h6>
                   <h3 class="text-bold mb-10"><%= data.stats.totalUsers %></h3>
                   <p class="text-sm text-success"><%= data.stats.activeUsers %> active</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-xl-3 col-lg-4 col-sm-6">
-              <div class="icon-card mb-30">
-                <div class="icon success"><i class="lni lni-checkmark-circle"></i></div>
-                <div class="content">
-                  <h6 class="mb-10">Redeemed Codes</h6>
-                  <h3 class="text-bold mb-10"><%= data.stats.redeemedCodes %></h3>
-                  <p class="text-sm text-success">Access unlocked</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-xl-3 col-lg-4 col-sm-6">
-              <div class="icon-card mb-30">
-                <div class="icon orange"><i class="lni lni-key"></i></div>
-                <div class="content">
-                  <h6 class="mb-10">Unused Codes</h6>
-                  <h3 class="text-bold mb-10"><%= data.stats.unusedCodes %></h3>
-                  <p class="text-sm text-gray">Ready to redeem</p>
                 </div>
               </div>
             </div>
@@ -112,17 +335,6 @@
                   <h6 class="mb-10">Onboarding Rate</h6>
                   <h3 class="text-bold mb-10"><%= data.stats.onboardingRate %></h3>
                   <p class="text-sm text-gray"><%= data.stats.onboardedUsers %> onboarded</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-xl-3 col-lg-4 col-sm-6">
-              <div class="icon-card mb-30">
-                <div class="icon primary"><i class="lni lni-bar-chart"></i></div>
-                <div class="content">
-                  <h6 class="mb-10">Activation Rate</h6>
-                  <h3 class="text-bold mb-10"><%= data.stats.activationRate %></h3>
-                  <p class="text-sm text-gray">Redeemed vs generated</p>
                 </div>
               </div>
             </div>

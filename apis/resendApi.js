@@ -1,17 +1,19 @@
 'use strict';
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'FitAccess <noreply@example.com>';
+const { getResendSettings } = require('../services/appSettingsService');
 
 async function sendResendEmail({ to, subject, html, text, attachments = [] })
 {
-  if (!process.env.RESEND_API_KEY)
+  const settings = await getResendSettings();
+
+  if (!settings.resend_api_key)
   {
-    console.warn('RESEND_API_KEY is not configured. Email skipped for:', to);
+    console.warn('Resend API key is not configured. Email skipped for:', to);
     return { skipped: true };
   }
 
   const payload = {
-    from: FROM_EMAIL,
+    from: settings.resend_from_email,
     to: [to],
     subject,
     html,
@@ -26,7 +28,7 @@ async function sendResendEmail({ to, subject, html, text, attachments = [] })
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${settings.resend_api_key}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(payload)

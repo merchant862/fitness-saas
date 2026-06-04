@@ -1,8 +1,7 @@
 'use strict';
 
-const { Op } = require('sequelize');
-const { PaymentMethod, PaymentTransaction, UserProfile, sequelize } = require('../database/models');
 const { postStickyOrder } = require('../apis/stickyApi');
+const { getStickySettings } = require('./appSettingsService');
 const { normalizeCheckoutCustomer } = require('../utils/checkoutCustomerUtils');
 const { normalizeEmail } = require('../utils/securityUtils');
 
@@ -11,9 +10,10 @@ async function chargeUpsellOrder(payload)
   const payment = extractPayment(payload);
   validatePayment(payment);
   const chargedAt = new Date();
+  const stickySettings = await getStickySettings();
 
-  const crmPayload = buildStickyOrderPayload(payload, payment);
-  const response = await postStickyOrder(crmPayload);
+  const crmPayload = buildStickyOrderPayload(payload, payment, stickySettings);
+  const response = await postStickyOrder(crmPayload, stickySettings);
   const crmResult = normalizeStickyResult(response.body);
 
   if (!crmResult.approved)
@@ -29,164 +29,12 @@ async function chargeUpsellOrder(payload)
   return {
     crmResult,
     idempotencyKey: crmPayload._idempotencyKey,
-    cardNo: payment.cardNumber,
     cardLast4: cardLast4(payment.cardNumber),
-    expiryMonth: payment.expiryMonth,
-    expiryYear: payment.expiryYear,
-    cvv: payment.cvv,
-    chargedAt,
-    nextChargedAt: calculateNextChargedAt(
-      payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at,
-      chargedAt
-    )
+    chargedAt
   };
 }
 
-async function updateCustomerPaymentMethod(user, payload)
-{
-  const payment = extractPayment(payload);
-  validatePayment(payment);
-  const activePaymentMethod = await findActivePaymentMethod(user.id);
-  const latestPaymentMethod = activePaymentMethod || await findLatestPaymentMethod(user.id);
-  const storedCustomer = await findStoredCustomer(user.id);
-  const shouldChargeNow = !activePaymentMethod;
-
-  const crmPayload = shouldChargeNow ?
-    buildStickyCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer) :
-    buildStickyCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer);
-  const response = await postStickyOrder(crmPayload);
-  const crmResult = normalizeStickyResult(response.body);
-
-  if (!crmResult.approved)
-  {
-    const error = new Error(shouldChargeNow ? 'Payment was declined' : 'Card verification was declined');
-    error.status = 402;
-    error.crmResult = crmResult.publicResult;
-    error.idempotencyKey = crmPayload._idempotencyKey;
-    error.cardLast4 = cardLast4(payment.cardNumber);
-    error.transactionType = shouldChargeNow ? 'card_update' : 'card_verification';
-    throw error;
-  }
-
-  const chargedAt = shouldChargeNow ? new Date() : null;
-
-  return {
-    crmResult,
-    idempotencyKey: crmPayload._idempotencyKey,
-    chargedNow: shouldChargeNow,
-    paymentMethod: await savePaymentMethod(user.id, {
-      customerId: providerCustomerId(user, crmResult, payload, latestPaymentMethod),
-      cardNo: payment.cardNumber,
-      cardLast4: cardLast4(payment.cardNumber),
-      expiryMonth: payment.expiryMonth,
-      expiryYear: payment.expiryYear,
-      cvv: payment.cvv,
-      lastChargedAt: chargedAt,
-      nextChargedAt: shouldChargeNow ?
-        calculateNextChargedAt(null, chargedAt) :
-        calculateNextChargedAt(
-          payload.nextChargedAt || payload.next_charged_at || payload.nextChargeAt || payload.next_charge_at || activePaymentMethod.nextChargedAt
-        )
-    })
-  };
-}
-
-async function chargeStoredPaymentMethod(paymentMethod, user, options = {})
-{
-  const payment = {
-    cardNumber: paymentMethod.cardNo,
-    expiryMonth: paymentMethod.expiryMonth,
-    expiryYear: paymentMethod.expiryYear,
-    cvv: paymentMethod.cvv,
-    cardHolderName: options.cardHolderName || user.name || user.email
-  };
-  validatePayment(payment);
-
-  const chargedAt = new Date();
-  const storedCustomer = await findStoredCustomer(user.id);
-  const previousOrderId = await findLatestApprovedOrderId(user.id, paymentMethod.id);
-  const crmPayload = previousOrderId ?
-    buildStickyCardOnFilePayload(paymentMethod, user, storedCustomer, options, previousOrderId) :
-    buildStickyStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options);
-  const response = await postStickyOrder(crmPayload);
-  const crmResult = normalizeStickyResult(response.body);
-
-  if (!crmResult.approved)
-  {
-    const error = new Error('Recurring payment was declined');
-    error.status = 402;
-    error.crmResult = crmResult.publicResult;
-    error.idempotencyKey = crmPayload._idempotencyKey;
-    error.cardLast4 = paymentMethod.cardLast4;
-    throw error;
-  }
-
-  return {
-    crmResult,
-    idempotencyKey: crmPayload._idempotencyKey,
-    chargedAt,
-    nextChargedAt: calculateNextChargedAt(options.nextChargedAt, chargedAt)
-  };
-}
-
-async function savePaymentMethod(userId, data, options = {})
-{
-  const persist = async (transaction) =>
-  {
-    await PaymentMethod.update(
-      { status: 'replaced' },
-      {
-        where: {
-          userId,
-          status: 'active'
-        },
-        transaction
-      }
-    );
-
-    return PaymentMethod.create({
-      userId,
-      customerId: data.customerId || null,
-      cardNo: data.cardNo,
-      expiryMonth: data.expiryMonth,
-      expiryYear: data.expiryYear,
-      cvv: data.cvv,
-      lastChargedAt: data.lastChargedAt || null,
-      nextChargedAt: data.nextChargedAt || null,
-      status: data.status || 'active'
-    }, { transaction });
-  };
-
-  if (options.transaction)
-  {
-    return persist(options.transaction);
-  }
-
-  return sequelize.transaction(persist);
-}
-
-async function findActivePaymentMethod(userId)
-{
-  return PaymentMethod.findOne({
-    where: {
-      userId,
-      status: 'active'
-    },
-    order: [['createdAt', 'DESC']]
-  });
-}
-
-async function findLatestPaymentMethod(userId)
-{
-  return PaymentMethod.findOne({
-    where: {
-      userId
-    },
-    order: [['createdAt', 'DESC']]
-  });
-}
-
-function buildStickyOrderPayload(payload, payment)
+function buildStickyOrderPayload(payload, payment, stickySettings)
 {
   const customer = normalizeCheckoutCustomer(payload);
   const customerId = providerCustomerIdFromPayload(payload);
@@ -194,89 +42,16 @@ function buildStickyOrderPayload(payload, payment)
   return stickyNewOrderPayload({
     customer,
     payment,
-    productId: stickyProductId('STICKY_UPSELL_PRODUCT_ID'),
+    productId: stickyProductId(stickySettings, 'sticky_product_id', 'Sticky product ID'),
     ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
     email: payload.email,
     idempotencyKey: idempotencyId('upsell', customerId, payload.email),
-    stepNum: process.env.STICKY_UPSELL_STEP_NUM
+    stepNum: stickyValue(stickySettings, 'sticky_upsell_step_num'),
+    stickySettings
   });
 }
 
-function buildStickyCardRenewalPayload(user, payload, payment, latestPaymentMethod, storedCustomer)
-{
-  const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
-  const cycleKey = billingCycleKey(latestPaymentMethod?.nextChargedAt || new Date());
-
-  return stickyNewOrderPayload({
-    customer,
-    user,
-    payment,
-    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
-    ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
-    email: user.email,
-    idempotencyKey: idempotencyId('card-renewal', `${user.id}:${cycleKey}`, user.email)
-  });
-}
-
-function buildStickyCardVerificationPayload(user, payload, payment, activePaymentMethod, storedCustomer)
-{
-  const customer = mergeCustomer(storedCustomer, normalizeCheckoutCustomer(payload));
-
-  return stickyNewOrderPayload({
-    customer,
-    user,
-    payment,
-    productId: normalizeNumberValue(payload.verificationProductId || payload.verification_product_id || stickyProductId('STICKY_CARD_VERIFY_PRODUCT_ID')),
-    ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
-    email: user.email,
-    idempotencyKey: idempotencyId('card-verify', user.id, cardLast4(payment.cardNumber))
-  });
-}
-
-function buildStickyStoredPaymentPayload(paymentMethod, user, payment, storedCustomer, options = {})
-{
-  return stickyNewOrderPayload({
-    customer: storedCustomer,
-    user,
-    payment,
-    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
-    ipAddress: options.ipAddress || null,
-    email: user.email,
-    idempotencyKey: idempotencyId(
-      'monthly-billing',
-      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
-      user.email
-    )
-  });
-}
-
-function buildStickyCardOnFilePayload(paymentMethod, user, storedCustomer, options, previousOrderId)
-{
-  return stripEmpty({
-    method: 'NewOrderCardOnFile',
-    previousOrderId,
-    CVV: paymentMethod.cvv,
-    campaignId: stickyRequired('STICKY_CAMPAIGN_ID'),
-    productId: stickyProductId('STICKY_RENEWAL_PRODUCT_ID', 'STICKY_UPSELL_PRODUCT_ID'),
-    shippingId: stickyRequired('STICKY_SHIPPING_ID'),
-    product_qty_1: 1,
-    forceGatewayId: process.env.STICKY_GATEWAY_ID,
-    ipAddress: options.ipAddress || null,
-    'product_step[1]': process.env.STICKY_RENEWAL_STEP_NUM || null,
-    _idempotencyKey: idempotencyId(
-      'monthly-billing',
-      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
-      user.email
-    ),
-    notes: stickyNotes(idempotencyId(
-      'monthly-billing',
-      `${paymentMethod.id}:${billingCycleKey(paymentMethod.nextChargedAt || new Date())}`,
-      user.email
-    ), storedCustomer)
-  });
-}
-
-function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAddress, email, idempotencyKey, stepNum = null })
+function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAddress, email, idempotencyKey, stepNum = null, stickySettings = {} })
 {
   const nameParts = splitName(customer.fullName || user?.name || payment.cardHolderName);
   const firstName = customer.firstName || nameParts.firstName;
@@ -298,11 +73,11 @@ function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAd
     creditCardNumber: payment.cardNumber,
     expirationDate: stickyExpirationDate(payment),
     CVV: payment.cvv,
-    tranType: process.env.STICKY_TRAN_TYPE || 'Sale',
+    tranType: stickyValue(stickySettings, 'sticky_tran_type') || 'Sale',
     ipAddress,
-    campaignId: stickyRequired('STICKY_CAMPAIGN_ID'),
+    campaignId: stickyRequired(stickySettings, 'sticky_campaign_id', 'Sticky campaign ID'),
     productId,
-    shippingId: stickyRequired('STICKY_SHIPPING_ID'),
+    shippingId: stickyRequired(stickySettings, 'sticky_shipping_id', 'Sticky shipping ID'),
     billingSameAsShipping: 'YES',
     billingFirstName: firstName,
     billingLastName: lastName,
@@ -313,33 +88,43 @@ function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAd
     billingZip: customer.zip,
     billingCountry: customer.country,
     product_qty_1: 1,
-    forceGatewayId: process.env.STICKY_GATEWAY_ID,
+    forceGatewayId: stickyValue(stickySettings, 'sticky_gateway_id'),
+    AFID: stickySettings.sticky_default_affiliate_id || null,
+    offer_id: stickySettings.sticky_offer_id || null,
+    billing_model_id: stickySettings.sticky_billing_model_id || null,
     'product_step[1]': stepNum || null,
     _idempotencyKey: idempotencyKey,
     notes: stickyNotes(idempotencyKey, customer)
   });
 }
 
-function stickyProductId(primaryEnv, fallbackEnv = null)
+function stickyProductId(stickySettings, primaryKey, label)
 {
-  const productId = process.env[primaryEnv] || (fallbackEnv ? process.env[fallbackEnv] : null);
+  const productId = stickySettings[primaryKey];
 
   if (!productId)
   {
-    throwValidationError(`${primaryEnv} is not configured.`);
+    throwValidationError(`${label} is not configured.`);
   }
 
   return normalizeNumberValue(productId);
 }
 
-function stickyRequired(envName)
+function stickyRequired(stickySettings, settingKey, label)
 {
-  if (!process.env[envName])
+  const value = stickyValue(stickySettings, settingKey);
+
+  if (!value)
   {
-    throwValidationError(`${envName} is not configured.`);
+    throwValidationError(`${label} is not configured.`);
   }
 
-  return process.env[envName];
+  return value;
+}
+
+function stickyValue(stickySettings, settingKey)
+{
+  return stickySettings?.[settingKey] || '';
 }
 
 function stickyCardType(cardNumber)
@@ -370,69 +155,6 @@ function stickyCardType(cardNumber)
 function stickyExpirationDate(payment)
 {
   return `${payment.expiryMonth}${String(payment.expiryYear).slice(-2)}`;
-}
-
-function stickyNotes(idempotencyKey, customer)
-{
-  return JSON.stringify(stripEmpty({
-    idempotencyKey,
-    source: 'fitaccess',
-    customerEmail: customer.email || null
-  })).slice(0, 500);
-}
-
-async function findLatestApprovedOrderId(userId, paymentMethodId)
-{
-  const transactions = await PaymentTransaction.findAll({
-    where: {
-      userId,
-      paymentMethodId,
-      status: 'approved',
-      responseCrmOrderId: { [Op.ne]: null }
-    },
-    order: [['createdAt', 'DESC']],
-    limit: 10
-  });
-
-  const transaction = transactions.find((row) => String(row.responseCrmOrderId || '').trim());
-
-  return transaction?.responseCrmOrderId || null;
-}
-
-async function findStoredCustomer(userId)
-{
-  const profile = await UserProfile.findOne({
-    where: { userId }
-  });
-
-  const preferences = safeObject(profile?.preferences);
-
-  return {
-    firstName: preferences.firstName || null,
-    lastName: preferences.lastName || null,
-    fullName: [preferences.firstName, preferences.lastName].filter(Boolean).join(' ') || null,
-    phone: preferences.phone || null,
-    address1: preferences.address1 || null,
-    address2: preferences.address2 || null,
-    city: preferences.city || null,
-    state: preferences.state || null,
-    zip: preferences.zip || null,
-    country: preferences.country || null,
-    billing: {},
-    shipping: {}
-  };
-}
-
-function mergeCustomer(primary, secondary)
-{
-  return Object.keys({
-    ...primary,
-    ...secondary
-  }).reduce((merged, key) =>
-  {
-    merged[key] = secondary[key] || primary[key] || null;
-    return merged;
-  }, {});
 }
 
 function splitName(value)
@@ -695,50 +417,12 @@ function normalizeStickyResult(body)
   };
 }
 
-function calculateNextChargedAt(value, baseDate = new Date())
-{
-  if (value)
-  {
-    const date = new Date(value);
-
-    if (!Number.isNaN(date.getTime()))
-    {
-      return date;
-    }
-  }
-
-  const months = Number(process.env.STICKY_RECURRING_MONTHS || 1);
-  return addCalendarMonths(baseDate, Number.isFinite(months) && months > 0 ? months : 1);
-}
-
-function addCalendarMonths(value, months)
-{
-  const source = new Date(value);
-  const date = new Date(source);
-  const originalDay = date.getDate();
-
-  date.setDate(1);
-  date.setMonth(date.getMonth() + months);
-
-  const lastDayOfTargetMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  date.setDate(Math.min(originalDay, lastDayOfTargetMonth));
-
-  return date;
-}
-
 function cardLast4(value)
 {
   return digits(value).slice(-4);
 }
 
-function providerCustomerId(user, crmResult, payload, activePaymentMethod = null)
-{
-  const customerId = crmResult.customerId || providerCustomerIdFromPayload(payload, user, activePaymentMethod);
-
-  return customerId ? String(customerId) : null;
-}
-
-function providerCustomerIdFromPayload(payload = {}, user = null, activePaymentMethod = null)
+function providerCustomerIdFromPayload(payload = {}, user = null)
 {
   const customerId =
     payload.customerId ||
@@ -746,55 +430,11 @@ function providerCustomerIdFromPayload(payload = {}, user = null, activePaymentM
     payload.CustomerID ||
     payload.stickyCustomerId ||
     payload.sticky_customer_id ||
-    activePaymentMethod?.customerId ||
     user?.metadata?.stickyCustomerId ||
     user?.metadata?.responseCrmCustomerId ||
     null;
 
   return normalizeNumberValue(customerId);
-}
-
-function sanitizeMetadata(value)
-{
-  if (Array.isArray(value))
-  {
-    return value.map(sanitizeMetadata);
-  }
-
-  if (!value || typeof value !== 'object')
-  {
-    return value;
-  }
-
-  const blocked = new Set([
-    'cardNumber',
-    'card_number',
-    'ccNumber',
-    'cc_number',
-    'cvv',
-    'cvc',
-    'cardCvv',
-    'card_cvv',
-    'paymentMethod',
-    'payment_method',
-    'payment',
-    'card'
-  ]);
-
-  return Object.keys(value).reduce((clean, key) =>
-  {
-    if (!blocked.has(key))
-    {
-      clean[key] = sanitizeMetadata(value[key]);
-    }
-
-    return clean;
-  }, {});
-}
-
-function safeObject(value)
-{
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
 function stripEmpty(value)
@@ -854,23 +494,6 @@ function idempotencyId(prefix, orderId, email)
     .slice(0, 191);
 }
 
-function billingCycleKey(value)
-{
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime()))
-  {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
-}
-
 module.exports = {
-  chargeStoredPaymentMethod,
-  chargeUpsellOrder,
-  findActivePaymentMethod,
-  sanitizeMetadata,
-  savePaymentMethod,
-  updateCustomerPaymentMethod
+  chargeUpsellOrder
 };

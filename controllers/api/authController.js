@@ -4,7 +4,6 @@ const { trackEvent } = require('../../services/eventService');
 const { enqueueEmail } = require('../../services/emailQueueService');
 const {
   loginWithPassword,
-  redeemAccessCode,
   requestMagicLink,
   revokeCurrentSession,
   verifyMagicLink
@@ -88,32 +87,6 @@ async function adminPasswordLogin(req, res, next)
 }
 
 
-async function redeem(req, res, next)
-{
-  try
-  {
-    const { email, accessCode } = req.body;
-
-    if (!isEmail(email) || !accessCode)
-    {
-      return errorResponse(req, res, { message: 'Valid email and access code are required' });
-    }
-
-    const user = await redeemAccessCode(req, res, { email, accessCode });
-    await trackEvent(req, 'access_code_redeemed', {}, user.id);
-
-    return successResponse(req, res, {
-      message: 'Access activated successfully.',
-      redirectTo: getPostAuthRedirect(user),
-      data: { user: compactUser(user) }
-    });
-  }
-  catch (error)
-  {
-    next(error);
-  }
-}
-
 async function magicLinkRequest(req, res, next)
 {
   try
@@ -129,7 +102,7 @@ async function magicLinkRequest(req, res, next)
 
     if (result)
     {
-      await enqueueEmail(magicLinkEmail({ email: result.email, token: result.token }));
+      await enqueueEmail(await magicLinkEmail({ email: result.email, token: result.token }));
       await trackEvent(req, 'magic_link_requested', {}, result.user.id);
     }
 
@@ -199,7 +172,6 @@ module.exports = {
   magicLinkRequest,
   magicLinkVerify,
   passwordLogin,
-  redeem,
   session
 };
 

@@ -1,3 +1,5 @@
 .env
 /node_modules
 codex-ref.txt
+/.agents
+.codex

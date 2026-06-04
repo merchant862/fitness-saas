@@ -107,12 +107,6 @@
             </div>
           <% } %>
 
-          <% if (data.billingMessage) { %>
-            <div class="alert-box <%= data.billingMessage.type === 'success' ? 'success-alert' : 'danger-alert' %> mb-25">
-              <p class="text-sm mb-0"><%= data.billingMessage.text %></p>
-            </div>
-          <% } %>
-
           <% if (!data.completion.complete) { %>
             <div class="profile-completion-note mb-25">
               <p class="text-sm mb-10">
@@ -274,71 +268,6 @@
                 <p class="text-sm mb-10"><strong>Goal:</strong> <%= data.currentUser.goal %></p>
                 <p class="text-sm mb-10"><strong>Level:</strong> <%= data.currentUser.level %></p>
                 <p class="text-sm mb-0"><strong>Environment:</strong> <%= data.currentUser.environment %></p>
-              </div>
-
-              <div class="card-style mb-30">
-                <div class="title">
-                  <h6 class="text-medium mb-20">Billing</h6>
-                </div>
-
-                <% if (data.billing.cardLast4) { %>
-                  <p class="text-sm mb-10"><strong>Card:</strong> **** **** **** <%= data.billing.cardLast4 %></p>
-                <% } else { %>
-                  <p class="text-sm mb-10"><strong>Card:</strong> Not added</p>
-                <% } %>
-
-                <p class="text-sm mb-20">
-                  <strong>Next Charge:</strong>
-                  <%= data.billing.nextChargedAt || 'Pending' %>
-                </p>
-
-                <div class="billing-brand-row mb-20" aria-label="Accepted cards">
-                  <span class="billing-brand visa">VISA</span>
-                  <span class="billing-brand mastercard">Mastercard</span>
-                  <span class="billing-brand amex">AMEX</span>
-                  <span class="billing-brand discover">Discover</span>
-                </div>
-
-                <form action="/billing/payment-method" method="POST" autocomplete="on">
-                  <input type="hidden" name="returnTo" value="/profile" />
-
-                  <div class="input-style-1">
-                    <label>Name on Card</label>
-                    <input type="text" name="cardHolderName" autocomplete="cc-name" required />
-                  </div>
-
-                  <div class="input-style-1">
-                    <label>Card Number</label>
-                    <input type="text" name="cardNumber" inputmode="numeric" autocomplete="cc-number" minlength="12" maxlength="23" required />
-                  </div>
-
-                  <div class="row">
-                    <div class="col-4">
-                      <div class="input-style-1">
-                        <label>Month</label>
-                        <input type="text" name="expiryMonth" inputmode="numeric" autocomplete="cc-exp-month" minlength="1" maxlength="2" required />
-                      </div>
-                    </div>
-
-                    <div class="col-4">
-                      <div class="input-style-1">
-                        <label>Year</label>
-                        <input type="text" name="expiryYear" inputmode="numeric" autocomplete="cc-exp-year" minlength="2" maxlength="4" required />
-                      </div>
-                    </div>
-
-                    <div class="col-4">
-                      <div class="input-style-1">
-                        <label>CVV</label>
-                        <input type="password" name="cvv" inputmode="numeric" autocomplete="cc-csc" minlength="3" maxlength="4" required />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="submit" class="main-btn primary-btn btn-hover w-100">
-                    Update Card
-                  </button>
-                </form>
               </div>
 
               <div class="card-style mb-30">

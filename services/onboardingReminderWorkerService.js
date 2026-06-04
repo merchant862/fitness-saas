@@ -159,7 +159,7 @@ async function queueReminder(user)
     userAgent: REMINDER_EVENT_USER_AGENT
   });
 
-  await enqueueEmail(onboardingReminderEmail({
+  await enqueueEmail(await onboardingReminderEmail({
     email: user.email,
     token,
     reminderNumber,

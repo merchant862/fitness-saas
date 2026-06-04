@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { appUrl } = require('./urlUtils');
+const { getPublicWebsiteUrl } = require('../services/appSettingsService');
 
 const LOGO_CONTENT_ID = 'fitaccess-logo-icon';
 const LOGO_FILENAME = 'fitaccess-logo-icon.png';
@@ -18,9 +18,9 @@ const BRAND = {
   dark: '#08111f'
 };
 
-function accessCodeEmail({ email, code, expiresAt })
+async function accessCodeEmail({ email, code, expiresAt })
 {
-  const activateUrl = appUrl(`/activate?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`);
+  const activateUrl = await getPublicWebsiteUrl(`/activate?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`);
 
   return brandedEmail({
     to: email,
@@ -35,9 +35,9 @@ function accessCodeEmail({ email, code, expiresAt })
   });
 }
 
-function magicLinkEmail({ email, token })
+async function magicLinkEmail({ email, token })
 {
-  const loginUrl = appUrl(`/session/verify?token=${encodeURIComponent(token)}`);
+  const loginUrl = await getPublicWebsiteUrl(`/session/verify?token=${encodeURIComponent(token)}`);
 
   return brandedEmail({
     to: email,
@@ -51,9 +51,9 @@ function magicLinkEmail({ email, token })
   });
 }
 
-function onboardingReminderEmail({ email, token, reminderNumber, maxReminders })
+async function onboardingReminderEmail({ email, token, reminderNumber, maxReminders })
 {
-  const loginUrl = appUrl(`/session/verify?token=${encodeURIComponent(token)}`);
+  const loginUrl = await getPublicWebsiteUrl(`/session/verify?token=${encodeURIComponent(token)}`);
 
   return brandedEmail({
     to: email,
@@ -67,9 +67,9 @@ function onboardingReminderEmail({ email, token, reminderNumber, maxReminders })
   });
 }
 
-function passwordResetEmail({ email, token })
+async function passwordResetEmail({ email, token })
 {
-  const resetUrl = appUrl(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+  const resetUrl = await getPublicWebsiteUrl(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
 
   return brandedEmail({
     to: email,
@@ -80,48 +80,6 @@ function passwordResetEmail({ email, token })
     buttonText: 'Reset Password',
     buttonUrl: resetUrl,
     footerText: 'This reset link expires shortly and can only be used once. If you did not request it, you can safely ignore this email.'
-  });
-}
-
-function billingSuccessEmail({ email, nextChargedAt })
-{
-  return brandedEmail({
-    to: email,
-    subject: 'Your FitAccess membership payment was received',
-    eyebrow: 'Payment received',
-    title: 'Your membership is active',
-    intro: `Your FitAccess payment was processed successfully. Your next billing date is ${formatDate(nextChargedAt)}.`,
-    buttonText: 'Open Dashboard',
-    buttonUrl: appUrl('/dashboard'),
-    footerText: 'You can keep using your workouts, meals, progress tracking, and AI Coach without interruption.'
-  });
-}
-
-function billingRetryFailedEmail({ email, retryAttempt, nextRetryAt })
-{
-  return brandedEmail({
-    to: email,
-    subject: 'FitAccess payment retry scheduled',
-    eyebrow: 'Payment retry',
-    title: 'We could not process your payment',
-    intro: `Your FitAccess payment did not go through. We will retry automatically on ${formatDate(nextRetryAt)}. This is retry ${retryAttempt} of ${Number(process.env.BILLING_MAX_RETRY_ATTEMPTS || 3)}.`,
-    buttonText: 'Update Card',
-    buttonUrl: appUrl('/billing'),
-    footerText: 'Please update your card if your current payment method is expired, blocked, or no longer available.'
-  });
-}
-
-function billingLockedEmail({ email })
-{
-  return brandedEmail({
-    to: email,
-    subject: 'Your FitAccess account is locked',
-    eyebrow: 'Account locked',
-    title: 'Your membership needs a new card',
-    intro: 'We could not process your FitAccess payment after the final retry, so your account has been locked until a valid card is added.',
-    buttonText: 'Add New Card',
-    buttonUrl: appUrl('/billing'),
-    footerText: 'Add a new card from your account to restore access to your workouts, meals, progress tracking, and AI Coach.'
   });
 }
 
@@ -321,26 +279,9 @@ function escapeAttribute(value)
   return escapeHtml(value).replace(/`/g, '&#096;');
 }
 
-function formatDate(value)
-{
-  if (!value)
-  {
-    return 'your next billing date';
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(new Date(value));
-}
-
 module.exports = {
   accessCodeEmail,
   magicLinkEmail,
   onboardingReminderEmail,
-  passwordResetEmail,
-  billingSuccessEmail,
-  billingRetryFailedEmail,
-  billingLockedEmail
+  passwordResetEmail
 };
