@@ -14,6 +14,7 @@ const { getPostAuthRedirect } = require('../../utils/profileCompletion');
 const { magicLinkEmail } = require('../../utils/emailTemplateUtils');
 const { errorResponse, successResponse } = require('../../utils/httpResponseUtils');
 const { adminRoute } = require('../../utils/adminPaths');
+const { renderMemberLogin } = require('../views/loginViewController');
 const { renderAdminLogin } = require('../views/adminLoginViewController');
 
 async function passwordLogin(req, res, next)
@@ -42,7 +43,7 @@ async function passwordLogin(req, res, next)
   {
     if (error.status && error.status < 500)
     {
-      return respondLoginFailure(req, res, error.message);
+      return respondLoginFailure(req, res, error.message, error.status);
     }
 
     next(error);
@@ -170,14 +171,14 @@ module.exports = {
   session
 };
 
-function respondLoginFailure(req, res, message)
+function respondLoginFailure(req, res, message, status = 401)
 {
   if (req.path.startsWith('/api/'))
   {
-    return errorResponse(req, res, { message, status: 401 });
+    return errorResponse(req, res, { message, status });
   }
 
-  return errorResponse(req, res, { message, status: 401, redirectTo: '/sign-in' });
+  return renderMemberLogin(res, { error: message, status });
 }
 
 function respondAdminLoginFailure(req, res, message)

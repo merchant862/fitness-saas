@@ -279,6 +279,8 @@ async function saveMemberLoginSession(req, user, sid, expiresAt, options = {})
   const now = new Date();
   const sessionHash = sha256(sid);
   const transaction = options.transaction;
+  const ipAddress = String(clientIp(req) || '').slice(0, 64) || null;
+  const userAgent = String(req.headers['user-agent'] || '').slice(0, 255) || null;
 
   const lockedUser = transaction
     ? await User.findByPk(user.id, { transaction, lock: transaction.LOCK.UPDATE })
@@ -302,17 +304,31 @@ async function saveMemberLoginSession(req, user, sid, expiresAt, options = {})
     transaction
   });
 
-  const [deviceLimit, activeSessionCount] = await Promise.all([
-    getMemberDeviceLimit({ transaction }),
-    UserLoginSession.count({
-      where: {
-        userId: lockedUser.id,
-        revokedAt: null,
-        expiresAt: { [Op.gt]: now }
-      },
+  const deviceLimit = await getMemberDeviceLimit({ transaction });
+  let activeSessionCount = await UserLoginSession.count({
+    where: {
+      userId: lockedUser.id,
+      revokedAt: null,
+      expiresAt: { [Op.gt]: now }
+    },
+    transaction
+  });
+
+  if (activeSessionCount >= deviceLimit)
+  {
+    const replacedSameDevice = await revokeSameDeviceSession({
+      userId: lockedUser.id,
+      ipAddress,
+      userAgent,
+      now,
       transaction
-    })
-  ]);
+    });
+
+    if (replacedSameDevice)
+    {
+      activeSessionCount -= replacedSameDevice;
+    }
+  }
 
   if (activeSessionCount >= deviceLimit)
   {
@@ -325,11 +341,35 @@ async function saveMemberLoginSession(req, user, sid, expiresAt, options = {})
     userId: lockedUser.id,
     sessionTokenHash: sessionHash,
     expiresAt,
-    ipAddress: String(clientIp(req) || '').slice(0, 64) || null,
-    userAgent: String(req.headers['user-agent'] || '').slice(0, 255) || null
+    ipAddress,
+    userAgent
   }, { transaction });
 
   Object.assign(user, lockedUser.get({ plain: true }));
+}
+
+async function revokeSameDeviceSession({ userId, ipAddress, userAgent, now, transaction })
+{
+  if (!ipAddress || !userAgent)
+  {
+    return 0;
+  }
+
+  const result = await UserLoginSession.update(
+    { revokedAt: now },
+    {
+      where: {
+        userId,
+        ipAddress,
+        userAgent,
+        revokedAt: null,
+        expiresAt: { [Op.gt]: now }
+      },
+      transaction
+    }
+  );
+
+  return Array.isArray(result) ? Number(result[0] || 0) : Number(result || 0);
 }
 
 async function isCurrentMemberLoginSession(user, sid)
