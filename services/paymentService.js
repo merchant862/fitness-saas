@@ -46,12 +46,11 @@ function buildStickyOrderPayload(payload, payment, stickySettings)
     ipAddress: payload.ipAddress || payload.ip_address || payload.ip || null,
     email: payload.email,
     idempotencyKey: idempotencyId('upsell', customerId, payload.email),
-    stepNum: stickyValue(stickySettings, 'sticky_upsell_step_num'),
     stickySettings
   });
 }
 
-function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAddress, email, idempotencyKey, stepNum = null, stickySettings = {} })
+function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAddress, email, idempotencyKey, stickySettings = {} })
 {
   const nameParts = splitName(customer.fullName || user?.name || payment.cardHolderName);
   const firstName = customer.firstName || nameParts.firstName;
@@ -73,7 +72,7 @@ function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAd
     creditCardNumber: payment.cardNumber,
     expirationDate: stickyExpirationDate(payment),
     CVV: payment.cvv,
-    tranType: stickyValue(stickySettings, 'sticky_tran_type') || 'Sale',
+    tranType: 'Sale',
     ipAddress,
     campaignId: stickyRequired(stickySettings, 'sticky_campaign_id', 'Sticky campaign ID'),
     productId,
@@ -88,11 +87,8 @@ function stickyNewOrderPayload({ customer, user = null, payment, productId, ipAd
     billingZip: customer.zip,
     billingCountry: customer.country,
     product_qty_1: 1,
-    forceGatewayId: stickyValue(stickySettings, 'sticky_gateway_id'),
-    AFID: stickySettings.sticky_default_affiliate_id || null,
     offer_id: stickySettings.sticky_offer_id || null,
     billing_model_id: stickySettings.sticky_billing_model_id || null,
-    'product_step[1]': stepNum || null,
     _idempotencyKey: idempotencyKey,
     notes: stickyNotes(idempotencyKey, customer)
   });
@@ -435,6 +431,15 @@ function providerCustomerIdFromPayload(payload = {}, user = null)
     null;
 
   return normalizeNumberValue(customerId);
+}
+
+function stickyNotes(idempotencyKey, customer)
+{
+  return [
+    'FitAccess one-time membership',
+    idempotencyKey ? `Idempotency: ${idempotencyKey}` : null,
+    customer?.phone ? `Phone: ${customer.phone}` : null
+  ].filter(Boolean).join(' | ').slice(0, 500);
 }
 
 function stripEmpty(value)

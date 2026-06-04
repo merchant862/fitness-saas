@@ -165,9 +165,9 @@ function normalizeAttachment(attachment)
   return {
     content: attachment.content,
     filename: attachment.filename,
-    contentType: attachment.contentType || attachment.content_type,
-    contentDisposition: attachment.contentDisposition || attachment.content_disposition,
-    contentId: attachment.contentId || attachment.content_id
+    content_type: attachment.content_type || attachment.contentType,
+    content_disposition: attachment.content_disposition || attachment.contentDisposition,
+    content_id: attachment.content_id || attachment.contentId
   };
 }
 

@@ -209,11 +209,8 @@ function logoAttachments()
     {
       content: fs.readFileSync(LOGO_PATH).toString('base64'),
       filename: LOGO_FILENAME,
-      contentType: 'image/png',
       content_type: 'image/png',
-      contentDisposition: 'inline',
       content_disposition: 'inline',
-      contentId: LOGO_CONTENT_ID,
       content_id: LOGO_CONTENT_ID
     }
   ];

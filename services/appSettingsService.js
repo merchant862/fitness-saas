@@ -16,7 +16,6 @@ const BRAND_SETTING_KEYS = [
   'website_url'
 ];
 const STICKY_SETTING_KEYS = [
-  'sticky_gateway_id',
   'sticky_app_key',
   'sticky_domain',
   'sticky_api_path',
@@ -25,12 +24,6 @@ const STICKY_SETTING_KEYS = [
   'sticky_timeout_ms',
   'sticky_campaign_id',
   'sticky_shipping_id',
-  'sticky_tran_type',
-  'sticky_upsell_step_num',
-  'sticky_default_affiliate_id',
-  'sticky_tracker_postback_url',
-  'sticky_product_key',
-  'sticky_product_label',
   'sticky_offer_id',
   'sticky_product_id',
   'sticky_billing_model_id'
@@ -39,10 +32,7 @@ const STICKY_SETTING_KEYS = [
 const STICKY_DEFAULTS = {
   sticky_domain: 'sticky.io',
   sticky_api_path: '/admin/transact.php',
-  sticky_timeout_ms: '15000',
-  sticky_tran_type: 'Sale',
-  sticky_product_key: 'main',
-  sticky_product_label: 'Main product'
+  sticky_timeout_ms: '15000'
 };
 const BRAND_DEFAULTS = {
   support_email: 'support@purple-flare.com',
@@ -174,7 +164,6 @@ function normalizeDeviceLimit(value)
 function normalizeStickySettings(input)
 {
   return {
-    sticky_gateway_id: clean(input.stickyGatewayId),
     sticky_app_key: clean(input.stickyAppKey),
     sticky_domain: clean(input.stickyDomain) || STICKY_DEFAULTS.sticky_domain,
     sticky_api_path: normalizeApiPath(input.stickyApiPath),
@@ -183,12 +172,6 @@ function normalizeStickySettings(input)
     sticky_timeout_ms: normalizeIntegerString(input.stickyTimeoutMs, STICKY_DEFAULTS.sticky_timeout_ms),
     sticky_campaign_id: clean(input.stickyCampaignId),
     sticky_shipping_id: clean(input.stickyShippingId),
-    sticky_tran_type: clean(input.stickyTranType) || STICKY_DEFAULTS.sticky_tran_type,
-    sticky_upsell_step_num: clean(input.stickyUpsellStepNum),
-    sticky_default_affiliate_id: clean(input.stickyDefaultAffiliateId),
-    sticky_tracker_postback_url: clean(input.stickyTrackerPostbackUrl),
-    sticky_product_key: clean(input.stickyProductKey) || STICKY_DEFAULTS.sticky_product_key,
-    sticky_product_label: clean(input.stickyProductLabel) || STICKY_DEFAULTS.sticky_product_label,
     sticky_offer_id: clean(input.stickyOfferId),
     sticky_product_id: clean(input.stickyProductId),
     sticky_billing_model_id: clean(input.stickyBillingModelId)
